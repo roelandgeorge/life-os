@@ -1,0 +1,577 @@
+:root {
+  color-scheme: dark;
+  --bg: #14161a;
+  --panel: #1c1f25;
+  --line: #2b2f37;
+  --text: #d9dce2;
+  --muted: #838a97;
+  --accent: #c9a227;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.debug {
+  display: grid;
+  grid-template-columns: minmax(320px, 480px) 1fr;
+  gap: 24px;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+@media (max-width: 900px) {
+  .debug {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stage {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+}
+
+.stage svg {
+  width: 100%;
+  height: auto;
+  background: #0b0e14;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.disclaimer {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 8px 2px 0;
+}
+
+.controls {
+  min-width: 0;
+}
+
+h1 {
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+
+h2 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 24px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.modes {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+button {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.slider {
+  margin-bottom: 14px;
+}
+
+.slider label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.slider .name {
+  font-weight: 600;
+}
+
+.num {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+
+.slider input[type='range'] {
+  width: 100%;
+  margin: 4px 0 2px;
+  accent-color: var(--accent);
+}
+
+.slider code {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.extremes {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: #5f6673;
+}
+
+.extremes span:last-child {
+  text-align: right;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.derived {
+  color: var(--muted);
+}
+
+.derived strong {
+  color: var(--text);
+}
+
+.readout {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.readout th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--muted);
+  padding: 2px 8px 2px 0;
+  white-space: nowrap;
+}
+
+.readout td {
+  padding: 2px 0;
+}
+
+.readout .num {
+  padding-left: 8px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.bar {
+  background: var(--panel);
+  border-radius: 3px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.chips button {
+  padding: 3px 9px;
+  font-size: 12px;
+}
+
+/* ---- main screen (§6.1) ------------------------------------------------ */
+
+.main-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* Inside .shell-body the screen is a flex child, not the viewport root — let
+   it fill the space the tab bar leaves rather than adding its own 100vh. */
+.shell-body .main-screen {
+  min-height: 0;
+}
+
+.main-screen .loading {
+  margin: auto;
+  color: var(--muted);
+}
+
+.portrait {
+  flex: 2 1 0;
+  min-height: 0;
+  display: flex;
+}
+
+.portrait svg {
+  width: 100%;
+  height: 100%;
+  background: #0b0e14;
+  display: block;
+}
+
+.below {
+  flex: 1 1 0;
+  padding: 16px 20px 28px;
+  overflow-y: auto;
+}
+
+.headline {
+  font-size: 20px;
+  margin: 0;
+}
+
+.subhead {
+  color: var(--muted);
+  margin: 2px 0 0;
+  font-size: 13px;
+}
+
+.warmup {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 12px;
+  margin: 10px 0 0;
+}
+
+.fullday {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+
+.strip {
+  display: flex;
+  gap: 2px;
+  margin: 14px 0 0;
+}
+
+.strip .cell {
+  flex: 1;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--line);
+}
+
+.strip .cell.filled {
+  background: var(--accent);
+}
+
+.checkins {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.checkin {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.checkin input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  flex: none;
+}
+
+.checkin .label {
+  font-weight: 600;
+  flex: 1;
+}
+
+.checkin.collapsed {
+  padding: 7px 14px;
+  opacity: 0.6;
+}
+
+.checkin.collapsed .label {
+  font-weight: 400;
+  font-size: 13px;
+}
+
+.checkin .lastHit {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ---- onboarding (§7) --------------------------------------------------- */
+
+.onboarding .progress {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 12px;
+}
+
+.onboarding h2 {
+  font-size: 17px;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text);
+  border: none;
+  padding: 0;
+  margin: 0 0 8px;
+}
+
+.onboarding .note {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 16px;
+}
+
+.onboarding input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+  margin-top: 8px;
+}
+
+.onboarding .ageValue {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 8px 0 0;
+}
+
+.onboarding .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.onboarding .chips button {
+  padding: 8px 16px;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.swatch {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  padding: 0;
+  cursor: pointer;
+}
+
+.swatch.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.onboarding-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.onboarding-nav button.primary {
+  margin-left: auto;
+}
+
+button.primary {
+  background: var(--accent);
+  color: #1a1305;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.onboarding .closing p {
+  color: var(--text);
+}
+
+section p {
+  line-height: 1.6;
+  margin: 0 0 10px;
+}
+
+.start {
+  margin-top: 8px;
+}
+
+/* ---- shell / nav -------------------------------------------------------- */
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.shell-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+.shell-body > * {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.tabbar {
+  display: flex;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+  flex: none;
+}
+
+.tabbar button {
+  flex: 1;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 12px 0;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.tabbar button.on {
+  color: var(--accent);
+}
+
+/* ---- history (§6.2) ------------------------------------------------------ */
+
+.history-screen {
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 20px 20px 28px;
+  overflow-y: auto;
+}
+
+.sparklines {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sparkline-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.sparkline-header .label {
+  font-weight: 600;
+}
+
+.sparkline-header .num {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.sparkline {
+  width: 100%;
+  height: 36px;
+  display: block;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.history-screen h2 {
+  margin-top: 24px;
+}
+
+/* ---- settings (§6.3) ------------------------------------------------------ */
+
+.settings-screen {
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 20px 20px 28px;
+  overflow-y: auto;
+}
+
+.settings-screen section {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.settings-screen section:first-of-type {
+  margin-top: 16px;
+}
+
+.settings-screen h2 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+.notification-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notification-row input[type='time'] {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: inherit;
+}
+
+.note.error {
+  color: #d97a6c;
+}
+
+button.danger {
+  border-color: #7a3b34;
+  color: #d97a6c;
+}
