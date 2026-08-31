@@ -146,6 +146,19 @@ store" path through every hook consumer for two rare, deliberate actions
 buys correctness the cheap way; profile edits and daily ticks — the common
 path — update in place with no reload.
 
+**The "see your best version" toggle is a deliberate reversal of §3, not an
+oversight** (`app/MainScreen.tsx`). §3 says "do not render an idealised self
+for comparison. There is one figure on screen" — the reasoning given is that a
+second, ideal figure would blur the causal link between today's tick and
+today's image. The user asked for exactly that comparison anyway, for
+motivation, and made that call explicitly after being shown the conflict. The
+toggle is scoped to preserve as much of the original reasoning as it can: it's
+opt-in (off by default, one tap to see it, one tap back), it hides the day's
+checkboxes and Full Day state while active so the idealised figure never sits
+next to a checkbox you could tick, and "best" is every domain at its own
+ceiling (`uniformScores(100)`) on the *same* identity — the same person,
+maximally adherent, not a fantasy version of them.
+
 **Onboarding's live preview always renders at score 50** (`app/Onboarding.tsx`).
 The portrait during onboarding only exists to build identity (§7); rendering it
 at any other score would let an appearance answer read as good or bad

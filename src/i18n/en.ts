@@ -21,6 +21,14 @@ export const en = {
   'main.neverHit': 'not yet',
   'main.loading': 'Loading…',
 
+  // Best-version comparison. §3 says "no idealised self for comparison" — this
+  // is a deliberate, documented reversal of that call, not an oversight; see
+  // README.
+  'main.bestVersion.show': 'See your best version',
+  'main.bestVersion.hide': 'Back to now',
+  'main.bestVersion.headline': 'This is you at {age}, at your best.',
+  'main.bestVersion.subhead': 'Every domain held at its ceiling. This is what you just saw, at its best.',
+
   // §7 onboarding — one question per screen, then the closing explanation.
   'onboarding.step': 'Step {n} of {total}',
   'onboarding.next': 'Next',
