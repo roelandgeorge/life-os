@@ -28,22 +28,24 @@ export function taskLabel(domain: DomainConfig, labels: AppState['taskLabels']):
 }
 
 /**
- * Blank means "use the default" rather than "an empty box": storing the empty
- * string would leave a check-in with no name at all.
+ * Stores exactly what was typed, minus nothing but excess length.
+ *
+ * It must not trim. The Settings field is a controlled input, so whatever
+ * this returns is what the field shows on the very next render — trimming
+ * here ate the space the moment it was typed, making multi-word labels
+ * impossible to enter. Whitespace is meaningful *while* typing; `taskLabel`
+ * trims when it displays, and import trims when it parses, which is where
+ * trimming belongs.
+ *
+ * A field cleared to nothing drops the key, so the default comes back.
  */
-export function normaliseTaskLabel(raw: string): string | undefined {
-  const trimmed = raw.trim().slice(0, MAX_LABEL_LENGTH);
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
 export function withTaskLabel(
   labels: AppState['taskLabels'],
   key: DomainKey,
   raw: string,
 ): Partial<Record<DomainKey, string>> {
   const next = { ...labels };
-  const value = normaliseTaskLabel(raw);
-  if (value === undefined) delete next[key];
-  else next[key] = value;
+  if (raw === '') delete next[key];
+  else next[key] = raw.slice(0, MAX_LABEL_LENGTH);
   return next;
 }
