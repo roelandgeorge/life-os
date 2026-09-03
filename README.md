@@ -123,10 +123,13 @@ that drives the step period. Never hit at all is always due.
 load/save/export/import; Settings' reset needs "no state", which import cannot
 express and save cannot either.
 
-**`notificationTime` lives on `AppState`, not `Profile`** (`core/types.ts`).
-It is a device setting, not identity. It persists; nothing schedules a real
-notification from it yet — that needs a push subscription and a server, out of
-scope for a local-only v1.
+**The daily reminder is a toggle, not a time** (`app/SettingsScreen.tsx`).
+§6 asks for a configurable notification time. Vercel's free plan runs a cron
+**once a day, within an hour of the scheduled time, in UTC only** — so a
+per-minute setting would be a promise the schedule cannot keep. The UI is an
+on/off switch and says the reminder lands "in the evening"; the schedule
+itself is one line in `vercel.json`. `notificationTime` survives on `AppState`
+as the record of whether reminders are on.
 
 **Import and reset resync by reloading the page** (`app/SettingsScreen.tsx`).
 Both replace the whole `AppState` underneath the hook. Threading a reload path
@@ -145,6 +148,49 @@ boot: without it IndexedDB is best-effort and a browser short on disk may clear
 default glob leaves them out, and a cached shell with an empty frame is worse
 offline than no cache at all.
 
+## Push notifications
+
+The app is otherwise entirely local — this is the one part with a server.
+
+```
+public/push-sw.js   push + notificationclick, imported into the generated SW
+src/app/push.ts     permission, subscribe, and every way it can fail
+api/subscribe.ts    stores the one subscription in a private Blob
+api/cron.ts         the daily send, guarded by CRON_SECRET
+vercel.json         the schedule
+```
+
+The Blob store **must be private**. A push subscription on a public URL lets
+anyone who finds it send notifications to the phone, and Blob access mode
+cannot be changed after the store is created.
+
+The cron cannot know whether the boxes were ticked — the log never leaves the
+phone — so the reminder asks rather than tells.
+
+### Environment variables
+
+| Variable | Where | What |
+|---|---|---|
+| `VITE_VAPID_PUBLIC_KEY` | Vercel + `.env.local` | Public half of the VAPID pair. Shipped to the browser by design. |
+| `VAPID_PRIVATE_KEY` | Vercel only | Secret. Never commit it. |
+| `VAPID_SUBJECT` | Vercel | `mailto:` address, required by the push spec. |
+| `CRON_SECRET` | Vercel | Vercel sends it as a bearer token; `api/cron.ts` refuses to run without it. |
+| `BLOB_READ_WRITE_TOKEN` | automatic | Added by Vercel when the Blob store is connected. |
+
+Regenerate the VAPID pair with
+`node -e "console.log(require('web-push').generateVAPIDKeys())"`. Changing it
+invalidates the existing subscription — the toggle has to be switched off and
+on again.
+
+### Testing it without waiting for evening
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" https://<your-app>.vercel.app/api/cron
+```
+
+`{"sent":true}` means the push left Vercel. `{"sent":false,"reason":"no
+subscription"}` means the toggle was never switched on, on that device.
+
 ## Layout
 
 ```
@@ -160,6 +206,7 @@ src/visual/    layers.ts (the domain -> artwork map) and the compositing Avatar
 src/app/       the shell: useLifeOS is the one place touching Store and clock;
                every screen takes state as props
 src/i18n/      §5.3 — every user-facing string, flat key map, English only
+api/           the only server-side code: push subscription + the daily send
 scripts/       icon generation, artwork slicing, placeholder sheets
 ```
 

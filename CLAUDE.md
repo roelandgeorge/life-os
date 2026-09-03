@@ -21,8 +21,13 @@ the EWMA scoring engine gave way to the step model. README explains both.
 
 Live on the user's Vercel deployment, which builds from `main` on GitHub.
 
-The real artwork is in. What is left is push scheduling behind the
-notification-time setting, which persists but fires nothing.
+The real artwork is in, and web push is built (`api/`, `public/push-sw.js`) —
+but it only works once the Vercel side is configured: a **private** Blob store
+plus the VAPID/CRON env vars listed in README. Until then the toggle in
+Settings reports the failure rather than pretending.
+
+Next up is the history screen: it shows step tracks, but not *which* day was
+missed.
 
 ## Commands
 
@@ -46,6 +51,7 @@ src/store/     Store interface + IndexedDB and in-memory impls (§5.1)
 src/visual/    layers.ts (domain -> artwork map) and the compositing Avatar
 src/app/       the shell: useLifeOS bridges Store+clock, every screen takes props
 src/i18n/      §5.3 — every user-facing string, as a flat key map
+api/           the only server-side code: push subscription + the daily send
 scripts/       icons, artwork slicing, placeholder sheets — not app code
 public/avatar/ the artwork: <layer>.png contact sheets and their sliced states
 ```

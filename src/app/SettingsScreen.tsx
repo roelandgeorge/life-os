@@ -7,6 +7,7 @@
  */
 
 import { useRef, useState } from 'react';
+import { disablePush, enablePush, type PushResult } from './push';
 import type { AppState, Profile } from '../core/types';
 import { en } from '../i18n/en';
 import { ImportError } from '../store/serialize';
@@ -24,7 +25,35 @@ export function SettingsScreen({
   onNotificationTimeChange: (value: string | null) => void;
 }) {
   const [message, setMessage] = useState<string | null>(null);
+  const [pushError, setPushError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  /**
+   * The permission prompt must come from this click — browsers refuse it
+   * otherwise, and iOS refuses it entirely unless the app was launched from
+   * the home screen. The stored time only records that reminders are on; the
+   * schedule itself lives in vercel.json, because the free plan allows one
+   * fixed daily cron and no more.
+   */
+  async function handleReminder(wanted: boolean) {
+    setPushError(null);
+    if (!wanted) {
+      onNotificationTimeChange(null);
+      await disablePush();
+      return;
+    }
+
+    setBusy(true);
+    const result = await enablePush();
+    setBusy(false);
+
+    if (result.ok) {
+      onNotificationTimeChange('20:00');
+      return;
+    }
+    setPushError(describe(result));
+  }
 
   function set<K extends keyof Profile>(key: K, value: Profile[K]) {
     onProfileChange({ ...state.profile, [key]: value });
@@ -85,16 +114,17 @@ export function SettingsScreen({
         <label className="notification-row">
           <input
             type="checkbox"
+            disabled={busy}
             checked={state.notificationTime != null}
-            onChange={(e) => onNotificationTimeChange(e.target.checked ? '20:00' : null)}
+            onChange={(e) => void handleReminder(e.target.checked)}
           />
-          <input
-            type="time"
-            disabled={state.notificationTime == null}
-            value={state.notificationTime ?? '20:00'}
-            onChange={(e) => onNotificationTimeChange(e.target.value)}
-          />
+          <span>{en['settings.notifications.enable']}</span>
         </label>
+        {busy && <p className="note">{en['settings.notifications.working']}</p>}
+        {!busy && pushError && <p className="note error">{pushError}</p>}
+        {!busy && !pushError && state.notificationTime != null && (
+          <p className="note">{en['settings.notifications.on']}</p>
+        )}
       </section>
 
       <section>
@@ -130,4 +160,19 @@ export function SettingsScreen({
       </section>
     </div>
   );
+}
+
+function describe(result: Extract<PushResult, { ok: false }>): string {
+  switch (result.reason) {
+    case 'unsupported':
+      return en['settings.notifications.error.unsupported'];
+    case 'not-installed':
+      return en['settings.notifications.error.notInstalled'];
+    case 'denied':
+      return en['settings.notifications.error.denied'];
+    default:
+      return result.detail
+        ? `${en['settings.notifications.error.failed']} ${result.detail}`
+        : en['settings.notifications.error.failed'];
+  }
 }

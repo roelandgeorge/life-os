@@ -21,6 +21,9 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,webmanifest}', 'icons/*.png', 'avatar/*.png'],
         // Illustrated PNGs run larger than the 2 MB default allows.
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // generateSW writes the service worker for us, so the push and
+        // notificationclick handlers have to be imported into it.
+        importScripts: ['/push-sw.js'],
       },
       manifest: {
         name: 'Life OS',
