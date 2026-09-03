@@ -24,7 +24,6 @@ export function Shell() {
     projection,
     today,
     toggle,
-    updateProfile,
     updateNotificationTime,
     updateTaskLabel,
     toggleCustom,
@@ -68,7 +67,6 @@ export function Shell() {
           <SettingsScreen
             state={state}
             store={store}
-            onProfileChange={updateProfile}
             onNotificationTimeChange={updateNotificationTime}
             onTaskLabelChange={updateTaskLabel}
             onAddCustom={addCustom}

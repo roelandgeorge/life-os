@@ -28,9 +28,15 @@ then live from day one: the picture can get worse, not only better, and neither
 extreme is more than two periods away.
 
 The period is the domain's own cadence (`expectedGapDays`), not the calendar
-day. SLEEP, FOOD and SPORT step daily; RELATIONSHIP and INCOME weekly, so one
-tick a week is all either needs. Charging a weekly domain -1 per calendar day
-would pin it at zero no matter how well the user actually did.
+day. SLEEP and FOOD step daily; SPORT every two days; RELATIONSHIP and INCOME
+weekly. Charging a weekly domain -1 per calendar day would pin it at zero no
+matter how well the user actually did.
+
+**SPORT is not `daily`, and that flag does two jobs.** It decides Full Day
+membership and the "not due today, collapse" rule. Strength training runs
+every other day, so a rest day is correct behaviour — it must neither cost a
+step nor block a Full Day. Leaving SPORT marked daily made a Full Day
+unreachable on exactly the days the plan calls for rest.
 
 A day with no log entry — the app was never opened — is a day with nothing
 ticked, and costs its step like any other. There is no amnesty. That is what
@@ -99,10 +105,13 @@ table. Scoped to keep what it can: opt-in, off by default, and it hides the
 check-in list while active so the idealised scene never sits next to a checkbox
 you could tick.
 
-**The twelve appearance questions are gone from onboarding** (§7). They existed
-to parameterise a generated figure. The artwork is now a drawing of one
-specific person, so there is nothing left for them to drive, and `Profile` is
-just `currentAge` — which §3 still needs for the +15 projection.
+**Onboarding asks nothing at all now** (§7). The twelve appearance questions
+went with the parametric figure — the artwork is a drawing of one specific
+person, so there was nothing left for them to drive. The age went when the
+headline stopped naming a number: it drove one line of copy and nothing else,
+and §3's horizon is fixed at +15 regardless. `Profile` is gone from
+`AppState` entirely. What remains is a single explanation screen, kept
+because the rules are unusual enough that meeting them cold would confuse.
 
 **User-added tasks move no panel** (`core/customTasks.ts`). The artwork is
 three fixed panels; a task the user invents has nothing to drive, so ticking
@@ -124,9 +133,12 @@ on. Daily things get no warning — missing one is its own, immediate signal.
 
 It fires when a period is down to its last two days with nothing logged in
 it, and it covers the fixed weekly domains and weekly custom tasks under one
-rule, because from the user's side they are the same problem. `daily` domains
-are excluded even when their cadence spans more than a day: SPORT is 4x a
-week, so its period is two days, and warning every other evening is noise.
+rule, because from the user's side they are the same problem.
+
+The filter is the **period length**, not the `daily` flag: anything shorter
+than a week is excluded. SPORT is not daily — a rest day is fine — but its
+period is two days, and a warning every other evening is nagging rather than
+help.
 
 ### How the evening reminder knows
 

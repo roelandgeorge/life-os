@@ -22,6 +22,5 @@ export function buildProjection(state: AppState, today: DateKey): Projection {
     steps: allSteps(state.logs, DOMAINS, today),
     preview: allSteps(state.logs, DOMAINS, today, { includeCurrentPeriod: true }),
     fullDay: isFullDay(indexLogs(state.logs).get(today)),
-    projectionAge: state.profile.currentAge + 15,
   };
 }

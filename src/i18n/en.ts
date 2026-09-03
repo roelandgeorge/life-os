@@ -7,7 +7,7 @@
 export const en = {
   'domain.sleep': 'Slept 8 hours',
   'domain.food': 'Hit calories & protein',
-  'domain.sport': 'Trained',
+  'domain.sport': 'Strength training',
   'domain.order': 'Cleared a todo',
   'domain.relationship': 'Invested in the relationship',
   'domain.mind': 'Learned something deliberately',
@@ -60,16 +60,12 @@ export const en = {
   'main.bestVersion.subhead': 'Every part at its top step. Two good days is all any one of them takes.',
 
   // §7 onboarding — one question per screen, then the closing explanation.
-  'onboarding.next': 'Next',
-  'onboarding.back': 'Back',
 
-  'onboarding.currentAge.question': 'How old are you now?',
-  'onboarding.currentAge.note': 'This sets how far ahead the picture looks — always 15 years out.',
 
   'onboarding.closing.title': 'How this works',
   'onboarding.closing.line1': 'Each day you check off a handful of small things — sleep, food, training, and the people and work that matter. The last two only need a tick once a week.',
   'onboarding.closing.line2': 'Nothing here scores your day. Each part of the picture moves one step at a time: a tick takes it up, a period without one takes it down.',
-  'onboarding.closing.line3': 'The picture above is you at {age}. Everything starts halfway, so it can move either way from day one: two good days takes any part of it to the top, two missed ones take it down.',
+  'onboarding.closing.line3': 'The picture above is you in fifteen years. Everything starts halfway, so it can move either way from day one: two good days takes any part of it to the top, two missed ones take it down.',
   'onboarding.closing.iosNote': "On iPhone: add this to your home screen from the share menu — that's what lets the evening reminder in Settings actually notify you.",
   'onboarding.closing.start': 'Start',
 
@@ -85,7 +81,6 @@ export const en = {
 
   // §6 screen 3 — settings
   'settings.title': 'Settings',
-  'settings.profile': 'Profile',
   'settings.notifications': 'Daily reminder',
   'settings.notifications.note': 'One notification a day, in the evening. The exact minute is not guaranteed — the free plan schedules it within the hour.',
   'settings.notifications.enable': 'Remind me each evening',

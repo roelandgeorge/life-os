@@ -39,12 +39,12 @@ describe('atRiskItems', () => {
     expect(ids).not.toContain('RELATIONSHIP');
   });
 
-  it('never warns about a daily domain — missing one is its own feedback', () => {
+  it('never warns about anything on a short cadence', () => {
     const ids = atRiskItems(logs(7, NOTHING), VISIBLE_DOMAINS, [], addDays(START, 6)).map((r) => r.id);
     expect(ids).not.toContain('SLEEP');
     expect(ids).not.toContain('FOOD');
-    // SPORT's cadence spans two days, but it is still a daily domain: warning
-    // every other evening would be noise.
+    // SPORT is not daily — a rest day is fine — but its period is two days,
+    // and a warning every other evening would be nagging rather than useful.
     expect(ids).not.toContain('SPORT');
   });
 

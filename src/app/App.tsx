@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import type { AppState, Profile } from '../core/types';
+import type { AppState } from '../core/types';
 import { en } from '../i18n/en';
 import { Onboarding } from './Onboarding';
 import { Shell } from './Shell';
@@ -40,8 +40,8 @@ export function App() {
     };
   }, []);
 
-  async function finishOnboarding(profile: Profile) {
-    const initial: AppState = { profile, logs: [], notificationTime: null };
+  async function finishOnboarding() {
+    const initial: AppState = { logs: [], notificationTime: null };
     await store.save(initial);
     setPhase({ kind: 'ready' });
   }
@@ -69,7 +69,7 @@ export function App() {
   }
 
   if (phase.kind === 'onboarding') {
-    return <Onboarding onComplete={(profile) => void finishOnboarding(profile)} />;
+    return <Onboarding onComplete={() => void finishOnboarding()} />;
   }
 
   return <Shell />;

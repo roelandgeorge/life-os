@@ -15,7 +15,7 @@ function stateOf(days: number, hits: (i: number) => DomainKey[]): AppState {
     for (const k of hits(i)) ticks[k] = true;
     return { date: addDays(START, i), opened: true, ticks };
   });
-  return { profile: { currentAge: 35 }, logs, notificationTime: null };
+  return { logs, notificationTime: null };
 }
 
 const ALL = () => [...DOMAIN_KEYS];
@@ -24,7 +24,6 @@ describe('buildProjection', () => {
   it('day 1 starts every domain in the middle', () => {
     const p = buildProjection(stateOf(1, ALL), START);
     for (const k of DOMAIN_KEYS) expect(p.steps[k]).toBe(START_STEP);
-    expect(p.projectionAge).toBe(50);
   });
 
   it('reaches the ceiling on a daily domain two ticked days in', () => {
@@ -43,16 +42,18 @@ describe('buildProjection', () => {
 
   it('is a Full Day only when every visible daily domain is ticked', () => {
     const today = addDays(START, 1);
-    const full = stateOf(2, () => ['SLEEP', 'FOOD', 'SPORT']);
+    const full = stateOf(2, () => ['SLEEP', 'FOOD']);
     expect(buildProjection(full, today).fullDay).toBe(true);
 
-    const partial = stateOf(2, () => ['SLEEP', 'FOOD']);
+    const partial = stateOf(2, () => ['SLEEP']);
     expect(buildProjection(partial, today).fullDay).toBe(false);
   });
 
-  it('does not require the hidden ORDER domain for a Full Day', () => {
+  it('does not require training for a Full Day — a rest day is correct', () => {
+    // SPORT is every other day, so demanding it daily would make a Full Day
+    // unreachable on exactly the days the plan calls for rest.
     const today = addDays(START, 1);
-    const state = stateOf(2, () => ['SLEEP', 'FOOD', 'SPORT']); // no ORDER
+    const state = stateOf(2, () => ['SLEEP', 'FOOD']); // no SPORT, no ORDER
     expect(buildProjection(state, today).fullDay).toBe(true);
   });
 

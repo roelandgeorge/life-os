@@ -17,7 +17,7 @@ import {
   setCustomTaskCadence,
   toggleCustomTick,
 } from '../core/customTasks';
-import type { AppState, CustomTask, DayLog, Profile, Projection, TaskCadence } from '../core/types';
+import type { AppState, CustomTask, DayLog, Projection, TaskCadence } from '../core/types';
 import type { Store } from '../store/types';
 import { withTaskLabel } from './taskLabels';
 
@@ -27,7 +27,6 @@ export type LifeOS = {
   today: DateKey;
   /** `on` defaults to today; §5.2 allows editing up to EDIT_WINDOW_DAYS back. */
   toggle: (key: DomainKey, on?: DateKey) => void;
-  updateProfile: (profile: Profile) => void;
   updateNotificationTime: (value: string | null) => void;
   updateTaskLabel: (key: DomainKey, raw: string) => void;
   toggleCustom: (id: string, on?: DateKey) => void;
@@ -143,15 +142,6 @@ export function useLifeOS(store: Store): LifeOS {
     mutateCustomTasks((tasks) => setCustomTaskCadence(tasks, id, cadence));
   }
 
-  function updateProfile(profile: Profile) {
-    setState((prev) => {
-      if (!prev) return prev;
-      const next: AppState = { ...prev, profile };
-      void store.save(next);
-      return next;
-    });
-  }
-
   function updateTaskLabel(key: DomainKey, raw: string) {
     setState((prev) => {
       if (!prev) return prev;
@@ -176,7 +166,6 @@ export function useLifeOS(store: Store): LifeOS {
     projection,
     today,
     toggle,
-    updateProfile,
     updateNotificationTime,
     updateTaskLabel,
     toggleCustom,

@@ -32,21 +32,7 @@ export type CustomTask = {
 
 export type TaskCadence = 'daily' | 'weekly';
 
-/**
- * What the app knows about the person (§7, much reduced).
- *
- * The twelve appearance questions are gone. They existed to parameterise a
- * generated figure; the artwork is now drawn once, of one specific person, so
- * there is nothing left for them to drive — and a drawing of you beats any
- * number of sliders approximating you. Age survives because §3 needs it: the
- * projection is always +15.
- */
-export type Profile = {
-  currentAge: number;
-};
-
 export type AppState = {
-  profile: Profile;
   /** Append-only, sorted by date ascending, capped at 400 days (§5).
    *  The only source of truth: every step is recomputed from this. */
   logs: DayLog[];
@@ -72,5 +58,4 @@ export type Projection = {
   /** What the picture shows: the above, plus any hit in the period in progress. */
   preview: DomainSteps;
   fullDay: boolean;
-  projectionAge: number;
 };

@@ -9,7 +9,7 @@
 import { isDateKey } from '../core/dates';
 import { DOMAIN_KEYS, emptyTicks, type DomainKey } from '../core/domains';
 import { MAX_CUSTOM_TASKS, MAX_TASK_NAME_LENGTH } from '../core/customTasks';
-import type { AppState, CustomTask, DayLog, Profile } from '../core/types';
+import type { AppState, CustomTask, DayLog } from '../core/types';
 import { SCHEMA_VERSION, type Envelope } from './types';
 
 export class ImportError extends Error {
@@ -30,23 +30,6 @@ export function serialize(state: AppState): string {
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
-}
-
-function requireNumber(v: unknown, path: string): number {
-  if (typeof v !== 'number' || !Number.isFinite(v)) {
-    throw new ImportError(`${path} must be a finite number`);
-  }
-  return v;
-}
-
-function parseProfile(v: unknown): Profile {
-  if (!isRecord(v)) throw new ImportError('profile is missing');
-  const age = requireNumber(v.currentAge, 'profile.currentAge');
-  if (age < 0 || age > 120) throw new ImportError('profile.currentAge is out of range');
-  // Any appearance fields from an export predating the artwork layers are
-  // dropped rather than rejected — they no longer drive anything, and they
-  // should not cost the user 400 days of history.
-  return { currentAge: age };
 }
 
 /**
@@ -80,7 +63,10 @@ function parseCustomTasks(v: unknown): CustomTask[] {
     if (typeof id !== 'string' || id.length === 0 || seen.has(id)) continue;
     if (typeof name !== 'string') continue;
     seen.add(id);
-    out.push({ id, name: name.trim().slice(0, MAX_TASK_NAME_LENGTH) });
+    // Without carrying the cadence, an import would silently turn every
+    // weekly task back into a daily one.
+    const cadence = entry.cadence === 'weekly' ? 'weekly' : 'daily';
+    out.push({ id, name: name.trim().slice(0, MAX_TASK_NAME_LENGTH), cadence });
     if (out.length >= MAX_CUSTOM_TASKS) break;
   }
   return out;
@@ -151,7 +137,6 @@ export function deserialize(json: string): AppState {
   for (const log of logs) log.customTicks = parseCustomTicks(rawById.get(log.date), knownTaskIds);
 
   return {
-    profile: parseProfile(state.profile),
     logs,
     customTasks,
     taskLabels: parseTaskLabels(state.taskLabels),

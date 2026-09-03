@@ -16,11 +16,10 @@ function sampleState(): AppState {
     return { date: addDays(START, i), opened: true, ticks, customTicks: i % 3 === 0 ? { t1: true } : {} };
   });
   return {
-    profile: { currentAge: 35 },
     logs,
     notificationTime: null,
     taskLabels: { SLEEP: 'Went to bed before 22:30' },
-    customTasks: [{ id: 't1', name: 'No alcohol' }],
+    customTasks: [{ id: 't1', name: 'No alcohol', cadence: 'weekly' }],
   };
 }
 
@@ -103,7 +102,7 @@ describe('export/import', () => {
 
   it('carries user-added tasks and their ticks through a round trip', () => {
     const restored = deserialize(serialize(sampleState()));
-    expect(restored.customTasks).toEqual([{ id: 't1', name: 'No alcohol' }]);
+    expect(restored.customTasks).toEqual([{ id: 't1', name: 'No alcohol', cadence: 'weekly' }]);
     expect(restored.logs[0]?.customTicks).toEqual({ t1: true });
     expect(restored.logs[1]?.customTicks).toEqual({});
   });
@@ -118,6 +117,8 @@ describe('export/import', () => {
   it('drops a malformed task rather than failing the whole import', () => {
     const raw = JSON.parse(serialize(sampleState()));
     raw.state.customTasks = [{ id: 't1', name: 'Keep me' }, { id: 42 }, { name: 'no id' }, 'junk'];
-    expect(deserialize(JSON.stringify(raw)).customTasks).toEqual([{ id: 't1', name: 'Keep me' }]);
+    expect(deserialize(JSON.stringify(raw)).customTasks).toEqual([
+      { id: 't1', name: 'Keep me', cadence: 'daily' },
+    ]);
   });
 });

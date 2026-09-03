@@ -1,31 +1,24 @@
 /**
- * §7 onboarding. Runs once.
+ * §7 onboarding. Runs once, and is now a single screen.
  *
- * The twelve appearance questions are gone with the parametric figure — the
- * artwork is a drawing of one specific person now, so there is nothing to
- * configure. Age remains because §3 needs it: the projection is always +15.
+ * Everything it used to ask has been removed rather than answered elsewhere.
+ * The twelve appearance questions went with the parametric figure; the age
+ * went when the headline stopped naming a number. What is left is worth
+ * keeping on its own: the app's rules are unusual enough that meeting them
+ * cold would be confusing.
  *
  * The preview renders at the starting step, which is where day 1 genuinely
- * begins. Showing anything better here would be a promise the app has not
- * yet earned.
+ * begins. Showing anything better would be a promise the app has not earned.
  */
 
-import { useState } from 'react';
-import type { Profile } from '../core/types';
-import { en, t } from '../i18n/en';
+import { en } from '../i18n/en';
 import { Avatar } from '../visual/Avatar';
 import { LAYER_KEYS, type LayerSteps } from '../visual/layers';
 import { START_STEP } from '../core/steps';
 
-/** Where day 1 actually begins, so onboarding promises nothing it will not show. */
 const START: LayerSteps = Object.fromEntries(LAYER_KEYS.map((k) => [k, START_STEP])) as LayerSteps;
 
-const DEFAULT_AGE = 30;
-
-export function Onboarding({ onComplete }: { onComplete: (profile: Profile) => void }) {
-  const [age, setAge] = useState(DEFAULT_AGE);
-  const [closing, setClosing] = useState(false);
-
+export function Onboarding({ onComplete }: { onComplete: () => void }) {
   return (
     <div className="main-screen onboarding">
       <div className="portrait">
@@ -33,42 +26,18 @@ export function Onboarding({ onComplete }: { onComplete: (profile: Profile) => v
       </div>
 
       <div className="below">
-        {closing ? (
-          <section>
-            <h2>{en['onboarding.closing.title']}</h2>
-            <p>{en['onboarding.closing.line1']}</p>
-            <p>{en['onboarding.closing.line2']}</p>
-            <p>{t('onboarding.closing.line3', { age: age + 15 })}</p>
-            <p className="note">{en['onboarding.closing.iosNote']}</p>
-            <div className="onboarding-nav">
-              <button type="button" onClick={() => setClosing(false)}>
-                {en['onboarding.back']}
-              </button>
-              <button type="button" className="primary" onClick={() => onComplete({ currentAge: age })}>
-                {en['onboarding.closing.start']}
-              </button>
-            </div>
-          </section>
-        ) : (
-          <section>
-            <h2>{en['onboarding.currentAge.question']}</h2>
-            <p className="note">{en['onboarding.currentAge.note']}</p>
-            <input
-              type="range"
-              min={16}
-              max={80}
-              step={1}
-              value={age}
-              onChange={(e) => setAge(Number(e.target.value))}
-            />
-            <p className="ageValue">{age}</p>
-            <div className="onboarding-nav">
-              <button type="button" className="primary" onClick={() => setClosing(true)}>
-                {en['onboarding.next']}
-              </button>
-            </div>
-          </section>
-        )}
+        <section>
+          <h2>{en['onboarding.closing.title']}</h2>
+          <p>{en['onboarding.closing.line1']}</p>
+          <p>{en['onboarding.closing.line2']}</p>
+          <p>{en['onboarding.closing.line3']}</p>
+          <p className="note">{en['onboarding.closing.iosNote']}</p>
+          <div className="onboarding-nav">
+            <button type="button" className="primary" onClick={onComplete}>
+              {en['onboarding.closing.start']}
+            </button>
+          </div>
+        </section>
       </div>
     </div>
   );

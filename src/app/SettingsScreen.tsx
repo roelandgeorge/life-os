@@ -1,6 +1,6 @@
 /**
- * §6 screen 3. Profile edit, notification time, export/import, reset —
- * nothing else. Export/import round-trip through the same `Store.export` /
+ * §6 screen 3. Check-in names, own tasks, the reminder, export/import and
+ * reset — nothing else. Export/import round-trip through the same `Store.export` /
  * `Store.import` the spec calls "the only defence against a cleared cache"
  * (§5.1); reset just clears the store and reloads, which drops the app back
  * into onboarding.
@@ -11,7 +11,7 @@ import { disablePush, enablePush, type PushResult } from './push';
 import { weeklyDigest } from '../core/atRisk';
 import { VISIBLE_DOMAINS } from '../core/domains';
 import type { DomainKey } from '../core/domains';
-import type { AppState, Profile, TaskCadence } from '../core/types';
+import type { AppState, TaskCadence } from '../core/types';
 import { defaultTaskLabel, MAX_LABEL_LENGTH } from './taskLabels';
 import { cadenceOf, canAddCustomTask, MAX_TASK_NAME_LENGTH } from '../core/customTasks';
 import { en } from '../i18n/en';
@@ -21,7 +21,6 @@ import type { Store } from '../store/types';
 export function SettingsScreen({
   state,
   store,
-  onProfileChange,
   onNotificationTimeChange,
   onTaskLabelChange,
   onAddCustom,
@@ -31,7 +30,6 @@ export function SettingsScreen({
 }: {
   state: AppState;
   store: Store;
-  onProfileChange: (profile: Profile) => void;
   onNotificationTimeChange: (value: string | null) => void;
   onTaskLabelChange: (key: DomainKey, raw: string) => void;
   onAddCustom: (name: string) => void;
@@ -73,10 +71,6 @@ export function SettingsScreen({
     setPushError(describe(result));
   }
 
-  function set<K extends keyof Profile>(key: K, value: Profile[K]) {
-    onProfileChange({ ...state.profile, [key]: value });
-  }
-
   async function handleExport() {
     const json = await store.export();
     const blob = new Blob([json], { type: 'application/json' });
@@ -111,20 +105,6 @@ export function SettingsScreen({
   return (
     <div className="settings-screen">
       <h1 className="headline">{en['settings.title']}</h1>
-
-      <section>
-        <h2>{en['settings.profile']}</h2>
-        <p className="note">{en['onboarding.currentAge.note']}</p>
-        <input
-          type="range"
-          min={16}
-          max={80}
-          step={1}
-          value={state.profile.currentAge}
-          onChange={(e) => set('currentAge', Number(e.target.value))}
-        />
-        <p className="ageValue">{state.profile.currentAge}</p>
-      </section>
 
       <section>
         <h2>{en['settings.tasks']}</h2>

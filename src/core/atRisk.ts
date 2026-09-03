@@ -13,7 +13,7 @@
 
 import type { DateKey } from './dates';
 import { expectedGapDays, type DomainConfig } from './domains';
-import { cadenceOf, customHitDates, periodDaysOf } from './customTasks';
+import { customHitDates, periodDaysOf } from './customTasks';
 import { currentPeriod, daysLeftInPeriod, hitInRange } from './periods';
 import type { CustomTask, DayLog } from './types';
 
@@ -23,6 +23,16 @@ import type { CustomTask, DayLog } from './types';
  * the reminder arrives in the evening.
  */
 export const RISK_DAYS_LEFT = 2;
+
+/**
+ * Only things on a week-long cadence or longer get a warning.
+ *
+ * The filter is the period itself, not the `daily` flag: SPORT is not daily
+ * — a rest day is correct — but its period is two days, and a warning every
+ * other evening is nagging, not help. A week is the point at which a thing
+ * can genuinely slip your mind.
+ */
+export const RISK_MIN_PERIOD_DAYS = 7;
 
 export type RiskItem = {
   kind: 'domain' | 'custom';
@@ -61,18 +71,16 @@ export function atRiskItems(
   const out: RiskItem[] = [];
 
   for (const domain of domains) {
-    // `daily` domains are excluded even when their cadence spans more than a
-    // day: SPORT is 4x a week, so its period is two days, and warning every
-    // other evening is noise rather than help. Missing a daily thing shows up
-    // in the picture on its own.
-    if (domain.daily) continue;
-    const daysLeft = riskOf(domainHitDates(logs, domain), start, today, expectedGapDays(domain));
+    const period = expectedGapDays(domain);
+    if (period < RISK_MIN_PERIOD_DAYS) continue;
+    const daysLeft = riskOf(domainHitDates(logs, domain), start, today, period);
     if (daysLeft !== null) out.push({ kind: 'domain', id: domain.key, daysLeft });
   }
 
   for (const task of tasks ?? []) {
-    if (cadenceOf(task) !== 'weekly') continue;
-    const daysLeft = riskOf(customHitDates(logs, task.id), start, today, periodDaysOf(task));
+    const period = periodDaysOf(task);
+    if (period < RISK_MIN_PERIOD_DAYS) continue;
+    const daysLeft = riskOf(customHitDates(logs, task.id), start, today, period);
     if (daysLeft !== null) out.push({ kind: 'custom', id: task.id, daysLeft });
   }
 
@@ -109,16 +117,13 @@ export function weeklyDigest(
   };
 
   for (const domain of domains) {
-    if (domain.daily) continue;
-    entries.push({
-      id: domain.key,
-      lastHit: lastOf(domainHitDates(logs, domain)),
-      periodDays: expectedGapDays(domain),
-    });
+    const periodDays = expectedGapDays(domain);
+    if (periodDays < RISK_MIN_PERIOD_DAYS) continue;
+    entries.push({ id: domain.key, lastHit: lastOf(domainHitDates(logs, domain)), periodDays });
   }
 
   for (const task of tasks ?? []) {
-    if (cadenceOf(task) !== 'weekly') continue;
+    if (periodDaysOf(task) < RISK_MIN_PERIOD_DAYS) continue;
     entries.push({
       id: task.id,
       lastHit: lastOf(customHitDates(logs, task.id)),

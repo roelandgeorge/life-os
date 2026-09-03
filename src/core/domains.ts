@@ -71,10 +71,14 @@ export const DOMAINS: readonly DomainConfig[] = [
   },
   {
     key: 'SPORT',
+    // Strength training every other day, which §1's "4 per 7 days" already
+    // rounded to a two-day period. Stated directly so the intent is legible.
     label: 'domain.sport',
-    r: { n: 4, per: 7 }, // §1 lists 0.571
+    r: { n: 1, per: 2 },
     color: '#C08A2E',
-    daily: true,
+    // Not daily: a rest day is correct behaviour, so it must neither collapse
+    // the check-in into a miss nor block a Full Day.
+    daily: false,
     visible: true,
   },
   {
