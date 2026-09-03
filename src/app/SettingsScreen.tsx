@@ -12,6 +12,7 @@ import { VISIBLE_DOMAINS } from '../core/domains';
 import type { DomainKey } from '../core/domains';
 import type { AppState, Profile } from '../core/types';
 import { defaultTaskLabel, MAX_LABEL_LENGTH } from './taskLabels';
+import { canAddCustomTask, MAX_TASK_NAME_LENGTH } from '../core/customTasks';
 import { en } from '../i18n/en';
 import { ImportError } from '../store/serialize';
 import type { Store } from '../store/types';
@@ -22,12 +23,18 @@ export function SettingsScreen({
   onProfileChange,
   onNotificationTimeChange,
   onTaskLabelChange,
+  onAddCustom,
+  onRenameCustom,
+  onRemoveCustom,
 }: {
   state: AppState;
   store: Store;
   onProfileChange: (profile: Profile) => void;
   onNotificationTimeChange: (value: string | null) => void;
   onTaskLabelChange: (key: DomainKey, raw: string) => void;
+  onAddCustom: (name: string) => void;
+  onRenameCustom: (id: string, name: string) => void;
+  onRemoveCustom: (id: string) => void;
 }) {
   const [message, setMessage] = useState<string | null>(null);
   const [pushError, setPushError] = useState<string | null>(null);
@@ -130,6 +137,39 @@ export function SettingsScreen({
             </label>
           ))}
         </div>
+      </section>
+
+      <section>
+        <h2>{en['settings.custom']}</h2>
+        <p className="note">{en['settings.custom.note']}</p>
+        <div className="task-labels">
+          {state.customTasks?.map((task) => (
+            <div className="task-label" key={task.id}>
+              <input
+                type="text"
+                maxLength={MAX_TASK_NAME_LENGTH}
+                placeholder={en['settings.custom.placeholder']}
+                value={task.name}
+                onChange={(e) => onRenameCustom(task.id, e.target.value)}
+              />
+              <button
+                type="button"
+                className="danger small"
+                aria-label={`${en['settings.custom.remove']}: ${task.name}`}
+                onClick={() => onRemoveCustom(task.id)}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+        {canAddCustomTask(state.customTasks) ? (
+          <button type="button" className="add-custom" onClick={() => onAddCustom('')}>
+            + {en['settings.custom.add']}
+          </button>
+        ) : (
+          <p className="note">{en['settings.custom.full']}</p>
+        )}
       </section>
 
       <section>

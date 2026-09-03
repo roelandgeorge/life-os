@@ -10,6 +10,22 @@ export type DayLog = {
    *  charges a miss either way, so it no longer grants amnesty (§2.2). */
   opened: boolean;
   ticks: DomainTicks;
+  /**
+   * Ticks for user-added tasks, keyed by task id. Separate from `ticks`
+   * because the step engine iterates `DOMAINS` and must never meet a key it
+   * does not recognise. Absent on days before the feature existed.
+   */
+  customTicks?: Record<string, boolean>;
+};
+
+/**
+ * A task the user added that belongs to no building block, and therefore
+ * moves no panel. See `core/customTasks.ts` for why that is a deliberate
+ * compromise rather than an oversight.
+ */
+export type CustomTask = {
+  id: string;
+  name: string;
 };
 
 /**
@@ -41,6 +57,8 @@ export type AppState = {
    * yourself is harder to tick dishonestly.
    */
   taskLabels?: Partial<Record<DomainKey, string>>;
+  /** User-added tasks, in the order they were created. */
+  customTasks?: CustomTask[];
 };
 
 /** Everything the UI needs for one moment in time. Derived, never persisted. */

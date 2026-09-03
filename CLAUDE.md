@@ -67,6 +67,12 @@ is not in the app at all — no artwork, no checkbox, because a tick that change
 nothing on screen breaks the causal link the app rests on. `layers.test.ts`
 pins both.
 
+The one sanctioned exception is `customTasks`: user-added tasks that move no
+panel. They are kept outside `DomainTicks` and styled as a separate, plainer
+list precisely so they cannot be mistaken for building blocks. Do not let them
+grow into the domain system — if something deserves to move the picture, it
+needs a panel and five drawings.
+
 ## House style
 
 Match the existing code.

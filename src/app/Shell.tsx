@@ -16,8 +16,19 @@ import { useLifeOS } from './useLifeOS';
 type Tab = 'main' | 'history' | 'settings';
 
 export function Shell() {
-  const { state, projection, today, toggle, updateProfile, updateNotificationTime, updateTaskLabel } =
-    useLifeOS(store);
+  const {
+    state,
+    projection,
+    today,
+    toggle,
+    updateProfile,
+    updateNotificationTime,
+    updateTaskLabel,
+    toggleCustom,
+    addCustom,
+    renameCustom,
+    removeCustom,
+  } = useLifeOS(store);
   const [tab, setTab] = useState<Tab>('main');
 
   if (!state || !projection) {
@@ -32,7 +43,13 @@ export function Shell() {
     <div className="shell">
       <div className="shell-body">
         {tab === 'main' && (
-          <MainScreen state={state} projection={projection} today={today} toggle={toggle} />
+          <MainScreen
+            state={state}
+            projection={projection}
+            today={today}
+            toggle={toggle}
+            toggleCustom={toggleCustom}
+          />
         )}
         {tab === 'history' && <HistoryScreen state={state} today={today} />}
         {tab === 'settings' && (
@@ -42,6 +59,9 @@ export function Shell() {
             onProfileChange={updateProfile}
             onNotificationTimeChange={updateNotificationTime}
             onTaskLabelChange={updateTaskLabel}
+            onAddCustom={addCustom}
+            onRenameCustom={renameCustom}
+            onRemoveCustom={removeCustom}
           />
         )}
       </div>

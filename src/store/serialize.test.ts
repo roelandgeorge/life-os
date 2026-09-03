@@ -13,9 +13,15 @@ function sampleState(): AppState {
   const logs: DayLog[] = Array.from({ length: 40 }, (_, i) => {
     const ticks = emptyTicks();
     for (const k of DOMAIN_KEYS) ticks[k] = i % 2 === 0;
-    return { date: addDays(START, i), opened: true, ticks };
+    return { date: addDays(START, i), opened: true, ticks, customTicks: i % 3 === 0 ? { t1: true } : {} };
   });
-  return { profile: { currentAge: 35 }, logs, notificationTime: null, taskLabels: { SLEEP: 'Went to bed before 22:30' } };
+  return {
+    profile: { currentAge: 35 },
+    logs,
+    notificationTime: null,
+    taskLabels: { SLEEP: 'Went to bed before 22:30' },
+    customTasks: [{ id: 't1', name: 'No alcohol' }],
+  };
 }
 
 describe('export/import', () => {
@@ -93,5 +99,25 @@ describe('export/import', () => {
     const restored = deserialize(JSON.stringify(raw));
     expect(restored.taskLabels?.SLEEP).toBeUndefined();
     expect(restored.taskLabels?.FOOD).toBe('spaces trimmed');
+  });
+
+  it('carries user-added tasks and their ticks through a round trip', () => {
+    const restored = deserialize(serialize(sampleState()));
+    expect(restored.customTasks).toEqual([{ id: 't1', name: 'No alcohol' }]);
+    expect(restored.logs[0]?.customTicks).toEqual({ t1: true });
+    expect(restored.logs[1]?.customTicks).toEqual({});
+  });
+
+  it('drops ticks for a task that no longer exists', () => {
+    const raw = JSON.parse(serialize(sampleState()));
+    raw.state.customTasks = [];
+    const restored = deserialize(JSON.stringify(raw));
+    expect(restored.logs[0]?.customTicks).toEqual({});
+  });
+
+  it('drops a malformed task rather than failing the whole import', () => {
+    const raw = JSON.parse(serialize(sampleState()));
+    raw.state.customTasks = [{ id: 't1', name: 'Keep me' }, { id: 42 }, { name: 'no id' }, 'junk'];
+    expect(deserialize(JSON.stringify(raw)).customTasks).toEqual([{ id: 't1', name: 'Keep me' }]);
   });
 });

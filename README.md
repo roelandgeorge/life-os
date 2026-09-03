@@ -104,6 +104,15 @@ to parameterise a generated figure. The artwork is now a drawing of one
 specific person, so there is nothing left for them to drive, and `Profile` is
 just `currentAge` — which §3 still needs for the +15 projection.
 
+**User-added tasks move no panel** (`core/customTasks.ts`). The artwork is
+three fixed panels; a task the user invents has nothing to drive, so ticking
+it changes nothing on screen — exactly what the rule below forbids. Added
+anyway, because people want somewhere to put "no alcohol" without it being a
+building block. The compromise is that they are visibly a *different kind of
+thing*: their own section, plainer styling, no step pips, and a streak count
+as the one thing they give back. They live in `DayLog.customTicks`, outside
+`DomainTicks`, so the step engine never meets a key it does not recognise.
+
 ## Decisions the spec left open
 
 **Retroactive editing is built, not just allowed** (`core/due.ts`,

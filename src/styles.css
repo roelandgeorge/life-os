@@ -695,3 +695,42 @@ button.danger {
   border-radius: 50%;
   flex: none;
 }
+
+/* ---- user-added tasks --------------------------------------------------- */
+
+/* Deliberately plainer than a building block: these move no panel, and the
+   screen should say so before the user has to read anything. */
+.custom-tasks {
+  margin-top: 22px;
+}
+
+.custom-heading {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  border: none;
+  padding: 0;
+  margin: 0 0 8px;
+}
+
+.checkin.custom {
+  background: none;
+  border-style: dashed;
+  margin-bottom: 8px;
+}
+
+.checkin.custom .label {
+  font-weight: 400;
+  color: var(--text);
+}
+
+button.small {
+  padding: 4px 10px;
+  line-height: 1;
+  flex: none;
+}
+
+.add-custom {
+  margin-top: 10px;
+}

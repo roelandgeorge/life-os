@@ -10,7 +10,8 @@ import { isEditable } from '../core/due';
 import { emptyTicks, type DomainKey } from '../core/domains';
 import { buildProjection } from '../core/projection';
 import { trimLogs } from '../core/scoring';
-import type { AppState, DayLog, Profile, Projection } from '../core/types';
+import { addCustomTask, removeCustomTask, renameCustomTask, toggleCustomTick } from '../core/customTasks';
+import type { AppState, CustomTask, DayLog, Profile, Projection } from '../core/types';
 import type { Store } from '../store/types';
 import { withTaskLabel } from './taskLabels';
 
@@ -23,6 +24,10 @@ export type LifeOS = {
   updateProfile: (profile: Profile) => void;
   updateNotificationTime: (value: string | null) => void;
   updateTaskLabel: (key: DomainKey, raw: string) => void;
+  toggleCustom: (id: string, on?: DateKey) => void;
+  addCustom: (name: string) => void;
+  renameCustom: (id: string, name: string) => void;
+  removeCustom: (id: string) => void;
 };
 
 export function useLifeOS(store: Store): LifeOS {
@@ -79,6 +84,54 @@ export function useLifeOS(store: Store): LifeOS {
     });
   }
 
+  /**
+   * Same three-day window as the domain check-ins: a day you did the thing
+   * but never opened the app has to be correctable, whatever kind of task it
+   * was.
+   */
+  function toggleCustom(id: string, on: DateKey = today) {
+    if (!isEditable(on, today)) return;
+    setState((prev) => {
+      if (!prev) return prev;
+      const idx = prev.logs.findIndex((l) => l.date === on);
+      const current: DayLog =
+        idx >= 0 ? (prev.logs[idx] as DayLog) : { date: on, opened: true, ticks: emptyTicks() };
+      const next = toggleCustomTick({ ...current, opened: true }, id);
+      const logs =
+        idx >= 0
+          ? prev.logs.map((l, i) => (i === idx ? next : l))
+          : [...prev.logs, next].sort((a, b) => (a.date < b.date ? -1 : 1));
+      const nextState: AppState = { ...prev, logs: trimLogs(logs, today) };
+      void store.save(nextState);
+      return nextState;
+    });
+  }
+
+  // Returns a list, never `undefined`: an absent field and an empty list mean
+  // the same thing, and `exactOptionalPropertyTypes` refuses the ambiguity.
+  function mutateCustomTasks(fn: (tasks: AppState['customTasks']) => CustomTask[]) {
+    setState((prev) => {
+      if (!prev) return prev;
+      const next: AppState = { ...prev, customTasks: fn(prev.customTasks) };
+      void store.save(next);
+      return next;
+    });
+  }
+
+  function addCustom(name: string) {
+    // The id is generated here rather than in core so the model stays pure
+    // and its tests stay deterministic.
+    mutateCustomTasks((tasks) => addCustomTask(tasks, crypto.randomUUID(), name));
+  }
+
+  function renameCustom(id: string, name: string) {
+    mutateCustomTasks((tasks) => renameCustomTask(tasks, id, name));
+  }
+
+  function removeCustom(id: string) {
+    mutateCustomTasks((tasks) => removeCustomTask(tasks, id));
+  }
+
   function updateProfile(profile: Profile) {
     setState((prev) => {
       if (!prev) return prev;
@@ -107,5 +160,17 @@ export function useLifeOS(store: Store): LifeOS {
   }
 
   const projection = useMemo(() => (state ? buildProjection(state, today) : null), [state, today]);
-  return { state, projection, today, toggle, updateProfile, updateNotificationTime, updateTaskLabel };
+  return {
+    state,
+    projection,
+    today,
+    toggle,
+    updateProfile,
+    updateNotificationTime,
+    updateTaskLabel,
+    toggleCustom,
+    addCustom,
+    renameCustom,
+    removeCustom,
+  };
 }

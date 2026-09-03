@@ -18,6 +18,7 @@ import type { AppState, Projection } from '../core/types';
 import { diffDays, type DateKey } from '../core/dates';
 import { en, t } from '../i18n/en';
 import { taskLabel } from './taskLabels';
+import { customTaskName, customTaskStreak, isCustomTicked } from '../core/customTasks';
 import { Avatar } from '../visual/Avatar';
 import { LAYER_KEYS, layerSteps, type LayerSteps } from '../visual/layers';
 import { FullDayStrip } from './FullDayStrip';
@@ -30,11 +31,13 @@ export function MainScreen({
   projection,
   today,
   toggle,
+  toggleCustom,
 }: {
   state: AppState;
   projection: Projection;
   today: DateKey;
   toggle: (key: DomainKey, on?: DateKey) => void;
+  toggleCustom: (id: string, on?: DateKey) => void;
 }) {
   const [showBest, setShowBest] = useState(false);
   // §5.2 — which day the check-ins are writing to. The picture always shows
@@ -96,6 +99,30 @@ export function MainScreen({
                 );
               })}
             </div>
+
+            {(state.customTasks?.length ?? 0) > 0 && (
+              <div className="custom-tasks">
+                <h2 className="custom-heading">{en['main.custom.title']}</h2>
+                {state.customTasks?.map((task) => {
+                  const streak = customTaskStreak(state.logs, task.id, today);
+                  return (
+                    <label key={task.id} className="checkin custom">
+                      <input
+                        type="checkbox"
+                        checked={isCustomTicked(editingLog ?? undefined, task.id)}
+                        onChange={() => toggleCustom(task.id, editing)}
+                      />
+                      <span className="label">
+                        {customTaskName(task, en['settings.custom.unnamed'])}
+                      </span>
+                      {streak > 1 && (
+                        <span className="lastHit">{t('main.custom.streak', { days: streak })}</span>
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            )}
 
             {editing !== today && (
               <p className="note editing-past">{t('main.editingPast', { day: dayLabel(editing, today) })}</p>
