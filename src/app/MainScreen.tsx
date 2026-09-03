@@ -11,11 +11,11 @@
 
 import { useState } from 'react';
 import { VISIBLE_DOMAINS, type DomainKey } from '../core/domains';
-import { isDueToday, lastHit } from '../core/due';
+import { editableDays, isDueToday, lastHit } from '../core/due';
 import { fullDayStrip } from '../core/scoring';
 import { daysLeftInPeriod, MAX_STEP } from '../core/steps';
-import type { AppState, DayLog, Projection } from '../core/types';
-import type { DateKey } from '../core/dates';
+import type { AppState, Projection } from '../core/types';
+import { diffDays, type DateKey } from '../core/dates';
 import { en, t, type I18nKey } from '../i18n/en';
 import { Avatar } from '../visual/Avatar';
 import { LAYER_KEYS, layerSteps, type LayerSteps } from '../visual/layers';
@@ -28,16 +28,19 @@ export function MainScreen({
   state,
   projection,
   today,
-  todayLog,
   toggle,
 }: {
   state: AppState;
   projection: Projection;
   today: DateKey;
-  todayLog: DayLog | null;
-  toggle: (key: DomainKey) => void;
+  toggle: (key: DomainKey, on?: DateKey) => void;
 }) {
   const [showBest, setShowBest] = useState(false);
+  // §5.2 — which day the check-ins are writing to. The picture always shows
+  // today; filling in a past day changes today's standing, it does not
+  // rewind the app to that day.
+  const [editing, setEditing] = useState<DateKey>(today);
+  const editingLog = state.logs.find((l) => l.date === editing) ?? null;
   const steps = showBest ? BEST : layerSteps(projection.preview);
   const strip = fullDayStrip(state.logs, today, 30);
 
@@ -69,14 +72,16 @@ export function MainScreen({
           <>
             <FullDayStrip strip={strip} />
 
+            <DayPicker today={today} editing={editing} onPick={setEditing} />
+
             <div className="checkins">
               {VISIBLE_DOMAINS.map((d) => {
                 const due = isDueToday(d, state.logs, today);
-                const checked = todayLog?.ticks[d.key] ?? false;
+                const checked = editingLog?.ticks[d.key] ?? false;
                 const last = lastHit(state.logs, d.key, today);
                 return (
                   <label key={d.key} className={due ? 'checkin' : 'checkin collapsed'}>
-                    <input type="checkbox" checked={checked} onChange={() => toggle(d.key)} />
+                    <input type="checkbox" checked={checked} onChange={() => toggle(d.key, editing)} />
                     <span className="label" style={{ color: d.color }}>
                       {t(d.label as I18nKey)}
                     </span>
@@ -91,10 +96,51 @@ export function MainScreen({
               })}
             </div>
 
+            {editing !== today && (
+              <p className="note editing-past">{t('main.editingPast', { day: dayLabel(editing, today) })}</p>
+            )}
             <p className="note next-move">{nextMove(state, today, projection)}</p>
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Relative names for the near past; anything older is just its date. */
+function dayLabel(date: DateKey, today: DateKey): string {
+  const age = diffDays(today, date);
+  if (age === 0) return en['main.day.today'];
+  if (age === 1) return en['main.day.yesterday'];
+  return new Date(date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long' });
+}
+
+/**
+ * §5.2's three-day window. Without it a day the app was not opened is an
+ * unfixable -1, even when the thing was actually done — which would punish
+ * forgetting to log rather than forgetting to live.
+ */
+function DayPicker({
+  today,
+  editing,
+  onPick,
+}: {
+  today: DateKey;
+  editing: DateKey;
+  onPick: (d: DateKey) => void;
+}) {
+  return (
+    <div className="day-picker">
+      {editableDays(today).map((day) => (
+        <button
+          key={day}
+          type="button"
+          className={day === editing ? 'on' : ''}
+          onClick={() => onPick(day)}
+        >
+          {dayLabel(day, today)}
+        </button>
+      ))}
     </div>
   );
 }

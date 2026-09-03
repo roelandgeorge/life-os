@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { addDays } from './dates';
 import { DOMAIN_KEYS, emptyTicks, type DomainKey } from './domains';
 import { buildProjection } from './projection';
-import { MAX_STEP } from './steps';
+import { MAX_STEP, START_STEP } from './steps';
 import type { AppState, DayLog } from './types';
 import { layerSteps } from '../visual/layers';
 
@@ -21,22 +21,24 @@ function stateOf(days: number, hits: (i: number) => DomainKey[]): AppState {
 const ALL = () => [...DOMAIN_KEYS];
 
 describe('buildProjection', () => {
-  it('day 1 starts every domain at the bottom step', () => {
+  it('day 1 starts every domain in the middle', () => {
     const p = buildProjection(stateOf(1, ALL), START);
-    for (const k of DOMAIN_KEYS) expect(p.steps[k]).toBe(0);
+    for (const k of DOMAIN_KEYS) expect(p.steps[k]).toBe(START_STEP);
     expect(p.projectionAge).toBe(50);
   });
 
-  it('reaches the ceiling on a daily domain after five ticked days', () => {
-    const p = buildProjection(stateOf(5, ALL), addDays(START, 5));
+  it('reaches the ceiling on a daily domain two ticked days in', () => {
+    const p = buildProjection(stateOf(5, ALL), addDays(START, 2));
     expect(p.steps.SLEEP).toBe(MAX_STEP);
   });
 
   it("preview counts today's tick, steps does not (§2.7)", () => {
-    const state = stateOf(3, () => ['SLEEP']);
+    // Two missed days first, so the ceiling cannot hide the difference.
+    const state = stateOf(3, (i) => (i === 2 ? ['SLEEP'] : []));
     const today = addDays(START, 2);
     const p = buildProjection(state, today);
-    expect(p.preview.SLEEP).toBe(p.steps.SLEEP + 1);
+    expect(p.steps.SLEEP).toBe(0);
+    expect(p.preview.SLEEP).toBe(1);
   });
 
   it('is a Full Day only when every visible daily domain is ticked', () => {
@@ -55,12 +57,14 @@ describe('buildProjection', () => {
   });
 
   it('feeds the layers, which take the lowest step among their domains', () => {
-    // SLEEP ticked daily, SPORT and FOOD never: `user` sits at the floor
-    // however good the sleep is, while RELATIONSHIP drives `lief` on its own.
+    // SLEEP ticked daily, SPORT and FOOD never: `user` sinks however good the
+    // sleep is, while RELATIONSHIP drives `lief` on its own.
     const state = stateOf(5, (i) => (i % 7 === 0 ? ['SLEEP', 'RELATIONSHIP'] : ['SLEEP']));
     const p = buildProjection(state, addDays(START, 5));
     const layers = layerSteps(p.preview);
-    expect(layers.user).toBe(0);
     expect(p.preview.SLEEP).toBe(MAX_STEP);
+    expect(p.preview.SPORT).toBe(0);
+    expect(layers.user).toBe(0); // the weakest of the three wins
+    expect(layers.lief).toBeGreaterThan(0);
   });
 });

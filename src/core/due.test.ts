@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { emptyTicks, getDomain } from './domains';
-import { isDueToday, lastHit } from './due';
+import { editableDays, isDueToday, isEditable, lastHit } from './due';
 import type { DayLog } from './types';
 
 const SLEEP = getDomain('SLEEP');
@@ -40,5 +40,27 @@ describe('lastHit', () => {
 
   it('returns null when never hit', () => {
     expect(lastHit([], 'RELATIONSHIP', '2026-01-09')).toBeNull();
+  });
+});
+
+describe('the retroactive edit window (§5.2)', () => {
+  const TODAY = '2026-01-10';
+
+  it('accepts today and the three days before it', () => {
+    for (const d of ['2026-01-10', '2026-01-09', '2026-01-08', '2026-01-07']) {
+      expect(isEditable(d, TODAY)).toBe(true);
+    }
+  });
+
+  it('refuses the fourth day back — a log you can rewrite at will records nothing', () => {
+    expect(isEditable('2026-01-06', TODAY)).toBe(false);
+  });
+
+  it('refuses the future', () => {
+    expect(isEditable('2026-01-11', TODAY)).toBe(false);
+  });
+
+  it('offers four days, today first', () => {
+    expect(editableDays(TODAY)).toEqual(['2026-01-10', '2026-01-09', '2026-01-08', '2026-01-07']);
   });
 });

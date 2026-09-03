@@ -5,9 +5,9 @@
  * artwork is a drawing of one specific person now, so there is nothing to
  * configure. Age remains because §3 needs it: the projection is always +15.
  *
- * The preview always renders at the bottom step, which is also where day 1
- * genuinely starts. Showing anything better here would be a promise the app
- * has not yet earned.
+ * The preview renders at the starting step, which is where day 1 genuinely
+ * begins. Showing anything better here would be a promise the app has not
+ * yet earned.
  */
 
 import { useState } from 'react';
@@ -15,8 +15,10 @@ import type { Profile } from '../core/types';
 import { en, t } from '../i18n/en';
 import { Avatar } from '../visual/Avatar';
 import { LAYER_KEYS, type LayerSteps } from '../visual/layers';
+import { START_STEP } from '../core/steps';
 
-const FLOOR: LayerSteps = Object.fromEntries(LAYER_KEYS.map((k) => [k, 0])) as LayerSteps;
+/** Where day 1 actually begins, so onboarding promises nothing it will not show. */
+const START: LayerSteps = Object.fromEntries(LAYER_KEYS.map((k) => [k, START_STEP])) as LayerSteps;
 
 const DEFAULT_AGE = 30;
 
@@ -27,7 +29,7 @@ export function Onboarding({ onComplete }: { onComplete: (profile: Profile) => v
   return (
     <div className="main-screen onboarding">
       <div className="portrait">
-        <Avatar steps={FLOOR} />
+        <Avatar steps={START} />
       </div>
 
       <div className="below">

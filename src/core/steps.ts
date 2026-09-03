@@ -34,8 +34,12 @@ import type { DayLog } from './types';
 export const STEP_COUNT = 5;
 export const MAX_STEP = STEP_COUNT - 1;
 
-/** Day 1 starts at the bottom: the picture is earned, not given. */
-export const START_STEP = 0;
+/**
+ * Day 1 starts in the middle. Both directions are then visible from the
+ * outset — the picture can get worse, not just better — and neither extreme
+ * is more than two periods away, so the first week already means something.
+ */
+export const START_STEP = 2;
 
 export type DomainSteps = Record<DomainKey, number>;
 

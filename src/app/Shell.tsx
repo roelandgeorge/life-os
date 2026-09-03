@@ -16,7 +16,7 @@ import { useLifeOS } from './useLifeOS';
 type Tab = 'main' | 'history' | 'settings';
 
 export function Shell() {
-  const { state, projection, today, todayLog, toggle, updateProfile, updateNotificationTime } = useLifeOS(store);
+  const { state, projection, today, toggle, updateProfile, updateNotificationTime } = useLifeOS(store);
   const [tab, setTab] = useState<Tab>('main');
 
   if (!state || !projection) {
@@ -31,7 +31,7 @@ export function Shell() {
     <div className="shell">
       <div className="shell-body">
         {tab === 'main' && (
-          <MainScreen state={state} projection={projection} today={today} todayLog={todayLog} toggle={toggle} />
+          <MainScreen state={state} projection={projection} today={today} toggle={toggle} />
         )}
         {tab === 'history' && <HistoryScreen state={state} today={today} />}
         {tab === 'settings' && (

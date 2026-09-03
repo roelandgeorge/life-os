@@ -15,6 +15,9 @@ const DB_VERSION = 1;
 const STORE_NAME = 'state';
 const RECORD_KEY = 'current';
 
+/** How long to wait for IndexedDB before treating silence as a failure. */
+const OPEN_TIMEOUT_MS = 5000;
+
 function request<T>(req: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     req.onsuccess = () => resolve(req.result);
@@ -26,7 +29,7 @@ export class IndexedDBStore implements Store {
   private db: Promise<IDBDatabase> | null = null;
 
   private open(): Promise<IDBDatabase> {
-    this.db ??= new Promise((resolve, reject) => {
+    this.db ??= new Promise<IDBDatabase>((resolve, reject) => {
       const req = indexedDB.open(DB_NAME, DB_VERSION);
       req.onupgradeneeded = () => {
         if (!req.result.objectStoreNames.contains(STORE_NAME)) {
@@ -37,6 +40,17 @@ export class IndexedDBStore implements Store {
       req.onerror = () => reject(req.error);
       // Another tab is holding the old schema open. Surfacing this beats hanging.
       req.onblocked = () => reject(new Error('Life OS is open in another tab'));
+
+      // An open queued behind a pending deleteDatabase can fire none of the
+      // three handlers above, leaving the promise unsettled and the app on its
+      // loading screen for good. A caller that is told "no" can say so; one
+      // left waiting cannot.
+      setTimeout(() => reject(new Error('Storage did not respond. Close other Life OS tabs and reload.')), OPEN_TIMEOUT_MS);
+    }).catch((err) => {
+      // Do not cache a failure: the next call should get a fresh attempt,
+      // otherwise one bad moment poisons the store for the whole session.
+      this.db = null;
+      throw err;
     });
     return this.db;
   }

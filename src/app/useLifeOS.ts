@@ -6,6 +6,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { dateKeyFor, type DateKey } from '../core/dates';
+import { isEditable } from '../core/due';
 import { emptyTicks, type DomainKey } from '../core/domains';
 import { buildProjection } from '../core/projection';
 import { trimLogs } from '../core/scoring';
@@ -16,8 +17,8 @@ export type LifeOS = {
   state: AppState | null;
   projection: Projection | null;
   today: DateKey;
-  todayLog: DayLog | null;
-  toggle: (key: DomainKey) => void;
+  /** `on` defaults to today; §5.2 allows editing up to EDIT_WINDOW_DAYS back. */
+  toggle: (key: DomainKey, on?: DateKey) => void;
   updateProfile: (profile: Profile) => void;
   updateNotificationTime: (value: string | null) => void;
 };
@@ -56,13 +57,20 @@ export function useLifeOS(store: Store): LifeOS {
     };
   }, [store, today]);
 
-  function toggle(key: DomainKey) {
+  function toggle(key: DomainKey, on: DateKey = today) {
+    if (!isEditable(on, today)) return;
     setState((prev) => {
       if (!prev) return prev;
-      const idx = prev.logs.findIndex((l) => l.date === today);
-      const current: DayLog = idx >= 0 ? (prev.logs[idx] as DayLog) : { date: today, opened: true, ticks: emptyTicks() };
+      const idx = prev.logs.findIndex((l) => l.date === on);
+      const current: DayLog =
+        idx >= 0 ? (prev.logs[idx] as DayLog) : { date: on, opened: true, ticks: emptyTicks() };
       const next: DayLog = { ...current, opened: true, ticks: { ...current.ticks, [key]: !current.ticks[key] } };
-      const logs = idx >= 0 ? prev.logs.map((l, i) => (i === idx ? next : l)) : [...prev.logs, next];
+      // A retroactive entry can land before existing ones, and every step
+      // calculation walks the log from logs[0] forward, so keep it sorted.
+      const logs =
+        idx >= 0
+          ? prev.logs.map((l, i) => (i === idx ? next : l))
+          : [...prev.logs, next].sort((a, b) => (a.date < b.date ? -1 : 1));
       const nextState: AppState = { ...prev, logs: trimLogs(logs, today) };
       void store.save(nextState);
       return nextState;
@@ -88,7 +96,5 @@ export function useLifeOS(store: Store): LifeOS {
   }
 
   const projection = useMemo(() => (state ? buildProjection(state, today) : null), [state, today]);
-  const todayLog = useMemo(() => state?.logs.find((l) => l.date === today) ?? null, [state, today]);
-
-  return { state, projection, today, todayLog, toggle, updateProfile, updateNotificationTime };
+  return { state, projection, today, toggle, updateProfile, updateNotificationTime };
 }

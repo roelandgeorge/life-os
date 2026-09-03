@@ -8,7 +8,7 @@
  * to collapse on.
  */
 
-import { diffDays, type DateKey } from './dates';
+import { addDays, diffDays, rangeDates, type DateKey } from './dates';
 import { expectedGapDays, type DomainConfig, type DomainKey } from './domains';
 import type { DayLog } from './types';
 
@@ -27,4 +27,24 @@ export function isDueToday(domain: DomainConfig, logs: readonly DayLog[], today:
   const last = lastHit(logs, domain.key, today);
   if (last === null) return true;
   return diffDays(today, last) >= expectedGapDays(domain);
+}
+
+/**
+ * §5.2 — "retroactive editing is allowed for 3 days back and no further."
+ *
+ * Which matters more now than it did under the old engine: a day the app was
+ * never opened costs a step, so a day you did the thing but did not log it
+ * has to be correctable. Beyond the window it is not, because a log you can
+ * rewrite at will is not a record of anything.
+ */
+export const EDIT_WINDOW_DAYS = 3;
+
+export function isEditable(date: DateKey, today: DateKey): boolean {
+  const age = diffDays(today, date);
+  return age >= 0 && age <= EDIT_WINDOW_DAYS;
+}
+
+/** Today first, then backwards to the edge of the window. */
+export function editableDays(today: DateKey): DateKey[] {
+  return rangeDates(addDays(today, -EDIT_WINDOW_DAYS), today).reverse();
 }

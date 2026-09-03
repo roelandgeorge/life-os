@@ -104,7 +104,9 @@ export const DOMAINS: readonly DomainConfig[] = [
   {
     key: 'INCOME',
     label: 'domain.income',
-    r: { n: 3, per: 90 }, // §1 lists 0.033
+    // §1 asked for 3 per 90 days. Weekly instead: a quarterly cadence moves
+    // the picture so rarely that the tick stops feeling connected to it.
+    r: { n: 1, per: 7 },
     color: '#4F6F7A',
     daily: false,
     visible: true,

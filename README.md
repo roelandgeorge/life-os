@@ -21,13 +21,19 @@ npm run slice        # cut public/avatar/<layer>.png into <layer>-1..5.png
 
 Every domain holds an integer **step**, 0 to 4, one per drawn artwork state.
 A period with a hit is +1, a period without one is -1, clamped at both ends.
-Five ticked days take a daily domain from the floor to the ceiling; one missed
-period costs exactly one image.
+
+Everything **starts at step 2** — level 3 of 5, the middle. Both directions are
+then live from day one: the picture can get worse, not only better, and neither
+extreme is more than two periods away.
 
 The period is the domain's own cadence (`expectedGapDays`), not the calendar
-day. SLEEP and FOOD step daily, RELATIONSHIP weekly, INCOME monthly — charging
-a weekly domain -1 per calendar day would pin it at zero no matter how well the
-user actually did.
+day. SLEEP, FOOD and SPORT step daily; RELATIONSHIP and INCOME weekly, so one
+tick a week is all either needs. Charging a weekly domain -1 per calendar day
+would pin it at zero no matter how well the user actually did.
+
+A day with no log entry — the app was never opened — is a day with nothing
+ticked, and costs its step like any other. There is no amnesty. That is what
+makes the three-day edit window below matter rather than being a nicety.
 
 Steps are **recomputed from the log on every read**, never accumulated, so a
 retroactive edit is absorbed and opening the app twice in a day cannot
@@ -95,6 +101,14 @@ just `currentAge` — which §3 still needs for the +15 projection.
 
 ## Decisions the spec left open
 
+**Retroactive editing is built, not just allowed** (`core/due.ts`,
+`app/MainScreen.tsx`). §5.2 permits editing 3 days back. Under the old engine
+that was a nicety; under this one a day the app was not opened is a hard -1,
+so a day you did the thing but did not log it has to be correctable or the app
+punishes forgetting to log rather than forgetting to live. The main screen has
+a four-day picker; beyond the window the log is fixed, because a record you can
+rewrite at will records nothing.
+
 **A domain "not due today" is a cadence gap, not a schedule** (`core/due.ts`).
 §1 gives no day-of-week for the non-daily domains — they are "sometime this
 window", not "Tuesdays". Due-ness comes from `expectedGapDays`, the same number
@@ -113,6 +127,14 @@ scope for a local-only v1.
 Both replace the whole `AppState` underneath the hook. Threading a reload path
 through every consumer for two rare, deliberate actions is not worth it; ticks
 and profile edits update in place.
+
+**Storage failure is a screen, not a hang** (`store/indexeddb.ts`, `app/App.tsx`).
+An `indexedDB.open` queued behind a pending delete can fire none of its three
+handlers, leaving the promise unsettled and the app on its loading screen
+permanently. The open times out, the failure is not cached, and `App` renders
+the reason with a retry. The app also asks for `navigator.storage.persist()` on
+boot: without it IndexedDB is best-effort and a browser short on disk may clear
+400 days of history with no warning.
 
 **The avatar layers are precached explicitly** (`vite.config.ts`). Workbox's
 default glob leaves them out, and a cached shell with an empty frame is worse
