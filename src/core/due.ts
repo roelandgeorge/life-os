@@ -44,7 +44,7 @@ export function isEditable(date: DateKey, today: DateKey): boolean {
   return age >= 0 && age <= EDIT_WINDOW_DAYS;
 }
 
-/** Today first, then backwards to the edge of the window. */
+/** Oldest first, today last — the order they are shown in, left to right. */
 export function editableDays(today: DateKey): DateKey[] {
-  return rangeDates(addDays(today, -EDIT_WINDOW_DAYS), today).reverse();
+  return rangeDates(addDays(today, -EDIT_WINDOW_DAYS), today);
 }

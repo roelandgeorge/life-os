@@ -15,7 +15,7 @@ function sampleState(): AppState {
     for (const k of DOMAIN_KEYS) ticks[k] = i % 2 === 0;
     return { date: addDays(START, i), opened: true, ticks };
   });
-  return { profile: { currentAge: 35 }, logs, notificationTime: null };
+  return { profile: { currentAge: 35 }, logs, notificationTime: null, taskLabels: { SLEEP: 'Went to bed before 22:30' } };
 }
 
 describe('export/import', () => {
@@ -81,5 +81,17 @@ describe('export/import', () => {
 
     await expect(store.import('{"schemaVersion":1}')).rejects.toThrow(ImportError);
     expect(await store.load()).toEqual(before);
+  });
+  it('carries renamed check-ins through a round trip', () => {
+    const restored = deserialize(serialize(sampleState()));
+    expect(restored.taskLabels?.SLEEP).toBe('Went to bed before 22:30');
+  });
+
+  it('drops a label that is not a string rather than failing the import', () => {
+    const raw = JSON.parse(serialize(sampleState()));
+    raw.state.taskLabels = { SLEEP: 42, NONSENSE: 'x', FOOD: '  spaces trimmed  ' };
+    const restored = deserialize(JSON.stringify(raw));
+    expect(restored.taskLabels?.SLEEP).toBeUndefined();
+    expect(restored.taskLabels?.FOOD).toBe('spaces trimmed');
   });
 });

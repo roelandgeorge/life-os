@@ -12,6 +12,7 @@ import { buildProjection } from '../core/projection';
 import { trimLogs } from '../core/scoring';
 import type { AppState, DayLog, Profile, Projection } from '../core/types';
 import type { Store } from '../store/types';
+import { withTaskLabel } from './taskLabels';
 
 export type LifeOS = {
   state: AppState | null;
@@ -21,6 +22,7 @@ export type LifeOS = {
   toggle: (key: DomainKey, on?: DateKey) => void;
   updateProfile: (profile: Profile) => void;
   updateNotificationTime: (value: string | null) => void;
+  updateTaskLabel: (key: DomainKey, raw: string) => void;
 };
 
 export function useLifeOS(store: Store): LifeOS {
@@ -86,6 +88,15 @@ export function useLifeOS(store: Store): LifeOS {
     });
   }
 
+  function updateTaskLabel(key: DomainKey, raw: string) {
+    setState((prev) => {
+      if (!prev) return prev;
+      const next: AppState = { ...prev, taskLabels: withTaskLabel(prev.taskLabels, key, raw) };
+      void store.save(next);
+      return next;
+    });
+  }
+
   function updateNotificationTime(value: string | null) {
     setState((prev) => {
       if (!prev) return prev;
@@ -96,5 +107,5 @@ export function useLifeOS(store: Store): LifeOS {
   }
 
   const projection = useMemo(() => (state ? buildProjection(state, today) : null), [state, today]);
-  return { state, projection, today, toggle, updateProfile, updateNotificationTime };
+  return { state, projection, today, toggle, updateProfile, updateNotificationTime, updateTaskLabel };
 }

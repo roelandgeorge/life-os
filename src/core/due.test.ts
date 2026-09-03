@@ -60,7 +60,7 @@ describe('the retroactive edit window (§5.2)', () => {
     expect(isEditable('2026-01-11', TODAY)).toBe(false);
   });
 
-  it('offers four days, today first', () => {
-    expect(editableDays(TODAY)).toEqual(['2026-01-10', '2026-01-09', '2026-01-08', '2026-01-07']);
+  it('offers four days oldest-first, so today sits at the right-hand end', () => {
+    expect(editableDays(TODAY)).toEqual(['2026-01-07', '2026-01-08', '2026-01-09', '2026-01-10']);
   });
 });

@@ -16,7 +16,8 @@ import { useLifeOS } from './useLifeOS';
 type Tab = 'main' | 'history' | 'settings';
 
 export function Shell() {
-  const { state, projection, today, toggle, updateProfile, updateNotificationTime } = useLifeOS(store);
+  const { state, projection, today, toggle, updateProfile, updateNotificationTime, updateTaskLabel } =
+    useLifeOS(store);
   const [tab, setTab] = useState<Tab>('main');
 
   if (!state || !projection) {
@@ -40,6 +41,7 @@ export function Shell() {
             store={store}
             onProfileChange={updateProfile}
             onNotificationTimeChange={updateNotificationTime}
+            onTaskLabelChange={updateTaskLabel}
           />
         )}
       </div>

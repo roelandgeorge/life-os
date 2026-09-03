@@ -8,7 +8,10 @@
 
 import { useRef, useState } from 'react';
 import { disablePush, enablePush, type PushResult } from './push';
+import { VISIBLE_DOMAINS } from '../core/domains';
+import type { DomainKey } from '../core/domains';
 import type { AppState, Profile } from '../core/types';
+import { defaultTaskLabel, MAX_LABEL_LENGTH } from './taskLabels';
 import { en } from '../i18n/en';
 import { ImportError } from '../store/serialize';
 import type { Store } from '../store/types';
@@ -18,11 +21,13 @@ export function SettingsScreen({
   store,
   onProfileChange,
   onNotificationTimeChange,
+  onTaskLabelChange,
 }: {
   state: AppState;
   store: Store;
   onProfileChange: (profile: Profile) => void;
   onNotificationTimeChange: (value: string | null) => void;
+  onTaskLabelChange: (key: DomainKey, raw: string) => void;
 }) {
   const [message, setMessage] = useState<string | null>(null);
   const [pushError, setPushError] = useState<string | null>(null);
@@ -106,6 +111,25 @@ export function SettingsScreen({
           onChange={(e) => set('currentAge', Number(e.target.value))}
         />
         <p className="ageValue">{state.profile.currentAge}</p>
+      </section>
+
+      <section>
+        <h2>{en['settings.tasks']}</h2>
+        <p className="note">{en['settings.tasks.note']}</p>
+        <div className="task-labels">
+          {VISIBLE_DOMAINS.map((d) => (
+            <label className="task-label" key={d.key}>
+              <span className="swatch-dot" style={{ background: d.color }} aria-hidden="true" />
+              <input
+                type="text"
+                maxLength={MAX_LABEL_LENGTH}
+                placeholder={defaultTaskLabel(d)}
+                value={state.taskLabels?.[d.key] ?? ''}
+                onChange={(e) => onTaskLabelChange(d.key, e.target.value)}
+              />
+            </label>
+          ))}
+        </div>
       </section>
 
       <section>

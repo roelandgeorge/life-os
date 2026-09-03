@@ -1,5 +1,5 @@
 import type { DateKey } from './dates';
-import type { DomainTicks } from './domains';
+import type { DomainKey, DomainTicks } from './domains';
 import type { DomainSteps } from './steps';
 
 /** §5 data model. */
@@ -32,6 +32,15 @@ export type AppState = {
   logs: DayLog[];
   /** §6 settings — evening notification time, "HH:mm" local, or `null` for off. */
   notificationTime?: string | null;
+  /**
+   * What each check-in is called, when the user has renamed it. Falls back to
+   * the §5.3 default per domain.
+   *
+   * "Slept 8 hours" is a guess at what the domain means to this person;
+   * "Went to bed before 22:30" is the thing they actually do. A box you wrote
+   * yourself is harder to tick dishonestly.
+   */
+  taskLabels?: Partial<Record<DomainKey, string>>;
 };
 
 /** Everything the UI needs for one moment in time. Derived, never persisted. */

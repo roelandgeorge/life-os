@@ -661,3 +661,37 @@ button.danger {
   max-width: 360px;
   text-align: center;
 }
+
+.task-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.task-label input {
+  flex: 1;
+  min-width: 0;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.task-label input::placeholder {
+  color: var(--muted);
+}
+
+.swatch-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}

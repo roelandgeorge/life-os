@@ -13,12 +13,14 @@ export const en = {
   'domain.mind': 'Learned something deliberately',
   'domain.income': 'Worked on career or income',
 
-  'main.headline': 'This is you at {age}.',
+  'main.headline': 'This is future you.',
   'main.subhead': 'If today holds.',
   'main.nextMove.gained': "Today's ticks moved {count} of them up a step.",
   'main.nextMove.waiting': 'Tick a box today and the picture moves. {days} day(s) until the next one settles.',
   'main.day.today': 'Today',
   'main.day.yesterday': 'Yesterday',
+  'settings.tasks': 'What each box means',
+  'settings.tasks.note': 'Name the thing you actually do. Leave a box empty to use the default.',
   'main.editingPast': "Filling in {day}. The picture still shows today's standing.",
   'main.fullDay': 'Full day. This is the trajectory.',
   'main.lastHit': 'last: {date}',
@@ -32,7 +34,7 @@ export const en = {
   // README.
   'main.bestVersion.show': 'See your best version',
   'main.bestVersion.hide': 'Back to now',
-  'main.bestVersion.headline': 'This is you at {age}, at your best.',
+  'main.bestVersion.headline': 'This is future you, at your best.',
   'main.bestVersion.subhead': 'Every part at its top step. Two good days is all any one of them takes.',
 
   // §7 onboarding — one question per screen, then the closing explanation.

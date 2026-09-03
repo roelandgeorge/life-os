@@ -7,7 +7,7 @@
  */
 
 import { isDateKey } from '../core/dates';
-import { DOMAIN_KEYS, emptyTicks } from '../core/domains';
+import { DOMAIN_KEYS, emptyTicks, type DomainKey } from '../core/domains';
 import type { AppState, DayLog, Profile } from '../core/types';
 import { SCHEMA_VERSION, type Envelope } from './types';
 
@@ -46,6 +46,23 @@ function parseProfile(v: unknown): Profile {
   // dropped rather than rejected — they no longer drive anything, and they
   // should not cost the user 400 days of history.
   return { currentAge: age };
+}
+
+/**
+ * Renamed check-ins. Unknown keys and non-strings are dropped rather than
+ * rejected: a label is cosmetic, and losing 400 days of history over one is
+ * a bad trade.
+ */
+function parseTaskLabels(v: unknown): Partial<Record<DomainKey, string>> {
+  const out: Partial<Record<DomainKey, string>> = {};
+  if (!isRecord(v)) return out;
+  for (const key of DOMAIN_KEYS) {
+    const raw = v[key];
+    if (typeof raw !== 'string') continue;
+    const trimmed = raw.trim().slice(0, 60);
+    if (trimmed) out[key] = trimmed;
+  }
+  return out;
 }
 
 function parseDayLog(v: unknown, i: number): DayLog {
@@ -97,6 +114,7 @@ export function deserialize(json: string): AppState {
   return {
     profile: parseProfile(state.profile),
     logs,
+    taskLabels: parseTaskLabels(state.taskLabels),
     // Optional — an export from before it existed just means notifications
     // are off, not a corrupt file.
     notificationTime: typeof state.notificationTime === 'string' ? state.notificationTime : null,

@@ -16,7 +16,8 @@ import { fullDayStrip } from '../core/scoring';
 import { daysLeftInPeriod, MAX_STEP } from '../core/steps';
 import type { AppState, Projection } from '../core/types';
 import { diffDays, type DateKey } from '../core/dates';
-import { en, t, type I18nKey } from '../i18n/en';
+import { en, t } from '../i18n/en';
+import { taskLabel } from './taskLabels';
 import { Avatar } from '../visual/Avatar';
 import { LAYER_KEYS, layerSteps, type LayerSteps } from '../visual/layers';
 import { FullDayStrip } from './FullDayStrip';
@@ -53,12 +54,12 @@ export function MainScreen({
       <div className="below">
         {showBest ? (
           <>
-            <h1 className="headline">{t('main.bestVersion.headline', { age: projection.projectionAge })}</h1>
+            <h1 className="headline">{en['main.bestVersion.headline']}</h1>
             <p className="subhead">{en['main.bestVersion.subhead']}</p>
           </>
         ) : (
           <>
-            <h1 className="headline">{t('main.headline', { age: projection.projectionAge })}</h1>
+            <h1 className="headline">{en['main.headline']}</h1>
             <p className="subhead">{en['main.subhead']}</p>
             {projection.fullDay && <p className="fullday">{en['main.fullDay']}</p>}
           </>
@@ -83,7 +84,7 @@ export function MainScreen({
                   <label key={d.key} className={due ? 'checkin' : 'checkin collapsed'}>
                     <input type="checkbox" checked={checked} onChange={() => toggle(d.key, editing)} />
                     <span className="label" style={{ color: d.color }}>
-                      {t(d.label as I18nKey)}
+                      {taskLabel(d, state.taskLabels)}
                     </span>
                     <StepPips step={projection.preview[d.key]} color={d.color} />
                     {!due && (
@@ -107,7 +108,7 @@ export function MainScreen({
   );
 }
 
-/** Relative names for the near past; anything older is just its date. */
+/** Relative names for the near past, for prose. */
 function dayLabel(date: DateKey, today: DateKey): string {
   const age = diffDays(today, date);
   if (age === 0) return en['main.day.today'];
@@ -116,9 +117,22 @@ function dayLabel(date: DateKey, today: DateKey): string {
 }
 
 /**
+ * Button captions: today is named, the days behind it are chevrons. Four
+ * weekday names in a row read as a menu of equals, when in fact one of them
+ * is where you almost always want to be.
+ */
+function pickerLabel(date: DateKey, today: DateKey): string {
+  const age = diffDays(today, date);
+  return age === 0 ? en['main.day.today'] : '<'.repeat(age);
+}
+
+/**
  * §5.2's three-day window. Without it a day the app was not opened is an
  * unfixable -1, even when the thing was actually done — which would punish
  * forgetting to log rather than forgetting to live.
+ *
+ * Laid out oldest-to-newest so today sits on the right, where the thumb is
+ * and where it is selected by default.
  */
 function DayPicker({
   today,
@@ -136,9 +150,11 @@ function DayPicker({
           key={day}
           type="button"
           className={day === editing ? 'on' : ''}
+          title={dayLabel(day, today)}
+          aria-label={dayLabel(day, today)}
           onClick={() => onPick(day)}
         >
-          {dayLabel(day, today)}
+          {pickerLabel(day, today)}
         </button>
       ))}
     </div>
