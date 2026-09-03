@@ -7,8 +7,8 @@
  */
 
 import { isDateKey } from '../core/dates';
-import { DOMAIN_KEYS, emptyTicks, type DomainKey } from '../core/domains';
-import type { AppState, DayLog, DomainState, Profile } from '../core/types';
+import { DOMAIN_KEYS, emptyTicks } from '../core/domains';
+import type { AppState, DayLog, Profile } from '../core/types';
 import { SCHEMA_VERSION, type Envelope } from './types';
 
 export class ImportError extends Error {
@@ -42,10 +42,10 @@ function parseProfile(v: unknown): Profile {
   if (!isRecord(v)) throw new ImportError('profile is missing');
   const age = requireNumber(v.currentAge, 'profile.currentAge');
   if (age < 0 || age > 120) throw new ImportError('profile.currentAge is out of range');
-  // Appearance fields are enums the renderer already falls back on, so they are
-  // carried through as-is rather than rejected — a stale swatch index should not
-  // cost the user 400 days of history.
-  return { ...(v as unknown as Profile), currentAge: age };
+  // Any appearance fields from an export predating the artwork layers are
+  // dropped rather than rejected — they no longer drive anything, and they
+  // should not cost the user 400 days of history.
+  return { currentAge: age };
 }
 
 function parseDayLog(v: unknown, i: number): DayLog {
@@ -60,22 +60,6 @@ function parseDayLog(v: unknown, i: number): DayLog {
   for (const key of DOMAIN_KEYS) ticks[key] = rawTicks[key] === true;
 
   return { date: v.date, opened: v.opened !== false, ticks };
-}
-
-function parseDomains(v: unknown): DomainState[] {
-  const byKey = new Map<DomainKey, number>();
-  if (Array.isArray(v)) {
-    for (const entry of v) {
-      if (!isRecord(entry) || typeof entry.key !== 'string') continue;
-      if (!(DOMAIN_KEYS as readonly string[]).includes(entry.key)) continue;
-      const score = requireNumber(entry.score, `domains.${entry.key}.score`);
-      if (score < 0 || score > 100) throw new ImportError(`domains.${entry.key}.score is out of range`);
-      byKey.set(entry.key as DomainKey, score);
-    }
-  }
-  // Scores are recomputed from the log on the next advance anyway; these are a
-  // starting point, so a domain absent from the export gets the cold-start 50.
-  return DOMAIN_KEYS.map((key) => ({ key, score: byKey.get(key) ?? 50 }));
 }
 
 export function deserialize(json: string): AppState {
@@ -110,18 +94,11 @@ export function deserialize(json: string): AppState {
     seen.add(log.date);
   }
 
-  const lastEvaluatedDate = state.lastEvaluatedDate;
-  if (typeof lastEvaluatedDate !== 'string' || !isDateKey(lastEvaluatedDate)) {
-    throw new ImportError('lastEvaluatedDate must be "YYYY-MM-DD"');
-  }
-
   return {
     profile: parseProfile(state.profile),
-    domains: parseDomains(state.domains),
     logs,
-    lastEvaluatedDate,
-    // Optional (added in §9 step 7) — an export from before it existed just
-    // means notifications are off, not a corrupt file.
+    // Optional — an export from before it existed just means notifications
+    // are off, not a corrupt file.
     notificationTime: typeof state.notificationTime === 'string' ? state.notificationTime : null,
   };
 }

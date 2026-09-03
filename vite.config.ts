@@ -14,6 +14,14 @@ export default defineConfig({
       // not only in a production build.
       devOptions: { enabled: true },
       includeAssets: ['icons/icon-192.png', 'icons/icon-512.png'],
+      workbox: {
+        // The avatar layers are the app: without them a cached shell shows an
+        // empty frame offline, which is worse than not caching at all. The
+        // default glob leaves them out, so name the patterns explicitly.
+        globPatterns: ['**/*.{js,css,html,webmanifest}', 'icons/*.png', 'avatar/*.png'],
+        // Illustrated PNGs run larger than the 2 MB default allows.
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+      },
       manifest: {
         name: 'Life OS',
         short_name: 'Life OS',

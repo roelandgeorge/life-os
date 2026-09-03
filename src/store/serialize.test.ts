@@ -1,41 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { addDays } from '../core/dates';
-import { DOMAIN_KEYS } from '../core/domains';
-import { AT_TARGET, buildLogs } from '../core/fixtures';
-import { scoresAsOf } from '../core/scoring';
-import type { AppState, Profile } from '../core/types';
+import { DOMAIN_KEYS, emptyTicks } from '../core/domains';
+import { domainStep } from '../core/steps';
+import { getDomain } from '../core/domains';
+import type { AppState, DayLog } from '../core/types';
 import { MemoryStore } from './memory';
 import { deserialize, ImportError, serialize } from './serialize';
 
 const START = '2026-01-01';
 
-const PROFILE: Profile = {
-  currentAge: 35,
-  bodyFrame: 'average',
-  height: 'average',
-  skinTone: 2,
-  hairColor: 2,
-  hairType: 'straight',
-  hairLength: 'short',
-  hairline: 'full',
-  facialHair: 'none',
-  eyeColor: 2,
-  glasses: false,
-  faceShape: 'oval',
-  presentation: 'masculine',
-};
-
 function sampleState(): AppState {
-  const logs = buildLogs({ start: START, days: 40, pattern: AT_TARGET });
-  const today = addDays(START, 40);
-  const scores = scoresAsOf(logs, today);
-  return {
-    profile: PROFILE,
-    domains: DOMAIN_KEYS.map((key) => ({ key, score: scores[key] })),
-    logs,
-    lastEvaluatedDate: addDays(today, -1),
-    notificationTime: null,
-  };
+  const logs: DayLog[] = Array.from({ length: 40 }, (_, i) => {
+    const ticks = emptyTicks();
+    for (const k of DOMAIN_KEYS) ticks[k] = i % 2 === 0;
+    return { date: addDays(START, i), opened: true, ticks };
+  });
+  return { profile: { currentAge: 35 }, logs, notificationTime: null };
 }
 
 describe('export/import', () => {
@@ -49,12 +29,13 @@ describe('export/import', () => {
     expect(await restored.load()).toEqual(await store.load());
   });
 
-  it('survives a round trip through the scoring engine identically', async () => {
+  it('survives a round trip through the step model identically', () => {
     const original = sampleState();
     const restored = deserialize(serialize(original));
     const today = addDays(START, 40);
+    const sleep = getDomain('SLEEP');
 
-    expect(scoresAsOf(restored.logs, today)).toEqual(scoresAsOf(original.logs, today));
+    expect(domainStep(restored.logs, sleep, today)).toBe(domainStep(original.logs, sleep, today));
   });
 
   it('rejects a file from a newer schema rather than guessing', () => {

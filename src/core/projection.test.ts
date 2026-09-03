@@ -1,104 +1,66 @@
 import { describe, expect, it } from 'vitest';
 import { addDays } from './dates';
-import { DOMAIN_KEYS, uniformScores } from './domains';
-import { AT_TARGET, buildLogs } from './fixtures';
+import { DOMAIN_KEYS, emptyTicks, type DomainKey } from './domains';
 import { buildProjection } from './projection';
-import { computeBody, previewScores, scoresAsOf } from './scoring';
-import type { AppState, Profile } from './types';
-import { deriveParams } from '../visual/params';
+import { MAX_STEP } from './steps';
+import type { AppState, DayLog } from './types';
+import { layerSteps } from '../visual/layers';
 
 const START = '2026-01-01';
 
-const PROFILE: Profile = {
-  currentAge: 35,
-  bodyFrame: 'average',
-  height: 'average',
-  skinTone: 2,
-  hairColor: 2,
-  hairType: 'straight',
-  hairLength: 'short',
-  hairline: 'full',
-  facialHair: 'none',
-  eyeColor: 2,
-  glasses: false,
-  faceShape: 'oval',
-  presentation: 'masculine',
-};
-
-function stateOf(days: number, pattern = AT_TARGET): AppState {
-  const logs = buildLogs({ start: START, days, pattern });
-  return {
-    profile: PROFILE,
-    domains: DOMAIN_KEYS.map((key) => ({ key, score: 50 })),
-    logs,
-    lastEvaluatedDate: addDays(START, -1),
-  };
+/** `hits(i)` decides which domains are ticked on day `i`. */
+function stateOf(days: number, hits: (i: number) => DomainKey[]): AppState {
+  const logs: DayLog[] = Array.from({ length: days }, (_, i) => {
+    const ticks = emptyTicks();
+    for (const k of hits(i)) ticks[k] = true;
+    return { date: addDays(START, i), opened: true, ticks };
+  });
+  return { profile: { currentAge: 35 }, logs, notificationTime: null };
 }
 
+const ALL = () => [...DOMAIN_KEYS];
+
 describe('buildProjection', () => {
-  it('day 1: cold start at 50, warmup true, projectionAge is currentAge + 15 (§2.4, §3)', () => {
-    const state = stateOf(1);
-    const p = buildProjection(state, START);
-    expect(p.scores).toEqual(uniformScores(50));
-    expect(p.warmup).toBe(true);
-    expect(p.daysOfHistory).toBe(1);
+  it('day 1 starts every domain at the bottom step', () => {
+    const p = buildProjection(stateOf(1, ALL), START);
+    for (const k of DOMAIN_KEYS) expect(p.steps[k]).toBe(0);
     expect(p.projectionAge).toBe(50);
   });
 
-  it('60 days at target: every score >= 94, warmup false (§8/1)', () => {
-    const state = stateOf(60);
-    const today = addDays(START, 60);
-    const p = buildProjection(state, today);
-    for (const k of DOMAIN_KEYS) expect(p.scores[k]).toBeGreaterThanOrEqual(94);
-    expect(p.warmup).toBe(false);
+  it('reaches the ceiling on a daily domain after five ticked days', () => {
+    const p = buildProjection(stateOf(5, ALL), addDays(START, 5));
+    expect(p.steps.SLEEP).toBe(MAX_STEP);
   });
 
-  it('scores and preview match the scoring engine exactly (§2.7): today only ever reaches preview', () => {
-    // 13 days at target, so day 14 (today) is not yet folded into `scores`.
-    const state = stateOf(13);
-    const today = addDays(START, 13);
-    state.logs.push({
-      date: today,
-      opened: true,
-      ticks: { SLEEP: true, FOOD: true, SPORT: false, ORDER: false, RELATIONSHIP: false, MIND: false, INCOME: false },
-    });
+  it("preview counts today's tick, steps does not (§2.7)", () => {
+    const state = stateOf(3, () => ['SLEEP']);
+    const today = addDays(START, 2);
     const p = buildProjection(state, today);
-    expect(p.scores).toEqual(scoresAsOf(state.logs, today));
-    expect(p.preview).toEqual(previewScores(state.logs, today));
-    expect(p.preview.SLEEP).toBeGreaterThan(p.scores.SLEEP);
-    expect(p.preview).not.toEqual(p.scores);
+    expect(p.preview.SLEEP).toBe(p.steps.SLEEP + 1);
   });
 
-  it('body matches computeBody(preview), not computeBody(scores)', () => {
-    const state = stateOf(20);
-    const today = addDays(START, 20);
-    const p = buildProjection(state, today);
-    expect(p.body).toBe(computeBody(p.preview));
-  });
-
-  it('fullDay is true only when every daily domain is ticked today (§2.6)', () => {
-    const state = stateOf(1);
+  it('is a Full Day only when every visible daily domain is ticked', () => {
     const today = addDays(START, 1);
-    state.logs.push({
-      date: today,
-      opened: true,
-      ticks: { SLEEP: true, FOOD: true, SPORT: true, ORDER: true, RELATIONSHIP: false, MIND: false, INCOME: false },
-    });
-    expect(buildProjection(state, today).fullDay).toBe(true);
+    const full = stateOf(2, () => ['SLEEP', 'FOOD', 'SPORT']);
+    expect(buildProjection(full, today).fullDay).toBe(true);
 
-    state.logs[state.logs.length - 1] = {
-      ...(state.logs[state.logs.length - 1] as (typeof state.logs)[number]),
-      ticks: { ...(state.logs[state.logs.length - 1] as (typeof state.logs)[number]).ticks, ORDER: false },
-    };
-    expect(buildProjection(state, today).fullDay).toBe(false);
+    const partial = stateOf(2, () => ['SLEEP', 'FOOD']);
+    expect(buildProjection(partial, today).fullDay).toBe(false);
   });
 
-  it('feeds deriveParams end to end without a score ever reaching the renderer directly', () => {
-    const state = stateOf(30);
-    const today = addDays(START, 30);
-    const p = buildProjection(state, today);
-    const params = deriveParams(p.preview, p.body, { fullDay: p.fullDay });
-    expect(params.ambientLight).toBeGreaterThan(0.25);
-    expect(Number.isFinite(params.muscleMass)).toBe(true);
+  it('does not require the hidden ORDER domain for a Full Day', () => {
+    const today = addDays(START, 1);
+    const state = stateOf(2, () => ['SLEEP', 'FOOD', 'SPORT']); // no ORDER
+    expect(buildProjection(state, today).fullDay).toBe(true);
+  });
+
+  it('feeds the layers, which take the lowest step among their domains', () => {
+    // SLEEP ticked daily, SPORT and FOOD never: `user` sits at the floor
+    // however good the sleep is, while RELATIONSHIP drives `lief` on its own.
+    const state = stateOf(5, (i) => (i % 7 === 0 ? ['SLEEP', 'RELATIONSHIP'] : ['SLEEP']));
+    const p = buildProjection(state, addDays(START, 5));
+    const layers = layerSteps(p.preview);
+    expect(layers.user).toBe(0);
+    expect(p.preview.SLEEP).toBe(MAX_STEP);
   });
 });

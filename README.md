@@ -1,176 +1,144 @@
 # Life OS
 
-Implementation of `life-os-spec.md` v1. The spec is the source of truth; this
-file only records decisions the spec left open and where they live in the code.
+A habit tracker whose only output is a picture of your future self. Binary
+daily checks in, a scene at age +15 out.
+
+`life-os-spec.md` was the original source of truth. Four of its decisions have
+since been deliberately reversed — listed under "Departures from the spec"
+below, with the reasoning. Read those before "fixing" anything back.
 
 ```
-npm run dev         # app at :5173 (?debug for the step-3 parameter harness)
-npm run preview     # production build, served — the real PWA/service worker
+npm run dev          # app at :5173
+npm run preview      # production build, served — the real PWA/service worker
 npm test
 npm run typecheck
 npm run icons        # regenerate public/icons/*.png
+npm run placeholders # throwaway placeholder artwork sheets
+npm run slice        # cut public/avatar/<layer>.png into <layer>-1..5.png
 ```
 
-## Status against §9
+## The model
 
-All eight steps are built.
+Every domain holds an integer **step**, 0 to 4, one per drawn artwork state.
+A period with a hit is +1, a period without one is -1, clamped at both ends.
+Five ticked days take a daily domain from the floor to the ceiling; one missed
+period costs exactly one image.
 
-| Step | | |
-|---|---|---|
-| 1 | Scoring engine, pure module | done — `src/core/`, all §8 vectors pass |
-| 2 | Storage with export/import | done — `src/store/` |
-| 3 | Parametric SVG + debug screen | done — 26 parameters, three-mode harness, parametric avatar |
-| 4 | Wire scores to parameters | done — `core/projection.ts` builds a `Projection` from real `AppState` |
-| 5 | Main screen and check-in flow | done — `app/MainScreen.tsx`, `app/useLifeOS.ts` |
-| 6 | Onboarding | done — `app/Onboarding.tsx`, data-driven from `app/onboardingSteps.ts` |
-| 7 | History, settings | done — `app/HistoryScreen.tsx`, `app/SettingsScreen.tsx` |
-| 8 | PWA manifest, service worker, icon | done — `vite-plugin-pwa`, `public/icons/`, `scripts/generate-icons.mjs` |
+The period is the domain's own cadence (`expectedGapDays`), not the calendar
+day. SLEEP and FOOD step daily, RELATIONSHIP weekly, INCOME monthly — charging
+a weekly domain -1 per calendar day would pin it at zero no matter how well the
+user actually did.
 
-What's genuinely unfinished: real push notifications (the settings toggle and
-time persist; nothing schedules a notification from them yet — that needs a
-push subscription and a server, out of scope for a local-only v1), and the
-avatar art pass README already called out under step 3.
+Steps are **recomputed from the log on every read**, never accumulated, so a
+retroactive edit is absorbed and opening the app twice in a day cannot
+double-count.
 
-The avatar is a working parametric base, not finished art. Nose, hair styling
-and cheek modelling are the obvious next passes — but they are slider work on a
-system that holds, not structural changes. Render a contact sheet with:
+## The artwork
 
-```bash
-RENDER_OUT=./out npx vitest run src/visual/_render.test.ts
-```
+Four layers, drawn back to front, five states each — 20 images in
+`public/avatar/`. Each layer shows the **lowest** step among the domains
+feeding it; you cannot out-train a bad diet, and averaging would let a strong
+domain hide a neglected one.
+
+| Layer | Driven by |
+|---|---|
+| `achtergrond` | INCOME |
+| `lief` | RELATIONSHIP |
+| `lichaam` | SLEEP + SPORT + FOOD |
+| `hoofd` | SLEEP |
+
+**A domain with no layer is not in the app at all** — no artwork, no checkbox.
+ORDER and MIND are currently in that state (`visible: false` in `domains.ts`).
+A tick that changed nothing on screen would break the causal link the whole app
+rests on. `layers.test.ts` asserts the two tables agree.
+
+To replace the art: drop one contact sheet per layer in `public/avatar/`, named
+`hoofd.png`, `lichaam.png`, `lief.png`, `achtergrond.png` — five states side by
+side, worst on the left — then run `npm run slice`. Generating five states in
+one image keeps them far more consistent than five separate prompts. All four
+sheets must share the same crop and scale, and the three figure layers need
+transparency.
+
+## Departures from the spec
+
+**Discrete artwork states replace the continuous parameter system** (§4).
+The spec ruled out sprite sets and required every parameter to render at any
+value between its extremes, with ±8-point crossfades at tier boundaries. That
+bought genuine continuity, and cost a figure that had to be generated
+procedurally — which looked procedural. Five drawn states per layer trades the
+continuity for art someone actually drew. What it costs: the crossfade is gone
+(the step *is* the state, so there is no boundary to flicker across either),
+and with five steps most days would change nothing on screen — which is why the
+step is fast enough to move daily, and why the main screen names what today's
+ticks bought.
+
+**The step model replaces the adherence window and asymmetric EWMA** (§2).
+Gone with it: amnesty for unopened days (§2.2), the 14-day warmup (§2.4) — you
+now start at the floor and climb, which needs no explaining — the BODY
+composite (§2.5), and the §8 test vectors, which described an engine that no
+longer exists. Recovery and decay are now symmetric at one step each; the old
+asymmetry existed to keep a bad week from feeling unrecoverable, and five days
+back to the ceiling does that job more plainly.
+
+**The "see your best version" toggle** reverses §3's "do not render an
+idealised self for comparison. There is one figure on screen." The stated
+reason was that a second, ideal figure blurs the link between today's tick and
+today's image. Requested anyway, for motivation, with the conflict on the
+table. Scoped to keep what it can: opt-in, off by default, and it hides the
+check-in list while active so the idealised scene never sits next to a checkbox
+you could tick.
+
+**The twelve appearance questions are gone from onboarding** (§7). They existed
+to parameterise a generated figure. The artwork is now a drawing of one
+specific person, so there is nothing left for them to drive, and `Profile` is
+just `currentAge` — which §3 still needs for the +15 projection.
+
+## Decisions the spec left open
+
+**A domain "not due today" is a cadence gap, not a schedule** (`core/due.ts`).
+§1 gives no day-of-week for the non-daily domains — they are "sometime this
+window", not "Tuesdays". Due-ness comes from `expectedGapDays`, the same number
+that drives the step period. Never hit at all is always due.
+
+**`Store` grew a fourth method, `clear()`** (`store/types.ts`). §5.1 specifies
+load/save/export/import; Settings' reset needs "no state", which import cannot
+express and save cannot either.
+
+**`notificationTime` lives on `AppState`, not `Profile`** (`core/types.ts`).
+It is a device setting, not identity. It persists; nothing schedules a real
+notification from it yet — that needs a push subscription and a server, out of
+scope for a local-only v1.
+
+**Import and reset resync by reloading the page** (`app/SettingsScreen.tsx`).
+Both replace the whole `AppState` underneath the hook. Threading a reload path
+through every consumer for two rare, deliberate actions is not worth it; ticks
+and profile edits update in place.
+
+**The avatar layers are precached explicitly** (`vite.config.ts`). Workbox's
+default glob leaves them out, and a cached shell with an empty frame is worse
+offline than no cache at all.
 
 ## Layout
 
 ```
-src/core/      scoring engine — no DOM, no clock, no storage
+src/core/      the model — no DOM, no clock, no storage
   dates.ts     bare "YYYY-MM-DD" arithmetic, 04:00 boundary (§5.2)
-  domains.ts   the seven domains as data (§1)
-  scoring.ts   adherence + asymmetric EWMA (§2)
-  fixtures.ts  synthetic histories
+  domains.ts   the domains as data (§1), including what is visible
+  steps.ts     the step model
+  due.ts       "is this domain due today"
+  projection.ts  AppState + a date -> what the screen needs
+  scoring.ts   what survives of §2: log bookkeeping and the Full Day rule
 src/store/     Store interface + IndexedDB and in-memory impls (§5.1)
-src/visual/    the §4 parameter system — the renderer's only input
-src/app/       the app shell (steps 5–7): useLifeOS is the one place that
-               touches the Store and the clock; everything else here is
-               presentational — MainScreen/HistoryScreen/SettingsScreen take
-               state as props rather than reading the store themselves.
+src/visual/    layers.ts (the domain -> artwork map) and the compositing Avatar
+src/app/       the shell: useLifeOS is the one place touching Store and clock;
+               every screen takes state as props
 src/i18n/      §5.3 — every user-facing string, flat key map, English only
-src/debug/     step 3's harness. AvatarSchematic is a stand-in, not the artwork.
+scripts/       icon generation, artwork slicing, placeholder sheets
 ```
 
-## Decisions the spec left open
+## The contract
 
-Each is load-bearing and documented at length at the top of the file that owns
-it. Summarised here so they are not undone by accident.
-
-**The rolling window is clamped to the start of history** (`core/scoring.ts`).
-§2.2's `effectiveW = W - excluded` taken literally gives a day-1 user a 14-day
-window of which 13 predate the install, so A = 1/14 and the avatar collapses
-during the exact period §2.4 asks us to handle gently. Days before the app
-existed are not misses.
-
-**Scores are recomputed from the log, never accumulated** (`core/scoring.ts`).
-§5.2 allows retroactive edits 3 days back, which an incrementally accumulated
-EWMA cannot absorb. Replaying the chain makes the score a pure function of the
-log — which is what makes §8 vector 10 true by construction. `lastEvaluatedDate`
-survives but only reports *whether* a rollover happened.
-
-**Target rates are rationals, not decimals** (`core/domains.ts`). §1 gives both;
-the fractions are normative. `0.143` rounds 1/7 up, capping a perfectly adherent
-weekly domain at A = 0.999. Keeping `{n, per}` separate also makes `adherence`
-integer arithmetic, so exact cadence yields exactly 1.0 rather than
-0.9999999999999999.
-
-**Tiers are continuous positions, not indices** (`visual/params.ts`). §4.6 wants
-a ±8-point crossfade around every boundary, which a discrete tier cannot
-express. `backgroundTier` is a real number in [0,3]; `blendWeights` turns it
-into opacity weights at render time. One slider still drives it.
-
-**`acneCount` stays fractional** (`visual/params.ts`). §4.2 writes `round(...)`,
-but rounding at derive time makes a lesion pop in when a score crosses .5. The
-count is carried continuously and the renderer fades the partial one. Rounding
-is a drawing concern.
-
-**Full Day is its own parameter, not a modifier on `ambientLight`**
-(`visual/params.ts`). §4.7 calls it additive and independent; folding it in
-would give one parameter two meanings and break slider isolation.
-
-**Identity and state are separate inputs that meet only in the renderer**
-(`visual/identity.ts`). `resolveIdentity` takes a `Profile` and nothing else;
-`deriveParams` takes scores and nothing else. That is the mechanism behind §7's
-"the person in the picture must stay the same person". The dividing rule: if a
-stranger could tell it from a photograph on your best day, it is identity.
-Whether you have a beard is identity; whether it is trimmed is ORDER.
-
-**Every outline is a point list run through a spline** (`visual/path.ts`), never
-a hand-authored `d` attribute — a literal path cannot interpolate, and §4 rules
-out sprite sets and discrete states. Move any input and the outline deforms
-because there is nothing else it could do.
-
-**The darkest state stops short of black** (`visual/Avatar.tsx`). §4.1's ambient
-floor is 0.25, but a projection the user cannot make out is not a warning, it is
-an empty frame — and the degraded state is the one the app exists to show.
-
-**History's sparklines include today, not just settled days** (`core/scoring.ts`
-`scoreHistory`). §2.7 makes the main screen show a live preview rather than
-wait for rollover; showing History's last point frozen at yesterday while the
-main screen visibly moves today would read as two different apps disagreeing.
-`scoreHistory` is one EWMA pass that keeps every intermediate value, so it
-can't drift from `replay`/`previewScores` by construction.
-
-**A domain "not due today" (§6) is a cadence gap, not a schedule.** §1 gives no
-day-of-week for RELATIONSHIP/MIND/INCOME — they're "sometime this window", not
-"Tuesdays". `core/due.ts` derives "due" from `expectedGapDays` (already used
-for the same cadence in `domains.ts`): a domain collapses once it's been hit
-inside its own gap, and is due again the moment that gap has passed. Never hit
-at all is always due — there's nothing to collapse on.
-
-**`Store` grew a fourth method, `clear()`** (`store/types.ts`). §5.1 specifies
-load/save/export/import; Settings' reset (§6) needs to get back to "no state,"
-which import can't express and save can't either (there's no state to save).
-Additive to the interface, implemented in both the IndexedDB and in-memory
-stores.
-
-**`AppState.notificationTime` is optional** (`core/types.ts`). §6 asks for a
-configurable notification time; §5's `AppState` doesn't list one, and the spec
-doesn't give it a home. It lives on `AppState` rather than `Profile` because
-it's a device setting, not identity. Optional so every `AppState` literal
-written before step 7 — most of the test suite — keeps type-checking; app code
-always reads it as `?? null`. Step 7 only makes the value persist; nothing
-schedules an actual notification from it yet, that's a push subscription and a
-server, out of scope for a local-only v1.
-
-**Import and reset resync by reloading the page** (`app/SettingsScreen.tsx`).
-Both replace the entire `AppState` out from under `useLifeOS`'s in-memory copy
-and, for reset, the `App`-level onboarding gate too. Threading a "reload from
-store" path through every hook consumer for two rare, deliberate actions
-buys correctness the cheap way; profile edits and daily ticks — the common
-path — update in place with no reload.
-
-**The "see your best version" toggle is a deliberate reversal of §3, not an
-oversight** (`app/MainScreen.tsx`). §3 says "do not render an idealised self
-for comparison. There is one figure on screen" — the reasoning given is that a
-second, ideal figure would blur the causal link between today's tick and
-today's image. The user asked for exactly that comparison anyway, for
-motivation, and made that call explicitly after being shown the conflict. The
-toggle is scoped to preserve as much of the original reasoning as it can: it's
-opt-in (off by default, one tap to see it, one tap back), it hides the day's
-checkboxes and Full Day state while active so the idealised figure never sits
-next to a checkbox you could tick, and "best" is every domain at its own
-ceiling (`uniformScores(100)`) on the *same* identity — the same person,
-maximally adherent, not a fantasy version of them.
-
-**Onboarding's live preview always renders at score 50** (`app/Onboarding.tsx`).
-The portrait during onboarding only exists to build identity (§7); rendering it
-at any other score would let an appearance answer read as good or bad
-performance, which is exactly what §2.5's "no global life score" is there to
-prevent.
-
-## The contract these steps must not break
-
-`deriveParams(scores, body, { fullDay })` is the *only* path from scores to
-pixels. The renderer takes `AvatarParams` and never sees a score. That split is
-what makes §9's "every parameter independently drivable" structural rather than
-a promise, and `src/visual/avatar.test.ts` asserts it: every declared
-parameter must visibly change the output on its own. `core/projection.ts` and
-`app/useLifeOS.ts` are the only things standing between the `Store` and this
-function; neither one skips it.
+`domain steps -> layerSteps() -> <Avatar>`. The renderer sees layer steps and
+nothing else — not scores, not a profile, not why a layer sits where it does.
+That is what keeps the model and the artwork independently replaceable: swap
+the PNGs and no code changes; change the step rules and no artwork changes.

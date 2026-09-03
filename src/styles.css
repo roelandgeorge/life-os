@@ -234,6 +234,10 @@ button.on {
   flex: 2 1 0;
   min-height: 0;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0b0e14;
+  overflow: hidden;
 }
 
 .portrait svg {
@@ -584,4 +588,43 @@ section p {
 button.danger {
   border-color: #7a3b34;
   color: #d97a6c;
+}
+
+/* ---- layered artwork ---------------------------------------------------- */
+
+.avatar {
+  /* Height-driven: the frame is portrait and so is the space it sits in, so
+     matching the height and letting `aspect-ratio` set the width keeps the
+     collage undistorted. `.portrait` clips rather than squashes if it ever
+     comes out wider than the column. */
+  position: relative;
+  height: 100%;
+  width: auto;
+  background: #0b0e14;
+}
+
+/* Each panel is placed by `layers.ts` in the artwork's own proportions and
+   fills its cell exactly, so the three tile with no seam and no overlap. */
+.avatar-layer {
+  position: absolute;
+  object-fit: fill;
+  user-select: none;
+}
+
+.pips {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: auto;
+  flex: none;
+}
+
+.pip {
+  width: 10px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--line);
+}
+
+.next-move {
+  margin-top: 12px;
 }

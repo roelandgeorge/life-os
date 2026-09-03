@@ -5,8 +5,6 @@
  */
 
 import { useEffect, useState } from 'react';
-import { addDays, dateKeyFor } from '../core/dates';
-import { DOMAIN_KEYS } from '../core/domains';
 import type { AppState, Profile } from '../core/types';
 import { en } from '../i18n/en';
 import { Onboarding } from './Onboarding';
@@ -29,14 +27,7 @@ export function App() {
   }, []);
 
   async function finishOnboarding(profile: Profile) {
-    const today = dateKeyFor(new Date());
-    const initial: AppState = {
-      profile,
-      domains: DOMAIN_KEYS.map((key) => ({ key, score: 50 })), // §7 closing screen — every domain starts at 50
-      logs: [],
-      lastEvaluatedDate: addDays(today, -1),
-      notificationTime: null,
-    };
+    const initial: AppState = { profile, logs: [], notificationTime: null };
     await store.save(initial);
     setPhase({ kind: 'ready' });
   }

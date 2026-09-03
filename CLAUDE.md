@@ -1,85 +1,72 @@
 # Life OS
 
-A habit tracker whose only output is a rendered projection of the user's future
-self. Binary daily checks in, a portrait at age +15 out.
+A habit tracker whose only output is a picture of the user's future self.
+Binary daily checks in, a scene at age +15 out.
 
 ## Read these first, in this order
 
-1. **`life-os-spec.md`** — the source of truth. The user treats it as such.
-   Do not redesign what it already decides.
-2. **`README.md`** — eight decisions the spec left open, each with its reason.
-   These are load-bearing and easy to undo by accident if you read only the
-   spec. Check it before "fixing" anything to match the spec's literal wording.
+1. **`README.md`** — how the app actually works now, plus four deliberate
+   reversals of the spec and the reasoning behind each. Read it first: the
+   spec no longer describes the built system.
+2. **`life-os-spec.md`** — the original design. Still worth reading for the
+   *why* behind the domains, the cadences and the screens, and still binding
+   wherever README does not contradict it. Do not "fix" code back toward its
+   literal wording without checking README first.
 
 ## Where the build is
 
-§9 build order: all eight steps are done.
+All eight §9 steps shipped, then the visual system was replaced: the parametric
+SVG figure gave way to four layers of drawn artwork at five states each, and
+the EWMA scoring engine gave way to the step model. README explains both.
 
-| | | |
-|---|---|---|
-| 1 | Scoring engine, pure module | done — all §8 test vectors pass |
-| 2 | Storage with export/import | done |
-| 3 | Parametric SVG + debug harness | done — 26 parameters, working avatar |
-| 4 | Wire scores to parameters | done — `core/projection.ts` |
-| 5 | Main screen and check-in flow | done — `app/MainScreen.tsx`, `app/useLifeOS.ts` |
-| 6 | Onboarding | done — `app/Onboarding.tsx` |
-| 7 | History, settings | done — `app/HistoryScreen.tsx`, `app/SettingsScreen.tsx` |
-| 8 | PWA manifest, service worker, icon | done — `vite-plugin-pwa`, `public/icons/` |
+Live on the user's Vercel deployment, which builds from `main` on GitHub.
 
-Steps 1–3 were built deliberately in a stronger model because they hold the
-expensive-to-reverse decisions. Steps 4–8 are assembly on top of a settled base.
-
-What's left is polish, not structure: the avatar's nose/hair/cheek pass README
-already flags, real push scheduling behind the notification-time setting (the
-setting exists and persists; nothing fires it yet), and de-jankifying the
-onboarding/settings chip UI. None of that touches the two contracts below.
+What is left: real artwork (placeholders sit in `public/avatar/` — the wiring
+is done and tested, `npm run slice` swaps them in), and real push scheduling
+behind the notification-time setting, which persists but fires nothing.
 
 ## Commands
 
 ```bash
-npm run dev         # app at :5173 (?debug for the step-3 parameter harness)
-npm run preview     # production build, served — the only way to see the PWA/SW for real
-npm test            # unit tests
+npm run dev          # app at :5173
+npm run preview      # production build, served — the only way to see the PWA/SW for real
+npm test
 npm run typecheck
 npm run build
-npm run icons        # regenerate public/icons/*.png from scripts/generate-icons.mjs
-RENDER_OUT=./out npx vitest run src/visual/_render.test.ts   # avatar contact sheet
+npm run icons        # regenerate public/icons/*.png
+npm run placeholders # throwaway artwork, so the layer pipeline runs without real art
+npm run slice        # cut public/avatar/<layer>.png sheets into <layer>-1..5.png
 ```
 
 ## Layout
 
 ```
-src/core/      scoring engine — no DOM, no clock, no storage
+src/core/      the model — no DOM, no clock, no storage
 src/store/     Store interface + IndexedDB and in-memory impls (§5.1)
-src/visual/    the §4 parameter system, identity resolution, the avatar
-src/app/       the app shell: useLifeOS (Store+clock bridge), Onboarding,
-               Shell (tab nav), MainScreen, HistoryScreen, SettingsScreen
+src/visual/    layers.ts (domain -> artwork map) and the compositing Avatar
+src/app/       the shell: useLifeOS bridges Store+clock, every screen takes props
 src/i18n/      §5.3 — every user-facing string, as a flat key map
-src/debug/     the step-3 harness: scores / parameters / identity modes
-scripts/       generate-icons.mjs — the PWA icon source, not part of the app bundle
+scripts/       icons, artwork slicing, placeholder sheets — not app code
+public/avatar/ the artwork: <layer>.png contact sheets and their sliced states
 ```
 
-## Two contracts that must not break
+## The contract that must not break
 
-**`deriveParams(scores, body, { fullDay }) → AvatarParams → renderer`.**
-The renderer never sees a score. That split is what makes §9's "every parameter
-independently drivable" structural rather than a promise, and
-`src/visual/avatar.test.ts` asserts it: every declared parameter must visibly
-change the output on its own.
+`domain steps -> layerSteps() -> <Avatar>`. The renderer sees layer steps and
+nothing else. That is what keeps model and artwork independently replaceable:
+swap the PNGs and no code changes; change the step rules and no artwork does.
 
-**`resolveIdentity(profile)` takes a Profile and nothing else.**
-That is the mechanism behind §7's "the person in the picture must stay the same
-person across every state". If it ever needs a score argument, the projection
-has stopped being a projection of the same person. A test pins its arity.
+A layer takes the **lowest** step among its domains, and a domain with no layer
+is not in the app at all — no artwork, no checkbox, because a tick that changes
+nothing on screen breaks the causal link the app rests on. `layers.test.ts`
+pins both.
 
 ## House style
 
-Match the existing code. Notably: outlines are point lists run through the
-splines in `visual/path.ts`, never hand-authored `d` attributes — a literal path
-cannot interpolate, and §4 rules out sprite sets and discrete states.
+Match the existing code.
 
-Domains are data (`core/domains.ts`). Nothing may branch on a domain key.
+Domains are data (`core/domains.ts`) and layers are data (`visual/layers.ts`).
+Nothing may branch on a domain key.
 
-The avatar is a working parametric base, not finished art. Nose, hair styling
-and cheek modelling want another pass — but that is slider work, not structural
-change. Do not restructure it to make art changes.
+Artwork is never referenced by filename outside `visual/Avatar.tsx`. Adding a
+state or a layer should mean editing a table, not chasing string literals.

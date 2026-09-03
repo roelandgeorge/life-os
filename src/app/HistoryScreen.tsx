@@ -1,12 +1,17 @@
 /**
- * §6 screen 2. One sparkline per domain over 90 days, plus the Full Day
+ * §6 screen 2. One step-track per domain over 90 days, plus the Full Day
  * strip. Nothing else — "additional analytics turn this into an ordinary
  * tracker."
+ *
+ * A step chart rather than a sparkline: the value only ever moves by whole
+ * steps, and drawing it as a smooth line would imply an in-between the model
+ * does not have.
  */
 
-import type { DateKey } from '../core/dates';
-import { DOMAINS } from '../core/domains';
-import { fullDayStrip, scoreHistory } from '../core/scoring';
+import { addDays, rangeDates, type DateKey } from '../core/dates';
+import { VISIBLE_DOMAINS } from '../core/domains';
+import { fullDayStrip } from '../core/scoring';
+import { domainStep, MAX_STEP } from '../core/steps';
 import type { AppState } from '../core/types';
 import { en, t, type I18nKey } from '../i18n/en';
 import { FullDayStrip } from './FullDayStrip';
@@ -14,7 +19,7 @@ import { FullDayStrip } from './FullDayStrip';
 const HISTORY_DAYS = 90;
 
 export function HistoryScreen({ state, today }: { state: AppState; today: DateKey }) {
-  const series = scoreHistory(state.logs, today, HISTORY_DAYS);
+  const days = rangeDates(addDays(today, -(HISTORY_DAYS - 1)), today);
   const strip = fullDayStrip(state.logs, today, 30);
 
   return (
@@ -23,8 +28,8 @@ export function HistoryScreen({ state, today }: { state: AppState; today: DateKe
       <p className="subhead">{t('history.subhead', { days: HISTORY_DAYS })}</p>
 
       <div className="sparklines">
-        {DOMAINS.map((d) => {
-          const values = series.map((point) => point.scores[d.key]);
+        {VISIBLE_DOMAINS.map((d) => {
+          const values = days.map((day) => domainStep(state.logs, d, day));
           const current = values[values.length - 1] ?? 0;
           return (
             <div className="sparkline-row" key={d.key}>
@@ -32,9 +37,11 @@ export function HistoryScreen({ state, today }: { state: AppState; today: DateKe
                 <span className="label" style={{ color: d.color }}>
                   {t(d.label as I18nKey)}
                 </span>
-                <span className="num">{Math.round(current)}</span>
+                <span className="num">
+                  {current + 1}/{MAX_STEP + 1}
+                </span>
               </div>
-              <Sparkline values={values} color={d.color} />
+              <StepTrack values={values} color={d.color} />
             </div>
           );
         })}
@@ -46,15 +53,21 @@ export function HistoryScreen({ state, today }: { state: AppState; today: DateKe
   );
 }
 
-function Sparkline({ values, color }: { values: number[]; color: string }) {
+function StepTrack({ values, color }: { values: number[]; color: string }) {
   const w = 300;
   const h = 36;
   const step = values.length > 1 ? w / (values.length - 1) : 0;
-  const d = values.map((v, i) => `${i === 0 ? 'M' : 'L'} ${(i * step).toFixed(1)} ${(h - (v / 100) * h).toFixed(1)}`).join(' ');
+  const y = (v: number) => h - 2 - (v / MAX_STEP) * (h - 4);
+
+  // Horizontal run, then vertical jump: the value holds all day and changes
+  // at a period boundary, and the drawing should say exactly that.
+  const d = values
+    .map((v, i) => (i === 0 ? `M 0 ${y(v)}` : `H ${(i * step).toFixed(1)} V ${y(v).toFixed(1)}`))
+    .join(' ');
 
   return (
     <svg className="sparkline" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-      <path d={d} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+      <path d={d} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="miter" />
     </svg>
   );
 }

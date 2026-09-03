@@ -1,79 +1,45 @@
 import type { DateKey } from './dates';
-import type { DomainKey, DomainScores, DomainTicks } from './domains';
+import type { DomainTicks } from './domains';
+import type { DomainSteps } from './steps';
 
 /** §5 data model. */
 
 export type DayLog = {
   date: DateKey;
-  /** false = the app was never opened that day, so it is eligible for amnesty (§2.2). */
+  /** Whether the app was opened that day. Kept for the record; the step model
+   *  charges a miss either way, so it no longer grants amnesty (§2.2). */
   opened: boolean;
   ticks: DomainTicks;
 };
 
-export type DomainState = {
-  key: DomainKey;
-  /** 0..100 */
-  score: number;
-};
-
-export type BodyFrame = 'slight' | 'average' | 'broad';
-export type Height = 'short' | 'average' | 'tall';
-export type HairType = 'straight' | 'wavy' | 'curly' | 'coily';
-export type HairLength = 'shaved' | 'short' | 'medium' | 'long';
-export type Hairline = 'full' | 'slight' | 'receding' | 'baldCrown';
-export type FacialHair = 'none' | 'stubble' | 'shortBeard' | 'fullBeard' | 'moustache';
-export type FaceShape = 'oval' | 'round' | 'square' | 'long';
-export type Presentation = 'masculine' | 'feminine' | 'neutral';
-
 /**
- * Fixed identity (§7). Scores never touch any of this — the person in the
- * picture must stay the same person across every state.
+ * What the app knows about the person (§7, much reduced).
+ *
+ * The twelve appearance questions are gone. They existed to parameterise a
+ * generated figure; the artwork is now drawn once, of one specific person, so
+ * there is nothing left for them to drive — and a drawing of you beats any
+ * number of sliders approximating you. Age survives because §3 needs it: the
+ * projection is always +15.
  */
 export type Profile = {
   currentAge: number;
-  bodyFrame: BodyFrame;
-  height: Height;
-  /** Index into the 6-step swatch scales from §7. */
-  skinTone: number;
-  hairColor: number;
-  hairType: HairType;
-  hairLength: HairLength;
-  hairline: Hairline;
-  facialHair: FacialHair;
-  eyeColor: number;
-  glasses: boolean;
-  faceShape: FaceShape;
-  presentation: Presentation;
 };
 
 export type AppState = {
   profile: Profile;
-  domains: DomainState[];
-  /** Append-only, sorted by date ascending, capped at 400 days (§5). */
+  /** Append-only, sorted by date ascending, capped at 400 days (§5).
+   *  The only source of truth: every step is recomputed from this. */
   logs: DayLog[];
-  /**
-   * Last day whose EWMA update has been applied. Initialised to the day before
-   * the first log so that day 1 evaluates at the day-1 → day-2 rollover (§2.3).
-   */
-  lastEvaluatedDate: DateKey;
-  /**
-   * §6 settings — evening notification time, "HH:mm" local, or `null` for
-   * off. Optional so every AppState literal written before step 7 still
-   * type-checks; app code always reads it as `?? null`. Step 8 is what makes
-   * this actually schedule a notification.
-   */
+  /** §6 settings — evening notification time, "HH:mm" local, or `null` for off. */
   notificationTime?: string | null;
 };
 
 /** Everything the UI needs for one moment in time. Derived, never persisted. */
 export type Projection = {
-  /** Persisted end-of-yesterday scores. */
-  scores: DomainScores;
-  /** Display scores: yesterday's, advanced one step by today's ticks (§2.7). */
-  preview: DomainScores;
-  body: number;
+  /** Steps from closed periods only. */
+  steps: DomainSteps;
+  /** What the picture shows: the above, plus any hit in the period in progress. */
+  preview: DomainSteps;
   fullDay: boolean;
-  warmup: boolean;
-  daysOfHistory: number;
   projectionAge: number;
 };

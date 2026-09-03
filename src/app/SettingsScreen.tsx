@@ -11,8 +11,6 @@ import type { AppState, Profile } from '../core/types';
 import { en } from '../i18n/en';
 import { ImportError } from '../store/serialize';
 import type { Store } from '../store/types';
-import { StepView } from './Onboarding';
-import { ONBOARDING_STEPS } from './onboardingSteps';
 
 export function SettingsScreen({
   state,
@@ -38,7 +36,7 @@ export function SettingsScreen({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `life-os-export-${state.lastEvaluatedDate}.json`;
+    a.download = `life-os-export-${state.logs[state.logs.length - 1]?.date ?? 'empty'}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -69,9 +67,16 @@ export function SettingsScreen({
 
       <section>
         <h2>{en['settings.profile']}</h2>
-        {ONBOARDING_STEPS.map((step) => (
-          <StepView key={step.key} step={step} draft={state.profile} onSet={set} />
-        ))}
+        <p className="note">{en['onboarding.currentAge.note']}</p>
+        <input
+          type="range"
+          min={16}
+          max={80}
+          step={1}
+          value={state.profile.currentAge}
+          onChange={(e) => set('currentAge', Number(e.target.value))}
+        />
+        <p className="ageValue">{state.profile.currentAge}</p>
       </section>
 
       <section>

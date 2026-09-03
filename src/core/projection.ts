@@ -1,39 +1,27 @@
 /**
- * §9 step 4 — wires scores to parameters.
+ * Bridges the log to the screen: `AppState` + a date in, `Projection` out.
  *
- * `deriveParams` (visual/params.ts) has been pure and tested since step 3, but
- * nothing built the `Projection` it needs from real `AppState`: persisted
- * scores, today's preview, BODY, warmup, Full Day. This module is that bridge,
- * kept in `core` and free of the DOM/clock/store so the app shell (step 5) is
- * the only place that touches time or IndexedDB.
- *
- * `buildProjection` does not mutate or persist anything — advancing
- * `lastEvaluatedDate` and saving the result stays the caller's job (§2.3: run
- * the rollover at most once per day).
+ * Pure — no DOM, no clock, no storage — so the app shell stays the only place
+ * that touches time or IndexedDB.
  */
 
-import { computeBody, daysOfHistory, indexLogs, isFullDay, isWarmup, previewScores, scoresAsOf } from './scoring';
-import type { AppState, Projection } from './types';
 import type { DateKey } from './dates';
+import { DOMAINS } from './domains';
+import { isFullDay, indexLogs } from './scoring';
+import { allSteps } from './steps';
+import type { AppState, Projection } from './types';
 
 /**
- * §2.7 — the avatar renders `preview`, not `scores`: yesterday's persisted
- * value advanced by today's ticks, so a tick moves the figure within the
- * second it's made. `scores` is kept on the projection for screens (history)
- * that want the settled value instead.
+ * `preview` is what the avatar renders: the settled steps plus any hit in the
+ * period still in progress, so ticking a box moves the picture in the same
+ * second. `steps` is the settled value, for anything that should not jump
+ * around mid-day.
  */
 export function buildProjection(state: AppState, today: DateKey): Projection {
-  const scores = scoresAsOf(state.logs, today);
-  const preview = previewScores(state.logs, today);
-  const todayLog = indexLogs(state.logs).get(today);
-
   return {
-    scores,
-    preview,
-    body: computeBody(preview),
-    fullDay: isFullDay(todayLog),
-    warmup: isWarmup(state.logs, today),
-    daysOfHistory: daysOfHistory(state.logs, today),
+    steps: allSteps(state.logs, DOMAINS, today),
+    preview: allSteps(state.logs, DOMAINS, today, { includeCurrentPeriod: true }),
+    fullDay: isFullDay(indexLogs(state.logs).get(today)),
     projectionAge: state.profile.currentAge + 15,
   };
 }

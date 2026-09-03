@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { dateKeyFor, type DateKey } from '../core/dates';
 import { emptyTicks, type DomainKey } from '../core/domains';
 import { buildProjection } from '../core/projection';
-import { advance, trimLogs } from '../core/scoring';
+import { trimLogs } from '../core/scoring';
 import type { AppState, DayLog, Profile, Projection } from '../core/types';
 import type { Store } from '../store/types';
 
@@ -36,7 +36,9 @@ export function useLifeOS(store: Store): LifeOS {
       // onboarding has written an initial state, so this is never null here.
       const loaded = await store.load();
       if (!loaded) throw new Error('useLifeOS mounted before onboarding wrote a state');
-      const { state: advanced } = advance(loaded, today);
+      // Steps are recomputed from the log on every read, so opening the app
+      // needs no catch-up pass — there is no accumulated value to advance.
+      const advanced = loaded;
       // §2.2 — opening the app marks the day as not-amnestiable, even before
       // any box is ticked.
       const hasToday = advanced.logs.some((l) => l.date === today);
