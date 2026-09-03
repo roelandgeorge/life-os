@@ -16,14 +16,13 @@ Binary daily checks in, a scene at age +15 out.
 ## Where the build is
 
 All eight §9 steps shipped, then the visual system was replaced: the parametric
-SVG figure gave way to four layers of drawn artwork at five states each, and
+SVG figure gave way to three panels of drawn artwork at five states each, and
 the EWMA scoring engine gave way to the step model. README explains both.
 
 Live on the user's Vercel deployment, which builds from `main` on GitHub.
 
-What is left: real artwork (placeholders sit in `public/avatar/` — the wiring
-is done and tested, `npm run slice` swaps them in), and real push scheduling
-behind the notification-time setting, which persists but fires nothing.
+The real artwork is in. What is left is push scheduling behind the
+notification-time setting, which persists but fires nothing.
 
 ## Commands
 
@@ -35,7 +34,8 @@ npm run typecheck
 npm run build
 npm run icons        # regenerate public/icons/*.png
 npm run placeholders # throwaway artwork, so the layer pipeline runs without real art
-npm run slice        # cut public/avatar/<layer>.png sheets into <layer>-1..5.png
+npm run slice        # cut public/avatar/<layer>.png sheets into <layer>1..5.png
+npm run compress     # losslessly shrink the artwork PNGs
 ```
 
 ## Layout
@@ -56,7 +56,7 @@ public/avatar/ the artwork: <layer>.png contact sheets and their sliced states
 nothing else. That is what keeps model and artwork independently replaceable:
 swap the PNGs and no code changes; change the step rules and no artwork does.
 
-A layer takes the **lowest** step among its domains, and a domain with no layer
+A panel takes the **lowest** step among its domains, and a domain with no panel
 is not in the app at all — no artwork, no checkbox, because a tick that changes
 nothing on screen breaks the causal link the app rests on. `layers.test.ts`
 pins both.

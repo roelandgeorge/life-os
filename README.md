@@ -14,7 +14,8 @@ npm test
 npm run typecheck
 npm run icons        # regenerate public/icons/*.png
 npm run placeholders # throwaway placeholder artwork sheets
-npm run slice        # cut public/avatar/<layer>.png into <layer>-1..5.png
+npm run slice        # cut public/avatar/<layer>.png into <layer>1..5.png
+npm run compress     # losslessly shrink the artwork PNGs
 ```
 
 ## The model
@@ -41,29 +42,33 @@ double-count.
 
 ## The artwork
 
-Four layers, drawn back to front, five states each — 20 images in
-`public/avatar/`. Each layer shows the **lowest** step among the domains
+Three panels, five states each — 15 images in `public/avatar/`, named
+`<layer><1..5>.png`. Each panel shows the **lowest** step among the domains
 feeding it; you cannot out-train a bad diet, and averaging would let a strong
 domain hide a neglected one.
 
-| Layer | Driven by |
+| Panel | Driven by |
 |---|---|
 | `achtergrond` | INCOME |
+| `user` | SLEEP + SPORT + FOOD |
 | `lief` | RELATIONSHIP |
-| `lichaam` | SLEEP + SPORT + FOOD |
-| `hoofd` | SLEEP |
 
-**A domain with no layer is not in the app at all** — no artwork, no checkbox.
+The scene is a **collage of abutting panels**, not a stack of cut-outs: the
+background is a band across the top, the two figures sit side by side beneath
+it. Each panel is a complete picture in its own right, so there is no alpha to
+get right, no perspective to match between panels, and no seam to hide.
+`layers.ts` holds the tiling in the artwork's own pixel dimensions.
+
+**A domain with no panel is not in the app at all** — no artwork, no checkbox.
 ORDER and MIND are currently in that state (`visible: false` in `domains.ts`).
 A tick that changed nothing on screen would break the causal link the whole app
 rests on. `layers.test.ts` asserts the two tables agree.
 
-To replace the art: drop one contact sheet per layer in `public/avatar/`, named
-`hoofd.png`, `lichaam.png`, `lief.png`, `achtergrond.png` — five states side by
-side, worst on the left — then run `npm run slice`. Generating five states in
-one image keeps them far more consistent than five separate prompts. All four
-sheets must share the same crop and scale, and the three figure layers need
-transparency.
+To replace the art, drop the files in named as above. If a generator hands you
+all five states in one wide sheet, save it as `<layer>.png` and run
+`npm run slice` — generating five states in one image keeps them far more
+consistent than five separate prompts. Every state of a panel must share its
+dimensions, or the panels stop tiling.
 
 ## Departures from the spec
 
@@ -80,11 +85,11 @@ ticks bought.
 
 **The step model replaces the adherence window and asymmetric EWMA** (§2).
 Gone with it: amnesty for unopened days (§2.2), the 14-day warmup (§2.4) — you
-now start at the floor and climb, which needs no explaining — the BODY
-composite (§2.5), and the §8 test vectors, which described an engine that no
-longer exists. Recovery and decay are now symmetric at one step each; the old
-asymmetry existed to keep a bad week from feeling unrecoverable, and five days
-back to the ceiling does that job more plainly.
+start mid-scale, which needs no explaining — the BODY composite (§2.5), and the
+§8 test vectors, which described an engine that no longer exists. Recovery and
+decay are now symmetric at one step each; the old asymmetry existed to keep a
+bad week from feeling unrecoverable, and two good days back to the ceiling does
+that job more plainly.
 
 **The "see your best version" toggle** reverses §3's "do not render an
 idealised self for comparison. There is one figure on screen." The stated
