@@ -13,12 +13,21 @@ import { useState } from 'react';
 import { VISIBLE_DOMAINS, type DomainKey } from '../core/domains';
 import { editableDays, isDueToday, lastHit } from '../core/due';
 import { fullDayStrip } from '../core/scoring';
-import { daysLeftInPeriod, MAX_STEP } from '../core/steps';
+import { MAX_STEP } from '../core/steps';
 import type { AppState, Projection } from '../core/types';
 import { diffDays, type DateKey } from '../core/dates';
 import { en, t } from '../i18n/en';
 import { taskLabel } from './taskLabels';
-import { customTaskName, customTaskStreak, isCustomTicked } from '../core/customTasks';
+import {
+  cadenceOf,
+  customTaskDoneThisPeriod,
+  customTaskName,
+  customTaskStreak,
+  isCustomTicked,
+} from '../core/customTasks';
+import { atRiskItems, type RiskItem } from '../core/atRisk';
+import { daysLeftInPeriod as daysLeftIn } from '../core/periods';
+import { getDomain } from '../core/domains';
 import { Avatar } from '../visual/Avatar';
 import { LAYER_KEYS, layerSteps, type LayerSteps } from '../visual/layers';
 import { FullDayStrip } from './FullDayStrip';
@@ -76,6 +85,8 @@ export function MainScreen({
           <>
             <FullDayStrip strip={strip} />
 
+            <RiskWarning state={state} today={today} />
+
             <DayPicker today={today} editing={editing} onPick={setEditing} />
 
             <div className="checkins">
@@ -104,9 +115,10 @@ export function MainScreen({
               <div className="custom-tasks">
                 <h2 className="custom-heading">{en['main.custom.title']}</h2>
                 {state.customTasks?.map((task) => {
-                  const streak = customTaskStreak(state.logs, task.id, today);
+                  const weekly = cadenceOf(task) === 'weekly';
+                  const streak = customTaskStreak(state.logs, task, today);
                   return (
-                    <label key={task.id} className="checkin custom">
+                    <label key={task.id} className={weekly ? 'checkin custom weekly' : 'checkin custom'}>
                       <input
                         type="checkbox"
                         checked={isCustomTicked(editingLog ?? undefined, task.id)}
@@ -115,9 +127,7 @@ export function MainScreen({
                       <span className="label">
                         {customTaskName(task, en['settings.custom.unnamed'])}
                       </span>
-                      {streak > 1 && (
-                        <span className="lastHit">{t('main.custom.streak', { days: streak })}</span>
-                      )}
+                      <span className="lastHit">{customNote(state, task, today, streak)}</span>
                     </label>
                   );
                 })}
@@ -127,7 +137,7 @@ export function MainScreen({
             {editing !== today && (
               <p className="note editing-past">{t('main.editingPast', { day: dayLabel(editing, today) })}</p>
             )}
-            <p className="note next-move">{nextMove(state, today, projection)}</p>
+            <p className="note next-move">{nextMove(projection)}</p>
           </>
         )}
       </div>
@@ -205,14 +215,64 @@ function StepPips({ step, color }: { step: number; color: string }) {
  * already bought, or how soon the next period closes, keeps the daily action
  * worth taking.
  */
-function nextMove(state: AppState, today: DateKey, projection: Projection): string {
+function nextMove(projection: Projection): string {
   const climbing = VISIBLE_DOMAINS.filter(
     (d) => projection.preview[d.key] > projection.steps[d.key],
   ).length;
   if (climbing > 0) return t('main.nextMove.gained', { count: climbing });
 
-  const soonest = VISIBLE_DOMAINS.map((d) => daysLeftInPeriod(state.logs, d, today)).sort(
-    (a, b) => a - b,
-  )[0];
-  return soonest === undefined ? '' : t('main.nextMove.waiting', { days: soonest });
+  return en['main.nextMove.waiting'];
+}
+
+/**
+ * A weekly task shows the state of its week, not a day count: "done this
+ * week" or how long is left. A daily task keeps the plain streak.
+ */
+function customNote(
+  state: AppState,
+  task: Parameters<typeof cadenceOf>[0],
+  today: DateKey,
+  streak: number,
+): string {
+  if (cadenceOf(task) !== 'daily') {
+    if (customTaskDoneThisPeriod(state.logs, task, today)) {
+      return streak > 1
+        ? t('main.custom.streakWeeks', { weeks: streak })
+        : en['main.custom.weeklyDone'];
+    }
+    const start = state.logs[0]?.date ?? today;
+    const left = daysLeftIn(start, today, 7);
+    // English has no plural machinery in `t`, and "1 day(s)" is worse than
+    // two keys.
+    return left <= 1 ? en['main.custom.weeklyLast'] : t('main.custom.weeklyLeft', { days: left });
+  }
+  return streak > 1 ? t('main.custom.streak', { days: streak }) : '';
+}
+
+/**
+ * The one warning the app gives. A weekly thing changes nothing on screen for
+ * six days and then drops a step — the only case where the picture alone is
+ * not enough feedback in time to act on.
+ */
+function RiskWarning({ state, today }: { state: AppState; today: DateKey }) {
+  const risks = atRiskItems(state.logs, VISIBLE_DOMAINS, state.customTasks, today);
+  if (risks.length === 0) return null;
+
+  const first = risks[0] as RiskItem;
+  const text =
+    risks.length === 1
+      ? t('main.risk.one', { name: riskName(state, first), when: whenText(first.daysLeft) })
+      : t('main.risk.many', { count: risks.length });
+
+  return <p className="risk-warning">{text}</p>;
+}
+
+function riskName(state: AppState, risk: RiskItem): string {
+  if (risk.kind === 'domain') return taskLabel(getDomain(risk.id as DomainKey), state.taskLabels);
+  const task = state.customTasks?.find((t2) => t2.id === risk.id);
+  return task ? customTaskName(task, en['settings.custom.unnamed']) : '';
+}
+
+function whenText(daysLeft: number): string {
+  return daysLeft <= 1 ? en['main.risk.today'] : en['main.risk.tomorrow'];
 }

@@ -49,7 +49,37 @@ function decodeKey(base64: string): ArrayBuffer {
   return bytes.buffer;
 }
 
-export async function enablePush(): Promise<PushResult> {
+/**
+ * Ships alongside the subscription so the evening reminder can say something
+ * true. Only opaque ids, dates and period lengths — never a task's name, and
+ * never the log. See `core/atRisk.ts`.
+ */
+export type PushDigest = { anchor: string | null; entries: unknown[] };
+
+/**
+ * Refresh the server's copy of what is weekly and when it was last done.
+ * Called whenever the app opens, so the reminder stays right even after days
+ * without an open — the server recomputes urgency on the day it fires.
+ */
+export async function syncDigest(digest: PushDigest): Promise<void> {
+  if (!pushSupported()) return;
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    // No subscription means reminders are off; there is nothing to keep fresh.
+    if (!subscription) return;
+    await fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ subscription, digest }),
+    });
+  } catch {
+    // Best effort. A stale digest degrades the wording of the reminder; it
+    // does not stop the reminder, and it must never break opening the app.
+  }
+}
+
+export async function enablePush(digest?: PushDigest): Promise<PushResult> {
   if (!pushSupported()) return { ok: false, reason: 'unsupported' };
   if (isApple() && !installedToHomeScreen()) return { ok: false, reason: 'not-installed' };
   if (!VAPID_PUBLIC_KEY) {
@@ -73,7 +103,7 @@ export async function enablePush(): Promise<PushResult> {
     const response = await fetch('/api/subscribe', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ subscription }),
+      body: JSON.stringify({ subscription, digest }),
     });
     if (!response.ok) {
       return { ok: false, reason: 'failed', detail: `The server refused the subscription (${response.status}).` };

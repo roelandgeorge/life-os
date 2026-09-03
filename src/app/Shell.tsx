@@ -5,13 +5,16 @@
  * tab bar (the spec doesn't specify chrome beyond the three screens).
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { en } from '../i18n/en';
 import { HistoryScreen } from './HistoryScreen';
 import { MainScreen } from './MainScreen';
 import { SettingsScreen } from './SettingsScreen';
 import { store } from './store';
 import { useLifeOS } from './useLifeOS';
+import { weeklyDigest } from '../core/atRisk';
+import { VISIBLE_DOMAINS } from '../core/domains';
+import { syncDigest } from './push';
 
 type Tab = 'main' | 'history' | 'settings';
 
@@ -28,8 +31,17 @@ export function Shell() {
     addCustom,
     renameCustom,
     removeCustom,
+    setCustomCadence,
   } = useLifeOS(store);
   const [tab, setTab] = useState<Tab>('main');
+
+  // Refresh what the server knows about the weekly commitments, once per open.
+  // Only ids and dates travel; see core/atRisk.ts. Reminders being off makes
+  // this a no-op, so there is nothing to gate it on.
+  const digestKey = state ? JSON.stringify(weeklyDigest(state.logs, VISIBLE_DOMAINS, state.customTasks, state.logs[0]?.date ?? null)) : null;
+  useEffect(() => {
+    if (digestKey) void syncDigest(JSON.parse(digestKey));
+  }, [digestKey]);
 
   if (!state || !projection) {
     return (
@@ -62,6 +74,7 @@ export function Shell() {
             onAddCustom={addCustom}
             onRenameCustom={renameCustom}
             onRemoveCustom={removeCustom}
+            onSetCustomCadence={setCustomCadence}
           />
         )}
       </div>

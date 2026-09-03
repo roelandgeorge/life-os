@@ -26,8 +26,8 @@ but it only works once the Vercel side is configured: a **private** Blob store
 plus the VAPID/CRON env vars listed in README. Until then the toggle in
 Settings reports the failure rather than pretending.
 
-Next up is the history screen: it shows step tracks, but not *which* day was
-missed.
+History shows step tracks per domain plus a per-period strip for each custom
+task. It still does not show *which* day a domain was missed.
 
 ## Commands
 

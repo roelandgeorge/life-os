@@ -15,6 +15,9 @@ import { domainStep, MAX_STEP } from '../core/steps';
 import type { AppState } from '../core/types';
 import { en, t, type I18nKey } from '../i18n/en';
 import { FullDayStrip } from './FullDayStrip';
+import { cadenceOf, customHitDates, customTaskName, periodDaysOf } from '../core/customTasks';
+import { hitInRange, periodAt, completedPeriods } from '../core/periods';
+import type { CustomTask } from '../core/types';
 
 const HISTORY_DAYS = 90;
 
@@ -49,6 +52,17 @@ export function HistoryScreen({ state, today }: { state: AppState; today: DateKe
 
       <h2>{en['history.fullDay']}</h2>
       <FullDayStrip strip={strip} />
+
+      {(state.customTasks?.length ?? 0) > 0 && (
+        <>
+          <h2>{en['history.custom']}</h2>
+          <div className="sparklines">
+            {state.customTasks?.map((task) => (
+              <CustomTrack key={task.id} task={task} state={state} today={today} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -69,5 +83,51 @@ function StepTrack({ values, color }: { values: number[]; color: string }) {
     <svg className="sparkline" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
       <path d={d} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="miter" />
     </svg>
+  );
+}
+
+/**
+ * One cell per period, filled when that period had a tick — days for a daily
+ * task, weeks for a weekly one. Same rule either way, which is what makes the
+ * two readable side by side: a filled cell always means "satisfied".
+ */
+function CustomTrack({
+  task,
+  state,
+  today,
+}: {
+  task: CustomTask;
+  state: AppState;
+  today: DateKey;
+}) {
+  const weekly = cadenceOf(task) === 'weekly';
+  const period = periodDaysOf(task);
+  const cells = weekly ? 12 : 30;
+
+  const start = state.logs[0]?.date;
+  const hits = customHitDates(state.logs, task.id);
+  const newest = start === undefined ? -1 : completedPeriods(start, today, period);
+
+  // Oldest on the left, the period in progress on the right.
+  const filled = Array.from({ length: cells }, (_, i) => {
+    const index = newest - (cells - 1 - i);
+    if (start === undefined || index < 0) return false;
+    return hitInRange(hits, periodAt(start, index, period), today);
+  });
+
+  return (
+    <div className="sparkline-row">
+      <div className="sparkline-header">
+        <span className="label">{customTaskName(task, en['settings.custom.unnamed'])}</span>
+        <span className="num">
+          {weekly ? en['history.custom.weekly'] : en['history.custom.daily']}
+        </span>
+      </div>
+      <div className="strip">
+        {filled.map((on, i) => (
+          <span key={i} className={on ? 'cell filled' : 'cell'} />
+        ))}
+      </div>
+    </div>
   );
 }

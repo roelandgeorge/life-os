@@ -18,6 +18,35 @@ type StoredSubscription = {
   keys: { p256dh: string; auth: string };
 };
 
+/**
+ * What the app tells the server about its weekly commitments: opaque ids,
+ * the day each was last satisfied, and how long its period is. Deliberately
+ * no names and no log — the server can work out urgency from this alone, on
+ * whatever day it fires.
+ */
+type DigestEntry = { id: string; lastHit: string | null; periodDays: number };
+export type StoredRecord = {
+  subscription: StoredSubscription;
+  digest?: { anchor: string | null; entries: DigestEntry[] };
+};
+
+function parseDigest(value: unknown): StoredRecord['digest'] {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const raw = value as { anchor?: unknown; entries?: unknown };
+  if (!Array.isArray(raw.entries)) return undefined;
+
+  const entries: DigestEntry[] = [];
+  for (const entry of raw.entries) {
+    if (typeof entry !== 'object' || entry === null) continue;
+    const e = entry as Record<string, unknown>;
+    if (typeof e.id !== 'string') continue;
+    if (typeof e.periodDays !== 'number' || !Number.isFinite(e.periodDays)) continue;
+    const lastHit = typeof e.lastHit === 'string' ? e.lastHit : null;
+    entries.push({ id: e.id, lastHit, periodDays: e.periodDays });
+  }
+  return { anchor: typeof raw.anchor === 'string' ? raw.anchor : null, entries };
+}
+
 function isSubscription(value: unknown): value is StoredSubscription {
   if (typeof value !== 'object' || value === null) return false;
   const v = value as Record<string, unknown>;
@@ -48,7 +77,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Not a push subscription' });
   }
 
-  await put(SUBSCRIPTION_PATH, JSON.stringify(subscription), {
+  const digest = parseDigest((body as { digest?: unknown } | undefined)?.digest);
+  const record: StoredRecord = digest ? { subscription, digest } : { subscription };
+
+  await put(SUBSCRIPTION_PATH, JSON.stringify(record), {
     access: 'private',
     contentType: 'application/json',
     allowOverwrite: true,

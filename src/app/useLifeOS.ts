@@ -10,8 +10,14 @@ import { isEditable } from '../core/due';
 import { emptyTicks, type DomainKey } from '../core/domains';
 import { buildProjection } from '../core/projection';
 import { trimLogs } from '../core/scoring';
-import { addCustomTask, removeCustomTask, renameCustomTask, toggleCustomTick } from '../core/customTasks';
-import type { AppState, CustomTask, DayLog, Profile, Projection } from '../core/types';
+import {
+  addCustomTask,
+  removeCustomTask,
+  renameCustomTask,
+  setCustomTaskCadence,
+  toggleCustomTick,
+} from '../core/customTasks';
+import type { AppState, CustomTask, DayLog, Profile, Projection, TaskCadence } from '../core/types';
 import type { Store } from '../store/types';
 import { withTaskLabel } from './taskLabels';
 
@@ -28,6 +34,7 @@ export type LifeOS = {
   addCustom: (name: string) => void;
   renameCustom: (id: string, name: string) => void;
   removeCustom: (id: string) => void;
+  setCustomCadence: (id: string, cadence: TaskCadence) => void;
 };
 
 export function useLifeOS(store: Store): LifeOS {
@@ -132,6 +139,10 @@ export function useLifeOS(store: Store): LifeOS {
     mutateCustomTasks((tasks) => removeCustomTask(tasks, id));
   }
 
+  function setCustomCadence(id: string, cadence: TaskCadence) {
+    mutateCustomTasks((tasks) => setCustomTaskCadence(tasks, id, cadence));
+  }
+
   function updateProfile(profile: Profile) {
     setState((prev) => {
       if (!prev) return prev;
@@ -172,5 +183,6 @@ export function useLifeOS(store: Store): LifeOS {
     addCustom,
     renameCustom,
     removeCustom,
+    setCustomCadence,
   };
 }

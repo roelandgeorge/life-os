@@ -14,12 +14,43 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { get } from '@vercel/blob';
 import webpush from 'web-push';
-import { SUBSCRIPTION_PATH } from './subscribe.js';
+import { SUBSCRIPTION_PATH, type StoredRecord } from './subscribe.js';
 
-type StoredSubscription = {
-  endpoint: string;
-  keys: { p256dh: string; auth: string };
-};
+const DAY_MS = 86_400_000;
+
+/** Same threshold as the app's own warning (core/atRisk.ts). */
+const RISK_DAYS_LEFT = 2;
+
+function daysBetween(from: string, to: string): number {
+  return Math.round((Date.parse(to + 'T12:00:00Z') - Date.parse(from + 'T12:00:00Z')) / DAY_MS);
+}
+
+/**
+ * How many weekly commitments are about to lapse, worked out here rather than
+ * on the phone — the app may not have been opened for days, which is exactly
+ * when the reminder matters. Never-done counts as at risk.
+ */
+function countAtRisk(record: StoredRecord, todayIso: string): number {
+  const digest = record.digest;
+  if (!digest || digest.anchor === null) return 0;
+
+  let count = 0;
+  for (const entry of digest.entries) {
+    const period = entry.periodDays;
+    if (period <= 1) continue;
+    const elapsed = daysBetween(digest.anchor, todayIso);
+    if (elapsed < 0) continue;
+    const periodStartOffset = Math.floor(elapsed / period) * period;
+    const daysLeft = period - (elapsed % period);
+    if (daysLeft > RISK_DAYS_LEFT) continue;
+
+    // Satisfied within the period in progress? Then it is not at risk.
+    const doneAt = entry.lastHit === null ? null : daysBetween(digest.anchor, entry.lastHit);
+    if (doneAt !== null && doneAt >= periodStartOffset) continue;
+    count++;
+  }
+  return count;
+}
 
 /** Vercel sends `Authorization: Bearer $CRON_SECRET` when the secret is set. */
 function authorised(req: VercelRequest): boolean {
@@ -48,18 +79,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ sent: false, reason: 'no subscription' });
   }
 
-  const subscription = (await new Response(stored.stream).json()) as StoredSubscription;
+  const record = (await new Response(stored.stream).json()) as StoredRecord;
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const atRisk = countAtRisk(record, todayIso);
+
+  const body =
+    atRisk === 1
+      ? 'One weekly thing is about to lapse. Open Life OS.'
+      : atRisk > 1
+        ? `${atRisk} weekly things are about to lapse. Open Life OS.`
+        : 'Did today count? Fill it in.';
 
   try {
     await webpush.sendNotification(
-      subscription,
-      JSON.stringify({
-        title: 'Life OS',
-        body: 'Did today count? Fill it in.',
-        url: '/',
-      }),
+      record.subscription,
+      JSON.stringify({ title: 'Life OS', body, url: '/' }),
     );
-    return res.status(200).json({ sent: true });
+    return res.status(200).json({ sent: true, atRisk });
   } catch (err) {
     const statusCode = (err as { statusCode?: number }).statusCode;
     // 404/410 mean the browser dropped the subscription — the user reinstalled,

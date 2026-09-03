@@ -109,9 +109,35 @@ three fixed panels; a task the user invents has nothing to drive, so ticking
 it changes nothing on screen — exactly what the rule below forbids. Added
 anyway, because people want somewhere to put "no alcohol" without it being a
 building block. The compromise is that they are visibly a *different kind of
-thing*: their own section, plainer styling, no step pips, and a streak count
-as the one thing they give back. They live in `DayLog.customTicks`, outside
+thing*: their own section, plainer styling, no step pips, and a streak as the
+one thing they give back. They live in `DayLog.customTicks`, outside
 `DomainTicks`, so the step engine never meets a key it does not recognise.
+Each is daily or weekly; weekly ones use the same period anchor as the weekly
+domains (`core/periods.ts`), so "this week" means one thing everywhere.
+
+## The weekly warning
+
+`core/atRisk.ts` is the app's one nag, and it exists for a specific gap: a
+weekly thing changes nothing on screen for six days and then drops a step.
+That is the only case where the picture alone is not feedback in time to act
+on. Daily things get no warning — missing one is its own, immediate signal.
+
+It fires when a period is down to its last two days with nothing logged in
+it, and it covers the fixed weekly domains and weekly custom tasks under one
+rule, because from the user's side they are the same problem. `daily` domains
+are excluded even when their cadence spans more than a day: SPORT is 4x a
+week, so its period is two days, and warning every other evening is noise.
+
+### How the evening reminder knows
+
+The cron cannot read the log — it lives in IndexedDB and never leaves the
+phone. So the app sends a **digest**: opaque ids, the day each weekly thing
+was last satisfied, and its period length. No names, no ticks, no log.
+
+The server recomputes urgency on the day it fires, which is what keeps the
+reminder right after days without an open — precisely when it is needed. A
+digest that never arrived just means the generic wording; the reminder still
+goes out.
 
 ## Decisions the spec left open
 

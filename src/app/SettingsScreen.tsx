@@ -8,11 +8,12 @@
 
 import { useRef, useState } from 'react';
 import { disablePush, enablePush, type PushResult } from './push';
+import { weeklyDigest } from '../core/atRisk';
 import { VISIBLE_DOMAINS } from '../core/domains';
 import type { DomainKey } from '../core/domains';
-import type { AppState, Profile } from '../core/types';
+import type { AppState, Profile, TaskCadence } from '../core/types';
 import { defaultTaskLabel, MAX_LABEL_LENGTH } from './taskLabels';
-import { canAddCustomTask, MAX_TASK_NAME_LENGTH } from '../core/customTasks';
+import { cadenceOf, canAddCustomTask, MAX_TASK_NAME_LENGTH } from '../core/customTasks';
 import { en } from '../i18n/en';
 import { ImportError } from '../store/serialize';
 import type { Store } from '../store/types';
@@ -26,6 +27,7 @@ export function SettingsScreen({
   onAddCustom,
   onRenameCustom,
   onRemoveCustom,
+  onSetCustomCadence,
 }: {
   state: AppState;
   store: Store;
@@ -35,6 +37,7 @@ export function SettingsScreen({
   onAddCustom: (name: string) => void;
   onRenameCustom: (id: string, name: string) => void;
   onRemoveCustom: (id: string) => void;
+  onSetCustomCadence: (id: string, cadence: TaskCadence) => void;
 }) {
   const [message, setMessage] = useState<string | null>(null);
   const [pushError, setPushError] = useState<string | null>(null);
@@ -57,7 +60,10 @@ export function SettingsScreen({
     }
 
     setBusy(true);
-    const result = await enablePush();
+    // Send the digest with the very first subscription, so the reminder is
+    // useful from the first evening rather than the second.
+    const digest = weeklyDigest(state.logs, VISIBLE_DOMAINS, state.customTasks, state.logs[0]?.date ?? null);
+    const result = await enablePush(digest);
     setBusy(false);
 
     if (result.ok) {
@@ -144,22 +150,36 @@ export function SettingsScreen({
         <p className="note">{en['settings.custom.note']}</p>
         <div className="task-labels">
           {state.customTasks?.map((task) => (
-            <div className="task-label" key={task.id}>
-              <input
-                type="text"
-                maxLength={MAX_TASK_NAME_LENGTH}
-                placeholder={en['settings.custom.placeholder']}
-                value={task.name}
-                onChange={(e) => onRenameCustom(task.id, e.target.value)}
-              />
-              <button
-                type="button"
-                className="danger small"
-                aria-label={`${en['settings.custom.remove']}: ${task.name}`}
-                onClick={() => onRemoveCustom(task.id)}
-              >
-                ×
-              </button>
+            <div className="custom-row" key={task.id}>
+              <div className="task-label">
+                <input
+                  type="text"
+                  maxLength={MAX_TASK_NAME_LENGTH}
+                  placeholder={en['settings.custom.placeholder']}
+                  value={task.name}
+                  onChange={(e) => onRenameCustom(task.id, e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="danger small"
+                  aria-label={`${en['settings.custom.remove']}: ${task.name}`}
+                  onClick={() => onRemoveCustom(task.id)}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="chips cadence">
+                {(['daily', 'weekly'] as const).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={cadenceOf(task) === c ? 'on' : ''}
+                    onClick={() => onSetCustomCadence(task.id, c)}
+                  >
+                    {c === 'daily' ? en['settings.custom.daily'] : en['settings.custom.weekly']}
+                  </button>
+                ))}
+              </div>
             </div>
           ))}
         </div>

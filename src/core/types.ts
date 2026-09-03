@@ -26,7 +26,11 @@ export type DayLog = {
 export type CustomTask = {
   id: string;
   name: string;
+  /** Absent means daily — the shape every task had before weeklies existed. */
+  cadence?: TaskCadence;
 };
+
+export type TaskCadence = 'daily' | 'weekly';
 
 /**
  * What the app knows about the person (§7, much reduced).

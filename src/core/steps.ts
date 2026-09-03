@@ -28,6 +28,7 @@
 import { addDays, diffDays, rangeDates, type DateKey } from './dates';
 import { expectedGapDays, type DomainConfig, type DomainKey } from './domains';
 import { clamp } from './math';
+import { daysLeftInPeriod as daysLeftIn } from './periods';
 import type { DayLog } from './types';
 
 /** Artwork states per layer. Step 0 is the worst image, MAX_STEP the best. */
@@ -113,9 +114,6 @@ export function daysLeftInPeriod(
   today: DateKey,
 ): number {
   const start = logs[0]?.date;
-  if (start === undefined) return expectedGapDays(domain);
   const period = expectedGapDays(domain);
-  const elapsed = diffDays(today, start);
-  if (elapsed < 0) return period;
-  return period - (elapsed % period);
+  return start === undefined ? period : daysLeftIn(start, today, period);
 }
