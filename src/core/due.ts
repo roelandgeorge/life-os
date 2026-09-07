@@ -30,6 +30,28 @@ export function isDueToday(domain: DomainConfig, logs: readonly DayLog[], today:
 }
 
 /**
+ * Weekly and longer, a period already satisfied just means "done, see you
+ * next week". Below that the gap is the point: training every other day
+ * needs the day off, and an empty box on that day reads as a miss when it is
+ * the plan working.
+ *
+ * Derived from the cadence rather than flagged per domain, and the same
+ * threshold `atRisk.ts` uses — a domain either has rest built into its
+ * rhythm or it is on a long cycle, and the period length is what says which.
+ */
+export const REST_MAX_PERIOD_DAYS = 7;
+
+export function isRestDay(
+  domain: DomainConfig,
+  logs: readonly DayLog[],
+  today: DateKey,
+): boolean {
+  if (domain.daily) return false;
+  if (expectedGapDays(domain) >= REST_MAX_PERIOD_DAYS) return false;
+  return !isDueToday(domain, logs, today);
+}
+
+/**
  * §5.2 — "retroactive editing is allowed for 3 days back and no further."
  *
  * Which matters more now than it did under the old engine: a day the app was

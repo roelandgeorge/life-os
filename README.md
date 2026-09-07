@@ -97,6 +97,15 @@ decay are now symmetric at one step each; the old asymmetry existed to keep a
 bad week from feeling unrecoverable, and two good days back to the ceiling does
 that job more plainly.
 
+**A rest day is named, not just dimmed** (`core/due.isRestDay`). A
+short-cadence domain in a period it has already satisfied showed as a faded
+row with a last-hit date, which reads as a gap. For strength training the gap
+*is* the plan, so that day now says "Rest day". The box stays tickable: it
+writes to whichever day the picker is on, so disabling it would also block
+filling in a session you forgot to log — and a second tick inside one period
+changes nothing anyway. Derived from period length (< 7 days), the same
+threshold the weekly warning uses, rather than a flag on the domain.
+
 **The "see your best version" toggle** reverses §3's "do not render an
 idealised self for comparison. There is one figure on screen." The stated
 reason was that a second, ideal figure blurs the link between today's tick and
@@ -123,6 +132,18 @@ one thing they give back. They live in `DayLog.customTicks`, outside
 `DomainTicks`, so the step engine never meets a key it does not recognise.
 Each is daily or weekly; weekly ones use the same period anchor as the weekly
 domains (`core/periods.ts`), so "this week" means one thing everywhere.
+
+They can also carry one of the building blocks' **colours** — asked for so
+that "no alcohol" can be filed with food and read as belonging there, and the
+history pane sorts by it. This is the one place the "visibly a different kind
+of thing" line has been softened deliberately, so it is worth being exact
+about what did not change: the colour is a label the user applies and nothing
+reads it back. No code maps a colour to a domain, a coloured task still has
+no step pips and still moves no panel, and the dashed border and separate
+section stay. `core/customTasks.ts` holds the palette (`TASK_PALETTE`, built
+from `VISIBLE_DOMAINS`) and the sort (`byColor`); the stored value is
+validated as `#rrggbb` rather than as palette membership, so a later change
+to the palette cannot strip everyone's colours on the next import.
 
 ## The weekly warning
 

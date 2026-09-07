@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { emptyTicks, getDomain } from './domains';
-import { editableDays, isDueToday, isEditable, lastHit } from './due';
+import { editableDays, isDueToday, isEditable, isRestDay, lastHit } from './due';
 import type { DayLog } from './types';
 
 const SLEEP = getDomain('SLEEP');
 const RELATIONSHIP = getDomain('RELATIONSHIP');
+const SPORT = getDomain('SPORT');
 
-function logOn(date: string, key: 'SLEEP' | 'RELATIONSHIP'): DayLog {
+function logOn(date: string, key: 'SLEEP' | 'RELATIONSHIP' | 'SPORT'): DayLog {
   const ticks = emptyTicks();
   ticks[key] = true;
   return { date, opened: true, ticks };
@@ -29,6 +30,32 @@ describe('isDueToday', () => {
   it('a cadence domain becomes due once its gap has passed', () => {
     const logs = [logOn('2026-01-01', 'RELATIONSHIP')];
     expect(isDueToday(RELATIONSHIP, logs, '2026-01-08')).toBe(true); // 7 days later
+  });
+});
+
+describe('isRestDay', () => {
+  it('calls the day after training a rest day, not a gap', () => {
+    const logs = [logOn('2026-01-01', 'SPORT')];
+    expect(isRestDay(SPORT, logs, '2026-01-02')).toBe(true);
+  });
+
+  it('is over once the domain is due again', () => {
+    const logs = [logOn('2026-01-01', 'SPORT')];
+    expect(isRestDay(SPORT, logs, '2026-01-03')).toBe(false);
+  });
+
+  it('never applies before the first session — nothing has been earned yet', () => {
+    expect(isRestDay(SPORT, [], '2026-01-02')).toBe(false);
+  });
+
+  it('leaves daily domains alone: there is no resting from sleep', () => {
+    expect(isRestDay(SLEEP, [logOn('2026-01-01', 'SLEEP')], '2026-01-02')).toBe(false);
+  });
+
+  it('a weekly domain is done, not resting — the word would be wrong', () => {
+    const logs = [logOn('2026-01-08', 'RELATIONSHIP')];
+    expect(isDueToday(RELATIONSHIP, logs, '2026-01-10')).toBe(false);
+    expect(isRestDay(RELATIONSHIP, logs, '2026-01-10')).toBe(false);
   });
 });
 

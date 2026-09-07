@@ -13,7 +13,7 @@ import {
   renameCustomTask,
   toggleCustomTick,
 } from './customTasks';
-import { setCustomTaskCadence } from './customTasks';
+import { byColor, isTaskColor, setCustomTaskCadence, setCustomTaskColor, TASK_PALETTE } from './customTasks';
 import type { CustomTask, DayLog } from './types';
 
 const START = '2026-01-01';
@@ -135,5 +135,58 @@ describe('customTaskStreak — weekly', () => {
     const legacy: CustomTask = { id: 'a', name: 'Read' };
     const logs = [day(START, ['a']), day(addDays(START, 1), ['a'])];
     expect(customTaskStreak(logs, legacy, addDays(START, 1))).toBe(2);
+  });
+});
+
+describe('filing colours', () => {
+  const [first, second] = TASK_PALETTE;
+
+  it('sets and clears a colour', () => {
+    let tasks = addCustomTask(undefined, 'a', 'Call mum');
+    tasks = setCustomTaskColor(tasks, 'a', first?.color ?? '#000000');
+    expect(tasks[0]?.color).toBe(first?.color);
+
+    tasks = setCustomTaskColor(tasks, 'a', null);
+    // Absent, not undefined: a key set to undefined survives into JSON as a
+    // different shape from one that was never there.
+    expect('color' in (tasks[0] ?? {})).toBe(false);
+  });
+
+  it('refuses anything that is not a colour, rather than storing it', () => {
+    expect(isTaskColor('#C08A2E')).toBe(true);
+    expect(isTaskColor('red')).toBe(false);
+    expect(isTaskColor('#C08A2')).toBe(false);
+    expect(isTaskColor(undefined)).toBe(false);
+
+    const tasks = setCustomTaskColor(addCustomTask(undefined, 'a', 'x'), 'a', 'javascript:x');
+    expect('color' in (tasks[0] ?? {})).toBe(false);
+  });
+
+  it('offers exactly the building blocks’ own colours', () => {
+    expect(TASK_PALETTE.length).toBeGreaterThan(0);
+    for (const entry of TASK_PALETTE) expect(isTaskColor(entry.color)).toBe(true);
+  });
+
+  it('sorts by palette order, then by creation, with uncoloured last', () => {
+    let tasks: CustomTask[] = [];
+    for (const id of ['plain', 'late', 'early']) tasks = addCustomTask(tasks, id, id);
+    tasks = setCustomTaskColor(tasks, 'late', second?.color ?? '#000000');
+    tasks = setCustomTaskColor(tasks, 'early', first?.color ?? '#111111');
+
+    expect(byColor(tasks).map((t) => t.id)).toEqual(['early', 'late', 'plain']);
+  });
+
+  it('keeps same-coloured tasks in the order they were created', () => {
+    let tasks: CustomTask[] = [];
+    for (const id of ['one', 'two']) tasks = addCustomTask(tasks, id, id);
+    for (const id of ['one', 'two']) tasks = setCustomTaskColor(tasks, id, first?.color ?? '#000000');
+
+    expect(byColor(tasks).map((t) => t.id)).toEqual(['one', 'two']);
+  });
+
+  it('does not mutate the list it is given', () => {
+    const tasks = addCustomTask(addCustomTask(undefined, 'a', 'a'), 'b', 'b');
+    byColor(tasks);
+    expect(tasks.map((t) => t.id)).toEqual(['a', 'b']);
   });
 });

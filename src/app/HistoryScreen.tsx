@@ -15,7 +15,13 @@ import { domainStep, MAX_STEP } from '../core/steps';
 import type { AppState } from '../core/types';
 import { en, t, type I18nKey } from '../i18n/en';
 import { FullDayStrip } from './FullDayStrip';
-import { cadenceOf, customHitDates, customTaskName, periodDaysOf } from '../core/customTasks';
+import {
+  byColor,
+  cadenceOf,
+  customHitDates,
+  customTaskName,
+  periodDaysOf,
+} from '../core/customTasks';
 import { hitInRange, periodAt, completedPeriods } from '../core/periods';
 import type { CustomTask } from '../core/types';
 
@@ -57,7 +63,7 @@ export function HistoryScreen({ state, today }: { state: AppState; today: DateKe
         <>
           <h2>{en['history.custom']}</h2>
           <div className="sparklines">
-            {state.customTasks?.map((task) => (
+            {byColor(state.customTasks ?? []).map((task) => (
               <CustomTrack key={task.id} task={task} state={state} today={today} />
             ))}
           </div>
@@ -118,14 +124,23 @@ function CustomTrack({
   return (
     <div className="sparkline-row">
       <div className="sparkline-header">
-        <span className="label">{customTaskName(task, en['settings.custom.unnamed'])}</span>
+        <span
+          className="label"
+          style={task.color === undefined ? undefined : { color: task.color }}
+        >
+          {customTaskName(task, en['settings.custom.unnamed'])}
+        </span>
         <span className="num">
           {weekly ? en['history.custom.weekly'] : en['history.custom.daily']}
         </span>
       </div>
       <div className="strip">
         {filled.map((on, i) => (
-          <span key={i} className={on ? 'cell filled' : 'cell'} />
+          <span
+            key={i}
+            className={on ? 'cell filled' : 'cell'}
+            style={on && task.color !== undefined ? { background: task.color } : undefined}
+          />
         ))}
       </div>
     </div>

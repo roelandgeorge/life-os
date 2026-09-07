@@ -18,6 +18,7 @@
  */
 
 import { diffDays, type DateKey } from './dates';
+import { VISIBLE_DOMAINS } from './domains';
 import { completedPeriods, currentPeriod, hitInRange, periodAt } from './periods';
 import type { CustomTask, DayLog, TaskCadence } from './types';
 
@@ -26,6 +27,68 @@ export const MAX_CUSTOM_TASKS = 10;
 export const MAX_TASK_NAME_LENGTH = 60;
 
 export const CADENCE_DAYS: Record<TaskCadence, number> = { daily: 1, weekly: 7 };
+
+/**
+ * The colours on offer are the building blocks' own, taken from the same
+ * table the blocks are drawn from — so "no alcohol" can be filed under food
+ * and read as belonging there. Nothing downstream looks a colour up: it is a
+ * label the user applies, not a link to the domain.
+ */
+export const TASK_PALETTE: readonly { color: string; label: string }[] = VISIBLE_DOMAINS.map(
+  (d) => ({ color: d.color, label: d.label }),
+);
+
+/**
+ * Accepts any `#rrggbb`, not only the palette. A colour is stored, and a
+ * later build with a different palette must not silently strip it from
+ * everyone's tasks on the next import.
+ */
+export function isTaskColor(v: unknown): v is string {
+  return typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
+}
+
+export function setCustomTaskColor(
+  tasks: readonly CustomTask[] | undefined,
+  id: string,
+  color: string | null,
+): CustomTask[] {
+  return (tasks ?? []).map((task) => {
+    if (task.id !== id) return task;
+    if (color === null || !isTaskColor(color)) {
+      // Dropped rather than set to undefined: `exactOptionalPropertyTypes`
+      // draws a distinction, and so does a round trip through JSON.
+      const { color: _cleared, ...rest } = task;
+      return rest;
+    }
+    return { ...task, color };
+  });
+}
+
+/**
+ * Palette order first, then the order they were created in. The palette is
+ * the domain list, so colouring a task files it under a block and the
+ * history pane lists it in the same order as the step tracks above it.
+ * Uncoloured tasks come last — they belong to nothing in particular.
+ */
+export function byColor(tasks: readonly CustomTask[]): CustomTask[] {
+  const order = TASK_PALETTE.map((p) => p.color);
+  const rank = (task: CustomTask) => {
+    if (task.color === undefined) return order.length + 1;
+    const i = order.indexOf(task.color);
+    // A colour from outside the current palette still groups with its own
+    // kind, just after the ones the app offers.
+    return i < 0 ? order.length : i;
+  };
+  return tasks
+    .map((task, i) => ({ task, i }))
+    .sort(
+      (a, b) =>
+        rank(a.task) - rank(b.task) ||
+        (a.task.color ?? '').localeCompare(b.task.color ?? '') ||
+        a.i - b.i,
+    )
+    .map(({ task }) => task);
+}
 
 /** Absent cadence means daily — the shape every task had before weeklies existed. */
 export function cadenceOf(task: CustomTask): TaskCadence {

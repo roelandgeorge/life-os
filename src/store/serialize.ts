@@ -8,7 +8,7 @@
 
 import { isDateKey } from '../core/dates';
 import { DOMAIN_KEYS, emptyTicks, type DomainKey } from '../core/domains';
-import { MAX_CUSTOM_TASKS, MAX_TASK_NAME_LENGTH } from '../core/customTasks';
+import { isTaskColor, MAX_CUSTOM_TASKS, MAX_TASK_NAME_LENGTH } from '../core/customTasks';
 import type { AppState, CustomTask, DayLog } from '../core/types';
 import { SCHEMA_VERSION, type Envelope } from './types';
 
@@ -66,7 +66,11 @@ function parseCustomTasks(v: unknown): CustomTask[] {
     // Without carrying the cadence, an import would silently turn every
     // weekly task back into a daily one.
     const cadence = entry.cadence === 'weekly' ? 'weekly' : 'daily';
-    out.push({ id, name: name.trim().slice(0, MAX_TASK_NAME_LENGTH), cadence });
+    const task: CustomTask = { id, name: name.trim().slice(0, MAX_TASK_NAME_LENGTH), cadence };
+    // Anything that is not a colour is simply left off, the same as never
+    // having picked one.
+    if (isTaskColor(entry.color)) task.color = entry.color;
+    out.push(task);
     if (out.length >= MAX_CUSTOM_TASKS) break;
   }
   return out;

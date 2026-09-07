@@ -15,6 +15,7 @@ import {
   removeCustomTask,
   renameCustomTask,
   setCustomTaskCadence,
+  setCustomTaskColor,
   toggleCustomTick,
 } from '../core/customTasks';
 import type { AppState, CustomTask, DayLog, Projection, TaskCadence } from '../core/types';
@@ -34,6 +35,8 @@ export type LifeOS = {
   renameCustom: (id: string, name: string) => void;
   removeCustom: (id: string) => void;
   setCustomCadence: (id: string, cadence: TaskCadence) => void;
+  /** `null` clears it back to no colour. */
+  setCustomColor: (id: string, color: string | null) => void;
 };
 
 export function useLifeOS(store: Store): LifeOS {
@@ -142,6 +145,10 @@ export function useLifeOS(store: Store): LifeOS {
     mutateCustomTasks((tasks) => setCustomTaskCadence(tasks, id, cadence));
   }
 
+  function setCustomColor(id: string, color: string | null) {
+    mutateCustomTasks((tasks) => setCustomTaskColor(tasks, id, color));
+  }
+
   function updateTaskLabel(key: DomainKey, raw: string) {
     setState((prev) => {
       if (!prev) return prev;
@@ -173,5 +180,6 @@ export function useLifeOS(store: Store): LifeOS {
     renameCustom,
     removeCustom,
     setCustomCadence,
+    setCustomColor,
   };
 }

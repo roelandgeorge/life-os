@@ -73,6 +73,10 @@ list precisely so they cannot be mistaken for building blocks. Do not let them
 grow into the domain system — if something deserves to move the picture, it
 needs a panel and five drawings.
 
+They may now carry a building block's colour, which is filing only: nothing
+maps a colour back to a domain, and a coloured task still gets no pips and
+moves no panel. Keep it that way — a colour must never become a link.
+
 ## House style
 
 Match the existing code.

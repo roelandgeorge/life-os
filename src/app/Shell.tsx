@@ -31,6 +31,7 @@ export function Shell() {
     renameCustom,
     removeCustom,
     setCustomCadence,
+    setCustomColor,
   } = useLifeOS(store);
   const [tab, setTab] = useState<Tab>('main');
 
@@ -73,6 +74,7 @@ export function Shell() {
             onRenameCustom={renameCustom}
             onRemoveCustom={removeCustom}
             onSetCustomCadence={setCustomCadence}
+            onSetCustomColor={setCustomColor}
           />
         )}
       </div>

@@ -28,6 +28,13 @@ export type CustomTask = {
   name: string;
   /** Absent means daily — the shape every task had before weeklies existed. */
   cadence?: TaskCadence;
+  /**
+   * A filing colour, `#rrggbb`, absent when the user has not picked one. The
+   * palette offered is the building blocks' own, so a task can be filed
+   * alongside the block it belongs with. It is filing and nothing more — a
+   * coloured task still moves no panel.
+   */
+  color?: string;
 };
 
 export type TaskCadence = 'daily' | 'weekly';

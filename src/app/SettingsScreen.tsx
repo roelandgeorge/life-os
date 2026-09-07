@@ -11,10 +11,15 @@ import { disablePush, enablePush, type PushResult } from './push';
 import { weeklyDigest } from '../core/atRisk';
 import { VISIBLE_DOMAINS } from '../core/domains';
 import type { DomainKey } from '../core/domains';
-import type { AppState, TaskCadence } from '../core/types';
+import type { AppState, CustomTask, TaskCadence } from '../core/types';
 import { defaultTaskLabel, MAX_LABEL_LENGTH } from './taskLabels';
-import { cadenceOf, canAddCustomTask, MAX_TASK_NAME_LENGTH } from '../core/customTasks';
-import { en } from '../i18n/en';
+import {
+  cadenceOf,
+  canAddCustomTask,
+  MAX_TASK_NAME_LENGTH,
+  TASK_PALETTE,
+} from '../core/customTasks';
+import { en, t, type I18nKey } from '../i18n/en';
 import { ImportError } from '../store/serialize';
 import type { Store } from '../store/types';
 
@@ -27,6 +32,7 @@ export function SettingsScreen({
   onRenameCustom,
   onRemoveCustom,
   onSetCustomCadence,
+  onSetCustomColor,
 }: {
   state: AppState;
   store: Store;
@@ -36,6 +42,7 @@ export function SettingsScreen({
   onRenameCustom: (id: string, name: string) => void;
   onRemoveCustom: (id: string) => void;
   onSetCustomCadence: (id: string, cadence: TaskCadence) => void;
+  onSetCustomColor: (id: string, color: string | null) => void;
 }) {
   const [message, setMessage] = useState<string | null>(null);
   const [pushError, setPushError] = useState<string | null>(null);
@@ -159,6 +166,7 @@ export function SettingsScreen({
                     {c === 'daily' ? en['settings.custom.daily'] : en['settings.custom.weekly']}
                   </button>
                 ))}
+                <ColorPicker task={task} onPick={onSetCustomColor} />
               </div>
             </div>
           ))}
@@ -223,6 +231,42 @@ export function SettingsScreen({
         </button>
       </section>
     </div>
+  );
+}
+
+/**
+ * Swatches, not a colour wheel: the point is matching a building block, and
+ * an arbitrary colour would only make the list harder to read. Clicking the
+ * chosen one again clears it.
+ */
+function ColorPicker({
+  task,
+  onPick,
+}: {
+  task: CustomTask;
+  onPick: (id: string, color: string | null) => void;
+}) {
+  return (
+    <span className="swatches" role="group" aria-label={en['settings.custom.color']}>
+      {TASK_PALETTE.map(({ color, label }) => (
+        <button
+          key={color}
+          type="button"
+          className={task.color === color ? 'swatch on' : 'swatch'}
+          style={{ background: color }}
+          aria-pressed={task.color === color}
+          aria-label={t('settings.custom.color.match', { name: t(label as I18nKey) })}
+          onClick={() => onPick(task.id, task.color === color ? null : color)}
+        />
+      ))}
+      <button
+        type="button"
+        className={task.color === undefined ? 'swatch none on' : 'swatch none'}
+        aria-pressed={task.color === undefined}
+        aria-label={en['settings.custom.color.none']}
+        onClick={() => onPick(task.id, null)}
+      />
+    </span>
   );
 }
 

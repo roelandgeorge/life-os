@@ -19,7 +19,7 @@ function sampleState(): AppState {
     logs,
     notificationTime: null,
     taskLabels: { SLEEP: 'Went to bed before 22:30' },
-    customTasks: [{ id: 't1', name: 'No alcohol', cadence: 'weekly' }],
+    customTasks: [{ id: 't1', name: 'No alcohol', cadence: 'weekly', color: '#B85C38' }],
   };
 }
 
@@ -102,7 +102,9 @@ describe('export/import', () => {
 
   it('carries user-added tasks and their ticks through a round trip', () => {
     const restored = deserialize(serialize(sampleState()));
-    expect(restored.customTasks).toEqual([{ id: 't1', name: 'No alcohol', cadence: 'weekly' }]);
+    expect(restored.customTasks).toEqual([
+      { id: 't1', name: 'No alcohol', cadence: 'weekly', color: '#B85C38' },
+    ]);
     expect(restored.logs[0]?.customTicks).toEqual({ t1: true });
     expect(restored.logs[1]?.customTicks).toEqual({});
   });
@@ -112,6 +114,14 @@ describe('export/import', () => {
     raw.state.customTasks = [];
     const restored = deserialize(JSON.stringify(raw));
     expect(restored.logs[0]?.customTicks).toEqual({});
+  });
+
+  it('drops a colour that is not one, keeping the task', () => {
+    const raw = JSON.parse(serialize(sampleState()));
+    raw.state.customTasks[0].color = 'chartreuse';
+    const [task] = deserialize(JSON.stringify(raw)).customTasks ?? [];
+    expect(task?.name).toBe('No alcohol');
+    expect(task && 'color' in task).toBe(false);
   });
 
   it('drops a malformed task rather than failing the whole import', () => {

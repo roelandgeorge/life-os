@@ -11,7 +11,7 @@
 
 import { useState } from 'react';
 import { VISIBLE_DOMAINS, type DomainKey } from '../core/domains';
-import { editableDays, isDueToday, lastHit } from '../core/due';
+import { editableDays, isDueToday, isRestDay, lastHit } from '../core/due';
 import { fullDayStrip } from '../core/scoring';
 import { MAX_STEP } from '../core/steps';
 import type { AppState, Projection } from '../core/types';
@@ -94,6 +94,11 @@ export function MainScreen({
                 const due = isDueToday(d, state.logs, today);
                 const checked = editingLog?.ticks[d.key] ?? false;
                 const last = lastHit(state.logs, d.key, today);
+                // Left tickable on purpose. The box writes to whichever day
+                // the picker is on, so disabling it on today's rest day would
+                // also block filling in the training you forgot to log — and a
+                // second tick inside one period changes nothing anyway.
+                const rest = !due && isRestDay(d, state.logs, today);
                 return (
                   <label key={d.key} className={due ? 'checkin' : 'checkin collapsed'}>
                     <input type="checkbox" checked={checked} onChange={() => toggle(d.key, editing)} />
@@ -102,8 +107,12 @@ export function MainScreen({
                     </span>
                     <StepPips step={projection.preview[d.key]} color={d.color} />
                     {!due && (
-                      <span className="lastHit">
-                        {last ? t('main.lastHit', { date: last }) : en['main.neverHit']}
+                      <span className={rest ? 'lastHit rest' : 'lastHit'}>
+                        {rest
+                          ? en['main.restDay']
+                          : last
+                            ? t('main.lastHit', { date: last })
+                            : en['main.neverHit']}
                       </span>
                     )}
                   </label>
@@ -124,7 +133,10 @@ export function MainScreen({
                         checked={isCustomTicked(editingLog ?? undefined, task.id)}
                         onChange={() => toggleCustom(task.id, editing)}
                       />
-                      <span className="label">
+                      <span
+                        className="label"
+                        style={task.color === undefined ? undefined : { color: task.color }}
+                      >
                         {customTaskName(task, en['settings.custom.unnamed'])}
                       </span>
                       <span className="lastHit">{customNote(state, task, today, streak)}</span>

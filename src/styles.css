@@ -769,6 +769,48 @@ button.small {
   font-size: 11px;
 }
 
+/* Filing colours, taken from the building blocks. Round and small so the row
+   reads as a property of the task rather than another pair of buttons. */
+.swatches {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.chips button.swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.chips button.swatch.on {
+  border-color: var(--bg);
+  box-shadow: 0 0 0 2px var(--text);
+}
+
+.chips button.swatch.none {
+  background: none;
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+/* Same specificity as the rule above and later in the file, so without this
+   the "no colour" swatch loses its selected ring — the one state that is on
+   by default. */
+.chips button.swatch.none.on {
+  box-shadow: 0 0 0 2px var(--text);
+}
+
+/* The rest day is the plan working, so it says so in the same quiet voice as
+   a last-hit date rather than shouting about it. */
+.checkin .lastHit.rest {
+  font-style: italic;
+  opacity: 0.9;
+}
+
 /* The weekly ones carry a deadline, so their note earns a little more weight
    than a daily streak count. */
 .checkin.custom.weekly .lastHit {

@@ -30,6 +30,10 @@ export const en = {
   'settings.custom.unnamed': 'Unnamed task',
   'settings.custom.daily': 'Daily',
   'settings.custom.weekly': 'Weekly',
+  'settings.custom.color': 'Colour',
+  'settings.custom.color.none': 'No colour',
+  'settings.custom.color.match': 'Same colour as {name}',
+  'main.restDay': 'Rest day',
   'main.custom.weeklyDone': 'done this week',
   'main.custom.weeklyLeft': '{days} days left this week',
   'main.custom.weeklyLast': 'last day this week',
@@ -70,7 +74,7 @@ export const en = {
   'onboarding.closing.start': 'Start',
 
   // §6 navigation
-  'nav.main': 'Today',
+  'nav.main': 'Home',
   'nav.history': 'History',
   'nav.settings': 'Settings',
 
