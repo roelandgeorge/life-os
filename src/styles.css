@@ -220,9 +220,16 @@ button.on {
 }
 
 /* Inside .shell-body the screen is a flex child, not the viewport root — let
-   it fill the space the tab bar leaves rather than adding its own 100vh. */
+   it fill the space the tab bar leaves rather than adding its own 100vh.
+
+   The screen is also the scroll container, so the portrait and the check-ins
+   move together: the picture is what you meet first, and it slides up out of
+   the way as you reach for the boxes. Scrolling only the lower part instead
+   would pin the picture and leave the list reading through a letterbox. */
 .shell-body .main-screen {
   min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .main-screen .loading {
@@ -231,8 +238,12 @@ button.on {
 }
 
 .portrait {
-  flex: 2 1 0;
-  min-height: 0;
+  /* A share of the *viewport*, not of the content: percentages resolve
+     against the scroll container's own height, so the portrait keeps this
+     much of the screen however long the list below it grows. Over half, so
+     the picture still reads as the point of the app rather than a header. */
+  flex: none;
+  height: 64%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -248,9 +259,14 @@ button.on {
 }
 
 .below {
-  flex: 1 1 0;
+  flex: none;
   padding: 16px 20px 28px;
-  overflow-y: auto;
+  /* A full screen's worth, whatever the list holds. Without it the scroll
+     range is whatever the check-ins happen to add up to, so the portrait
+     slides half out of view with five boxes and fully out with eight — the
+     same gesture landing somewhere different each time. */
+  min-height: 100%;
+  box-sizing: border-box;
 }
 
 .headline {
