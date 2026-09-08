@@ -17,7 +17,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { get } from '@vercel/blob';
 import webpush from 'web-push';
-import { SUBSCRIPTION_PATH, type StoredRecord } from './subscribe.js';
+import { SUBSCRIPTION_PATH, vapidPublicKey, type StoredRecord } from './subscribe.js';
 
 type Result = {
   ok: boolean;
@@ -90,13 +90,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const cronSecretSet = Boolean(process.env.CRON_SECRET);
   const serverTimeUtc = new Date().toISOString();
 
-  const publicKey = process.env.VAPID_PUBLIC_KEY;
+  const publicKey = vapidPublicKey();
   const privateKey = process.env.VAPID_PRIVATE_KEY;
   if (!publicKey || !privateKey) {
     return send(res, {
       ok: false,
       stage: 'config',
-      detail: `VAPID keys are missing on the server (${!publicKey ? 'VAPID_PUBLIC_KEY' : 'VAPID_PRIVATE_KEY'} is not set).`,
+      detail: !publicKey
+        ? 'The server cannot see the public VAPID key. Set VITE_VAPID_PUBLIC_KEY in Vercel and redeploy.'
+        : 'VAPID_PRIVATE_KEY is not set on the server. Add it in Vercel and redeploy.',
       cronSecretSet,
       serverTimeUtc,
     });

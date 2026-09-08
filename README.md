@@ -250,11 +250,18 @@ phone — so the reminder asks rather than tells.
 
 | Variable | Where | What |
 |---|---|---|
-| `VITE_VAPID_PUBLIC_KEY` | Vercel + `.env.local` | Public half of the VAPID pair. Shipped to the browser by design. |
+| `VITE_VAPID_PUBLIC_KEY` | Vercel + `.env.local` | Public half of the VAPID pair. Shipped to the browser by design, and read by `api/` too — the `VITE_` prefix only decides what Vite bundles, not what a function can see. |
 | `VAPID_PRIVATE_KEY` | Vercel only | Secret. Never commit it. |
 | `VAPID_SUBJECT` | Vercel | `mailto:` address, required by the push spec. |
 | `CRON_SECRET` | Vercel | Vercel sends it as a bearer token; `api/cron.ts` refuses to run without it. |
 | `BLOB_READ_WRITE_TOKEN` | automatic | Added by Vercel when the Blob store is connected. |
+
+There is deliberately **one** public key variable. `api/` accepts
+`VAPID_PUBLIC_KEY` if it is set, but falls back to `VITE_VAPID_PUBLIC_KEY`:
+the browser subscribes with that one, and a push signed against a different
+pair is rejected. Two names for the same value is a standing invitation to
+set one, or to let them drift apart — either way reminders silently never
+arrive.
 
 Regenerate the VAPID pair with
 `node -e "console.log(require('web-push').generateVAPIDKeys())"`. Changing it

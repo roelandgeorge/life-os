@@ -98,3 +98,16 @@ function safeParse(raw: string): unknown {
     return undefined;
   }
 }
+
+/**
+ * The browser subscribes with `VITE_VAPID_PUBLIC_KEY` and the push service
+ * rejects anything signed against a different pair, so a separate
+ * `VAPID_PUBLIC_KEY` is one name too many: set only one of them and reminders
+ * never fire, set both differently and they fail on send. The Vite prefix
+ * only governs what gets bundled into the client — a serverless function can
+ * read the variable perfectly well — so fall back to it and let one value
+ * serve both sides.
+ */
+export function vapidPublicKey(): string | undefined {
+  return process.env.VAPID_PUBLIC_KEY ?? process.env.VITE_VAPID_PUBLIC_KEY;
+}

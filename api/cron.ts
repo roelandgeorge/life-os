@@ -14,7 +14,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { get } from '@vercel/blob';
 import webpush from 'web-push';
-import { SUBSCRIPTION_PATH, type StoredRecord } from './subscribe.js';
+import { SUBSCRIPTION_PATH, vapidPublicKey, type StoredRecord } from './subscribe.js';
 
 const DAY_MS = 86_400_000;
 
@@ -64,7 +64,7 @@ function authorised(req: VercelRequest): boolean {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!authorised(req)) return res.status(401).json({ error: 'Unauthorised' });
 
-  const publicKey = process.env.VAPID_PUBLIC_KEY;
+  const publicKey = vapidPublicKey();
   const privateKey = process.env.VAPID_PRIVATE_KEY;
   const subject = process.env.VAPID_SUBJECT ?? 'mailto:nobody@example.com';
   if (!publicKey || !privateKey) {
