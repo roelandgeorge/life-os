@@ -9,8 +9,9 @@
  */
 
 import { addDays, diffDays, rangeDates, type DateKey } from './dates';
-import { expectedGapDays, type DomainConfig, type DomainKey } from './domains';
-import type { DayLog } from './types';
+import { cadenceOf, isCustomTicked } from './customTasks';
+import { expectedGapDays, isWeeklyCadence, WEEKLY_PERIOD_DAYS, type DomainConfig, type DomainKey } from './domains';
+import type { CustomTask, DayLog } from './types';
 
 /** Most recent date strictly before `before` on which `key` was ticked. */
 export function lastHit(logs: readonly DayLog[], key: DomainKey, before: DateKey): DateKey | null {
@@ -39,7 +40,7 @@ export function isDueToday(domain: DomainConfig, logs: readonly DayLog[], today:
  * threshold `atRisk.ts` uses — a domain either has rest built into its
  * rhythm or it is on a long cycle, and the period length is what says which.
  */
-export const REST_MAX_PERIOD_DAYS = 7;
+export const REST_MAX_PERIOD_DAYS = WEEKLY_PERIOD_DAYS;
 
 export function isRestDay(
   domain: DomainConfig,
@@ -69,4 +70,38 @@ export function isEditable(date: DateKey, today: DateKey): boolean {
 /** Oldest first, today last — the order they are shown in, left to right. */
 export function editableDays(today: DateKey): DateKey[] {
   return rangeDates(addDays(today, -EDIT_WINDOW_DAYS), today);
+}
+
+/**
+ * The day's own work, finished: every short-cadence domain that is due today,
+ * and every daily task the user added.
+ *
+ * Weekly things are deliberately out. They are not part of a day — one is due
+ * on six days out of seven in the sense that you *could* do it, and letting
+ * that block the day would mean a Tuesday could never be complete. They get
+ * the lapse warning instead, which is the feedback a long cycle actually
+ * needs.
+ *
+ * Wider than `isFullDay` (scoring.ts), which only counts the always-daily
+ * domains: on a training day the training is part of finishing the day, and
+ * on a rest day it is not — `isDueToday` already says which.
+ */
+export function dailyTasksDone(
+  logs: readonly DayLog[],
+  domains: readonly DomainConfig[],
+  tasks: readonly CustomTask[] | undefined,
+  today: DateKey,
+): boolean {
+  const log = logs.find((l) => l.date === today);
+  if (!log) return false;
+
+  const due = domains.filter((d) => !isWeeklyCadence(d) && isDueToday(d, logs, today));
+  const daily = (tasks ?? []).filter((task) => cadenceOf(task) === 'daily');
+  // Nothing asked of today is not an achievement. It cannot happen while any
+  // daily domain exists, but a celebration for an empty list would be a lie.
+  if (due.length + daily.length === 0) return false;
+
+  return (
+    due.every((d) => log.ticks[d.key]) && daily.every((task) => isCustomTicked(log, task.id))
+  );
 }

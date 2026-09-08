@@ -97,6 +97,16 @@ decay are now symmetric at one step each; the old asymmetry existed to keep a
 bad week from feeling unrecoverable, and two good days back to the ceiling does
 that job more plainly.
 
+**A day's work gets a payoff** (`core/due.dailyTasksDone`, `app/Celebration.tsx`).
+Confetti and a medal, once, on the transition into "everything today is
+ticked" — not a banner that sits there afterwards, and not on opening a day
+that was already complete. Weekly things are deliberately excluded: one is
+available on six days out of seven, so letting it count would mean a Tuesday
+could never be finished. Training counts on the days it is due and not on rest
+days, which `isDueToday` already decides. Wider than §2.6's Full Day, which
+only tracks the always-daily domains — this is the checklist's own idea of
+done, and both exist because they answer different questions.
+
 **A rest day is named, not just dimmed** (`core/due.isRestDay`). A
 short-cadence domain in a period it has already satisfied showed as a faded
 row with a last-hit date, which reads as a gap. For strength training the gap
@@ -225,6 +235,7 @@ public/push-sw.js   push + notificationclick, imported into the generated SW
 src/app/push.ts     permission, subscribe, and every way it can fail
 api/subscribe.ts    stores the one subscription in a private Blob
 api/cron.ts         the daily send, guarded by CRON_SECRET
+api/test-push.ts    the same send on demand, reporting where it stops
 vercel.json         the schedule
 ```
 
@@ -252,12 +263,35 @@ on again.
 
 ### Testing it without waiting for evening
 
+**From the phone**: Settings → "Send a test notification", visible once the
+reminder is on. It walks the same chain the cron does and names the step that
+failed, because from the phone's side every failure looks identical — no
+notification, ever, with nothing to act on.
+
+| What it says | What is actually wrong |
+|---|---|
+| This browser has no subscription | The app's setting says on, but the browser dropped the subscription. Toggle off and on. |
+| No push endpoint is deployed | `api/` is not running — the deployment is the static site only. |
+| Could not read the subscription store | No Blob store, or `BLOB_READ_WRITE_TOKEN` missing, or the store was created public. |
+| The server has no subscription stored | The toggle was never switched on from this deployment. |
+| VAPID keys are missing on the server | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` not set in Vercel. |
+| The push service refused it | The endpoint or keys are stale — regenerate and re-subscribe. |
+| Sent — but `CRON_SECRET` is not set | Push works; the *daily job* refuses to run, so no evening reminder will ever fire. This is the one failure a working test push would otherwise hide. |
+
+Authorisation is the caller's own subscription endpoint, which is itself the
+capability that lets anything push to that device — so knowing it is proof of
+being it, and nothing is disclosed until it matches.
+
+**From anywhere**:
+
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" https://<your-app>.vercel.app/api/cron
 ```
 
 `{"sent":true}` means the push left Vercel. `{"sent":false,"reason":"no
-subscription"}` means the toggle was never switched on, on that device.
+subscription"}` means the toggle was never switched on, on that device. Without
+the header it must answer **401** — if it does not, `CRON_SECRET` is unset and
+the endpoint is refusing to run at all.
 
 ## Layout
 

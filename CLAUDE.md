@@ -24,7 +24,8 @@ Live on the user's Vercel deployment, which builds from `main` on GitHub.
 The real artwork is in, and web push is built (`api/`, `public/push-sw.js`) —
 but it only works once the Vercel side is configured: a **private** Blob store
 plus the VAPID/CRON env vars listed in README. Until then the toggle in
-Settings reports the failure rather than pretending.
+Settings reports the failure rather than pretending, and "Send a test
+notification" names which of those is missing — README has the table.
 
 History shows step tracks per domain plus a per-period strip for each custom
 task. It still does not show *which* day a domain was missed.
@@ -51,7 +52,8 @@ src/store/     Store interface + IndexedDB and in-memory impls (§5.1)
 src/visual/    layers.ts (domain -> artwork map) and the compositing Avatar
 src/app/       the shell: useLifeOS bridges Store+clock, every screen takes props
 src/i18n/      §5.3 — every user-facing string, as a flat key map
-api/           the only server-side code: push subscription + the daily send
+api/           the only server-side code: push subscription, the daily send,
+               and the on-demand test that says where the chain breaks
 scripts/       icons, artwork slicing, placeholder sheets — not app code
 public/avatar/ the artwork: <layer>.png contact sheets and their sliced states
 ```

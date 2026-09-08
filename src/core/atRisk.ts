@@ -12,7 +12,7 @@
  */
 
 import type { DateKey } from './dates';
-import { expectedGapDays, type DomainConfig } from './domains';
+import { expectedGapDays, WEEKLY_PERIOD_DAYS, type DomainConfig } from './domains';
 import { customHitDates, periodDaysOf } from './customTasks';
 import { currentPeriod, daysLeftInPeriod, hitInRange } from './periods';
 import type { CustomTask, DayLog } from './types';
@@ -32,7 +32,7 @@ export const RISK_DAYS_LEFT = 2;
  * other evening is nagging, not help. A week is the point at which a thing
  * can genuinely slip your mind.
  */
-export const RISK_MIN_PERIOD_DAYS = 7;
+export const RISK_MIN_PERIOD_DAYS = WEEKLY_PERIOD_DAYS;
 
 export type RiskItem = {
   kind: 'domain' | 'custom';

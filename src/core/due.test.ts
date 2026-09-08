@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { emptyTicks, getDomain } from './domains';
-import { editableDays, isDueToday, isEditable, isRestDay, lastHit } from './due';
-import type { DayLog } from './types';
+import { dailyTasksDone, editableDays, isDueToday, isEditable, isRestDay, lastHit } from './due';
+import type { CustomTask, DayLog } from './types';
+import type { DomainKey } from './domains';
 
 const SLEEP = getDomain('SLEEP');
 const RELATIONSHIP = getDomain('RELATIONSHIP');
@@ -89,5 +90,69 @@ describe('the retroactive edit window (§5.2)', () => {
 
   it('offers four days oldest-first, so today sits at the right-hand end', () => {
     expect(editableDays(TODAY)).toEqual(['2026-01-07', '2026-01-08', '2026-01-09', '2026-01-10']);
+  });
+});
+
+describe('dailyTasksDone', () => {
+  const domains = [SLEEP, SPORT, RELATIONSHIP];
+
+  function log(date: string, ticked: DomainKey[], custom: string[] = []): DayLog {
+    const ticks = emptyTicks();
+    for (const k of ticked) ticks[k] = true;
+    const customTicks: Record<string, boolean> = {};
+    for (const id of custom) customTicks[id] = true;
+    return { date, opened: true, ticks, customTicks };
+  }
+
+  it('is false when today has no log at all', () => {
+    expect(dailyTasksDone([], domains, undefined, '2026-01-10')).toBe(false);
+  });
+
+  it('is false while a daily domain is unticked', () => {
+    const logs = [log('2026-01-10', ['SPORT'])];
+    expect(dailyTasksDone(logs, domains, undefined, '2026-01-10')).toBe(false);
+  });
+
+  it('ignores the weekly domains — a Tuesday could never be finished otherwise', () => {
+    const logs = [log('2026-01-10', ['SLEEP', 'SPORT'])];
+    expect(isDueToday(RELATIONSHIP, logs, '2026-01-10')).toBe(true);
+    expect(dailyTasksDone(logs, domains, undefined, '2026-01-10')).toBe(true);
+  });
+
+  it('requires training on a day it is due', () => {
+    const logs = [log('2026-01-10', ['SLEEP'])];
+    expect(dailyTasksDone(logs, domains, undefined, '2026-01-10')).toBe(false);
+  });
+
+  it('does not require training on a rest day', () => {
+    const logs = [log('2026-01-09', ['SLEEP', 'SPORT']), log('2026-01-10', ['SLEEP'])];
+    expect(isRestDay(SPORT, logs, '2026-01-10')).toBe(true);
+    expect(dailyTasksDone(logs, domains, undefined, '2026-01-10')).toBe(true);
+  });
+
+  it('waits for the daily tasks the user added', () => {
+    const tasks: CustomTask[] = [{ id: 't1', name: 'No alcohol', cadence: 'daily' }];
+    const logs = [log('2026-01-10', ['SLEEP', 'SPORT'])];
+    expect(dailyTasksDone(logs, domains, tasks, '2026-01-10')).toBe(false);
+    expect(dailyTasksDone([log('2026-01-10', ['SLEEP', 'SPORT'], ['t1'])], domains, tasks, '2026-01-10')).toBe(
+      true,
+    );
+  });
+
+  it('ignores a weekly task of the user’s own, the same as a weekly domain', () => {
+    const tasks: CustomTask[] = [{ id: 't1', name: 'Call mum', cadence: 'weekly' }];
+    const logs = [log('2026-01-10', ['SLEEP', 'SPORT'])];
+    expect(dailyTasksDone(logs, domains, tasks, '2026-01-10')).toBe(true);
+  });
+
+  it('treats a task with no cadence as daily, the shape they had before weeklies', () => {
+    const tasks: CustomTask[] = [{ id: 't1', name: 'No alcohol' }];
+    const logs = [log('2026-01-10', ['SLEEP', 'SPORT'])];
+    expect(dailyTasksDone(logs, domains, tasks, '2026-01-10')).toBe(false);
+  });
+
+  it('is false when the day asks nothing at all', () => {
+    const logs = [log('2026-01-10', [])];
+    expect(dailyTasksDone(logs, [RELATIONSHIP], [], '2026-01-10')).toBe(false);
   });
 });

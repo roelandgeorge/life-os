@@ -7,7 +7,7 @@
  */
 
 import { useRef, useState } from 'react';
-import { disablePush, enablePush, type PushResult } from './push';
+import { disablePush, enablePush, testPush, type PushResult } from './push';
 import { weeklyDigest } from '../core/atRisk';
 import { VISIBLE_DOMAINS } from '../core/domains';
 import type { DomainKey } from '../core/domains';
@@ -47,6 +47,8 @@ export function SettingsScreen({
   const [message, setMessage] = useState<string | null>(null);
   const [pushError, setPushError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; detail: string } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   /**
@@ -76,6 +78,13 @@ export function SettingsScreen({
       return;
     }
     setPushError(describe(result));
+  }
+
+  async function handleTest() {
+    setTestResult(null);
+    setTesting(true);
+    setTestResult(await testPush());
+    setTesting(false);
   }
 
   async function handleExport() {
@@ -196,6 +205,18 @@ export function SettingsScreen({
         {!busy && pushError && <p className="note error">{pushError}</p>}
         {!busy && !pushError && state.notificationTime != null && (
           <p className="note">{en['settings.notifications.on']}</p>
+        )}
+
+        {state.notificationTime != null && (
+          <>
+            <button type="button" disabled={testing} onClick={() => void handleTest()}>
+              {testing ? en['settings.notifications.testing'] : en['settings.notifications.test']}
+            </button>
+            <p className="note">{en['settings.notifications.test.note']}</p>
+            {testResult && (
+              <p className={testResult.ok ? 'note' : 'note error'}>{testResult.detail}</p>
+            )}
+          </>
         )}
       </section>
 

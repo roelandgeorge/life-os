@@ -9,9 +9,9 @@
  * self for comparison"; see README.
  */
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { VISIBLE_DOMAINS, type DomainKey } from '../core/domains';
-import { editableDays, isDueToday, isRestDay, lastHit } from '../core/due';
+import { dailyTasksDone, editableDays, isDueToday, isRestDay, lastHit } from '../core/due';
 import { fullDayStrip } from '../core/scoring';
 import { MAX_STEP } from '../core/steps';
 import type { AppState, Projection } from '../core/types';
@@ -30,7 +30,11 @@ import { daysLeftInPeriod as daysLeftIn } from '../core/periods';
 import { getDomain } from '../core/domains';
 import { Avatar } from '../visual/Avatar';
 import { LAYER_KEYS, layerSteps, type LayerSteps } from '../visual/layers';
+import { Celebration } from './Celebration';
 import { FullDayStrip } from './FullDayStrip';
+
+/** How long the confetti stays up once every box for today is ticked. */
+const CELEBRATION_MS = 3000;
 
 /** Every layer at its ceiling — the same scene, maximally adherent. */
 const BEST: LayerSteps = Object.fromEntries(LAYER_KEYS.map((k) => [k, MAX_STEP])) as LayerSteps;
@@ -57,8 +61,25 @@ export function MainScreen({
   const steps = showBest ? BEST : layerSteps(projection.preview);
   const strip = fullDayStrip(state.logs, today, 30);
 
+  // Fires once, on the transition into "done" — not on every render while it
+  // stays true, and not for a day that was already complete when the app
+  // opened.
+  const allDone = dailyTasksDone(state.logs, VISIBLE_DOMAINS, state.customTasks, today);
+  const wasAllDone = useRef(allDone);
+  const [celebrate, setCelebrate] = useState(false);
+  useEffect(() => {
+    const justFinished = allDone && !wasAllDone.current;
+    wasAllDone.current = allDone;
+    if (!justFinished) return;
+    setCelebrate(true);
+    const timer = setTimeout(() => setCelebrate(false), CELEBRATION_MS);
+    return () => clearTimeout(timer);
+  }, [allDone]);
+
   return (
     <div className="main-screen">
+      {celebrate && <Celebration />}
+
       <div className="portrait">
         <Avatar steps={steps} />
       </div>

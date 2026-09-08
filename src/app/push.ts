@@ -114,6 +114,58 @@ export async function enablePush(digest?: PushDigest): Promise<PushResult> {
   }
 }
 
+/**
+ * Fires the real thing on demand: server, VAPID, push service, service
+ * worker. Every step of that chain fails silently in normal use, so this
+ * reports which one, in words meant for the person holding the phone.
+ *
+ * The endpoint URL is what proves to the server that this is the subscribed
+ * device — see api/test-push.ts.
+ */
+export async function testPush(): Promise<{ ok: boolean; detail: string }> {
+  if (!pushSupported()) {
+    return { ok: false, detail: 'This browser cannot do push notifications.' };
+  }
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      // Worth its own message: the app's own setting can read "on" while the
+      // browser has quietly dropped the subscription, and that combination
+      // looks exactly like a broken server.
+      return {
+        ok: false,
+        detail: 'This browser has no subscription. Switch the reminder off and on again.',
+      };
+    }
+    if (Notification.permission !== 'granted') {
+      return { ok: false, detail: 'Notifications are blocked for this app in your browser settings.' };
+    }
+
+    const response = await fetch('/api/test-push', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ endpoint: subscription.endpoint }),
+    });
+    if (!response.ok) {
+      return { ok: false, detail: `The server did not answer (${response.status}).` };
+    }
+    // A deployment without the serverless functions answers this with the
+    // app's own HTML, which would otherwise surface as a JSON parse error and
+    // send you looking in the wrong place.
+    if (!response.headers.get('content-type')?.includes('application/json')) {
+      return {
+        ok: false,
+        detail: 'No push endpoint is deployed at /api/test-push — the server side of the app is not running.',
+      };
+    }
+    const result = (await response.json()) as { ok?: boolean; detail?: string };
+    return { ok: result.ok === true, detail: result.detail ?? 'The server gave no reason.' };
+  } catch (err) {
+    return { ok: false, detail: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 export async function disablePush(): Promise<void> {
   if (!pushSupported()) return;
   try {

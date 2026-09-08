@@ -138,6 +138,18 @@ export const DAILY_DOMAIN_KEYS: readonly DomainKey[] = DOMAINS.filter(
   (d) => d.daily && d.visible,
 ).map((d) => d.key);
 
+/**
+ * The line between "part of the daily rhythm" and "a commitment on a long
+ * cycle". Three rules need it and must agree: the lapse warning only nags
+ * about the long ones, only the short ones can have a rest day, and only the
+ * short ones have to be ticked for a day to count as finished.
+ */
+export const WEEKLY_PERIOD_DAYS = 7;
+
+export function isWeeklyCadence(d: DomainConfig): boolean {
+  return expectedGapDays(d) >= WEEKLY_PERIOD_DAYS;
+}
+
 /** `r` as a decimal, for display and for sanity checks against the §1 table. */
 export function targetRate(d: DomainConfig): number {
   return d.r.n / d.r.per;

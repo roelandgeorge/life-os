@@ -49,6 +49,7 @@ export const en = {
   'settings.tasks.note': 'Name the thing you actually do. Leave a box empty to use the default.',
   'main.editingPast': "Filling in {day}. The picture still shows today's standing.",
   'main.fullDay': 'Full day. This is the trajectory.',
+  'main.allDone': 'Daily tasks all done',
   'main.lastHit': 'last: {date}',
   'main.neverHit': 'not yet',
   'main.loading': 'Loading…',
@@ -94,6 +95,10 @@ export const en = {
   'settings.notifications.error.notInstalled': 'On iPhone, add Life OS to your home screen first — Safari only allows notifications for an installed app. Share menu, then "Add to Home Screen".',
   'settings.notifications.error.denied': 'Notifications are blocked. Allow them for this app in your browser or phone settings, then try again.',
   'settings.notifications.error.failed': 'Could not set up notifications.',
+  'settings.notifications.test': 'Send a test notification',
+  'settings.notifications.testing': 'Sending…',
+  'settings.notifications.test.note':
+    'Goes through the whole chain the evening reminder uses, and says where it stops if it stops.',
   'settings.data': 'Data',
   'settings.export': 'Export',
   'settings.import': 'Import',
