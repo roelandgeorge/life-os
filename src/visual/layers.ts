@@ -10,7 +10,7 @@
  * a strong panel must not hide a neglected one sharing its drawing.
  */
 
-import type { PanelKey } from '../core/domains';
+import type { PanelKey, PanelSteps } from '../core/domains';
 import { PANEL_KEYS } from '../core/domains';
 
 export type LayerKey = 'achtergrond' | 'lief' | 'user';
@@ -44,7 +44,6 @@ export const ADAPTED_PANEL_KEYS: readonly PanelKey[] = [
   ...new Set(LAYERS.flatMap((l) => l.panels)),
 ];
 
-export type PanelSteps = Record<PanelKey, number>;
 export type LayerSteps = Record<LayerKey, number>;
 
 /** Each layer takes the lowest step among the panels standing in for it. */

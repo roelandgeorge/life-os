@@ -20,6 +20,9 @@ export type PanelKey = 'body' | 'head' | 'network' | 'partner' | 'wealth';
 
 export const PANEL_KEYS: readonly PanelKey[] = ['body', 'head', 'network', 'partner', 'wealth'];
 
+/** A step (0-4) per panel — what `core/steps.ts` computes and the renderer consumes. */
+export type PanelSteps = Record<PanelKey, number>;
+
 export interface DomainConfig {
   key: DomainKey;
   /** i18n key into src/i18n/en.ts. The literal string lives there, not here. */

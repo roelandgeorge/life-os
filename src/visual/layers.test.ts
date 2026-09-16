@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { PANEL_KEYS, type PanelKey } from '../core/domains';
-import { ADAPTED_PANEL_KEYS, LAYERS, coversEveryPanel, layerSteps, type PanelSteps } from './layers';
+import { PANEL_KEYS, type PanelKey, type PanelSteps } from '../core/domains';
+import { ADAPTED_PANEL_KEYS, LAYERS, coversEveryPanel, layerSteps } from './layers';
 
 function steps(overrides: Partial<PanelSteps>): PanelSteps {
   return Object.fromEntries(PANEL_KEYS.map((p) => [p, overrides[p] ?? 0])) as PanelSteps;

@@ -1,68 +1,83 @@
 import type { DateKey } from './dates';
-import type { DomainKey, DomainTicks } from './domains';
-import type { DomainSteps } from './steps';
+import type { Cadence } from './catalog';
+import type { DomainKey, PanelSteps } from './domains';
 
-/** §5 data model. */
-
-export type DayLog = {
-  date: DateKey;
-  /** Whether the app was opened that day. Kept for the record; the step model
-   *  charges a miss either way, so it no longer grants amnesty (§2.2). */
-  opened: boolean;
-  ticks: DomainTicks;
-  /**
-   * Ticks for user-added tasks, keyed by task id. Separate from `ticks`
-   * because the step engine iterates `DOMAINS` and must never meet a key it
-   * does not recognise. Absent on days before the feature existed.
-   */
-  customTicks?: Record<string, boolean>;
-};
+export type { Cadence } from './catalog';
 
 /**
- * A task the user added that belongs to no building block, and therefore
- * moves no panel. See `core/customTasks.ts` for why that is a deliberate
- * compromise rather than an oversight.
+ * A habit the user has added — from the catalogue or written themselves.
+ * Replaces both the old fixed `DomainTicks` and `CustomTask`: every habit is
+ * now the same shape, and whether it moves a panel is decided by one thing,
+ * `domain` being present (§1.3 of docs/plan/phase-1.md).
  */
-export type CustomTask = {
+export type UserHabit = {
   id: string;
-  name: string;
-  /** Absent means daily — the shape every task had before weeklies existed. */
-  cadence?: TaskCadence;
+  /** The catalogue item this came from, if any. Absent for a habit the user wrote themselves. */
+  catalogId?: string;
+  title: string;
   /**
-   * A filing colour, `#rrggbb`, absent when the user has not picked one. The
-   * palette offered is the building blocks' own, so a task can be filed
-   * alongside the block it belongs with. It is filing and nothing more — a
-   * coloured task still moves no panel.
+   * Absent means this habit moves no panel — it still counts for XP (phase 6)
+   * but nothing in the artwork answers to it, the same compromise the old
+   * `CustomTask` made explicit.
    */
+  domain?: DomainKey;
+  cadence: Cadence;
+  /** 1-5, defaults to the catalogue value when added from there, 3 for a habit the user writes themselves. */
+  importance: number;
+  /**
+   * Periods are anchored here, not at `logs[0].date` — each habit added later
+   * gets its own clock rather than inheriting one that started before it existed.
+   */
+  startDate: DateKey;
+  /**
+   * A soft delete: history and streaks up to this date stay correct, the
+   * habit simply stops asking anything of the user from here on.
+   */
+  removedDate?: DateKey;
+  /** A filing colour, `#rrggbb`. For a domain habit this defaults to the domain's own. */
   color?: string;
 };
 
-export type TaskCadence = 'daily' | 'weekly';
+export type DayLog = {
+  date: DateKey;
+  /** Whether the app was opened that day. Kept for the record; the step model charges a miss either way. */
+  opened: boolean;
+  /** Which habits were ticked, keyed by `UserHabit.id`. Presence means ticked — there is no `false` entry. */
+  ticks: Record<string, true>;
+};
+
+export type Gender = 'male' | 'female';
+
+/**
+ * Filled in by onboarding (phase 4). Optional throughout phase 1 — nothing
+ * here is read yet, but the shape is fixed now so the catalogue filters
+ * (`core/catalog.ts`) and the migration have somewhere to write.
+ */
+export type Profile = {
+  gender?: Gender;
+  hair?: string;
+  partner?: { wanted: boolean; gender?: Gender; hair?: string };
+  children?: boolean;
+  domainOrder?: readonly DomainKey[];
+  personaId?: string;
+};
 
 export type AppState = {
-  /** Append-only, sorted by date ascending, capped at 400 days (§5).
-   *  The only source of truth: every step is recomputed from this. */
+  schemaVersion: 2;
+  /** Append-only, sorted by date ascending, capped at 400 days. The only source of truth. */
   logs: DayLog[];
+  /** In the order they were added. */
+  habits: UserHabit[];
+  profile?: Profile;
   /** §6 settings — evening notification time, "HH:mm" local, or `null` for off. */
   notificationTime?: string | null;
-  /**
-   * What each check-in is called, when the user has renamed it. Falls back to
-   * the §5.3 default per domain.
-   *
-   * "Slept 8 hours" is a guess at what the domain means to this person;
-   * "Went to bed before 22:30" is the thing they actually do. A box you wrote
-   * yourself is harder to tick dishonestly.
-   */
-  taskLabels?: Partial<Record<DomainKey, string>>;
-  /** User-added tasks, in the order they were created. */
-  customTasks?: CustomTask[];
 };
 
 /** Everything the UI needs for one moment in time. Derived, never persisted. */
 export type Projection = {
   /** Steps from closed periods only. */
-  steps: DomainSteps;
-  /** What the picture shows: the above, plus any hit in the period in progress. */
-  preview: DomainSteps;
+  steps: PanelSteps;
+  /** What the picture shows: the above, plus any hit in the period(s) in progress. */
+  preview: PanelSteps;
   fullDay: boolean;
 };
