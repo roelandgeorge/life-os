@@ -1,75 +1,62 @@
 /**
- * The artwork layers, and which domains drive each.
+ * Temporary adapter from the 5 panels (§1.2 of docs/plan/phase-1.md) onto the
+ * 3 PNG layer sets that exist today. Phase 2 gives each panel its own artwork
+ * and this file collapses to the identity map; nothing outside this module
+ * should assume the 3-layer shape is permanent.
  *
- * This table is the whole contract between the step model and the renderer: a
- * layer shows one of five images, chosen by the *lowest* step among the
- * domains that feed it.
- *
- * Lowest, not average: you cannot out-train a bad diet, and averaging would
- * let a strong domain hide a neglected one — the same reason §2.5 refuses a
- * single global life score.
- *
- * A domain that appears in no layer is not in the app at all: no artwork, and
- * no checkbox either. A tick that changes nothing on screen would break the
- * one thing this app is built on. ORDER and MIND are currently in that state
- * by choice; giving either a layer here is all it takes to bring it back.
- *
- * `user` is head and body in one drawing. They were separate layers first, so
- * that a bad night showed in the face while training still showed in the
- * build; merging them means the whole figure moves at the pace of whichever
- * of the three is furthest behind. Splitting them again is this table plus a
- * fourth set of images, and nothing else.
+ * body/head -> user, network+partner -> lief, wealth -> achtergrond, each
+ * taking the *minimum* of the panels it stands in for — the same "lowest
+ * wins" rule the old domain->layer mapping used, and for the same reason:
+ * a strong panel must not hide a neglected one sharing its drawing.
  */
 
-import type { DomainKey } from '../core/domains';
-import type { DomainSteps } from '../core/steps';
+import type { PanelKey } from '../core/domains';
+import { PANEL_KEYS } from '../core/domains';
 
 export type LayerKey = 'achtergrond' | 'lief' | 'user';
 
 export interface LayerConfig {
   key: LayerKey;
-  /** The layer's step is the minimum across these. */
-  domains: readonly DomainKey[];
-  /** Where the panel sits, in FRAME units. */
+  /** The layer's step is the minimum across these panels. */
+  panels: readonly PanelKey[];
+  /** Where the panel sits, in FRAME units — the artwork's own pixel dimensions. */
   rect: { x: number; y: number; w: number; h: number };
 }
 
 /**
  * The scene is a collage of abutting panels, not a stack of cut-outs: the
  * background is a band across the top, the two figures sit side by side
- * beneath it. That is what lets each panel be drawn as its own complete
- * picture — no alpha, no matching perspective or ground shadows between
- * panels, no seams to hide.
- *
- * These numbers are the artwork's own pixel dimensions, so the panels tile
- * exactly. Re-crop the art and these move with it; nothing else does.
+ * beneath it. These numbers are the artwork's own pixel dimensions, unchanged
+ * from phase 1 — re-cropping the art moves these with it, nothing else does.
  */
 export const FRAME = { w: 682, h: 1033 };
 
 export const LAYERS: readonly LayerConfig[] = [
-  { key: 'achtergrond', domains: ['INCOME'], rect: { x: 0, y: 0, w: 682, h: 401 } },
-  { key: 'user', domains: ['SLEEP', 'SPORT', 'FOOD'], rect: { x: 0, y: 401, w: 409, h: 632 } },
-  { key: 'lief', domains: ['RELATIONSHIP'], rect: { x: 409, y: 401, w: 273, h: 632 } },
+  { key: 'achtergrond', panels: ['wealth'], rect: { x: 0, y: 0, w: 682, h: 401 } },
+  { key: 'user', panels: ['body', 'head'], rect: { x: 0, y: 401, w: 409, h: 632 } },
+  { key: 'lief', panels: ['network', 'partner'], rect: { x: 409, y: 401, w: 273, h: 632 } },
 ];
 
 export const LAYER_KEYS: readonly LayerKey[] = LAYERS.map((l) => l.key);
 
-/** Every domain that drives at least one layer — i.e. everything the app shows. */
-export const VISIBLE_DOMAIN_KEYS: readonly DomainKey[] = [
-  ...new Set(LAYERS.flatMap((l) => l.domains)),
+/** Every panel this temporary adapter accounts for — currently all 5. */
+export const ADAPTED_PANEL_KEYS: readonly PanelKey[] = [
+  ...new Set(LAYERS.flatMap((l) => l.panels)),
 ];
 
-export function isVisibleDomain(key: DomainKey): boolean {
-  return VISIBLE_DOMAIN_KEYS.includes(key);
-}
-
+export type PanelSteps = Record<PanelKey, number>;
 export type LayerSteps = Record<LayerKey, number>;
 
-/** Each layer takes the lowest step among the domains feeding it. */
-export function layerSteps(steps: DomainSteps): LayerSteps {
+/** Each layer takes the lowest step among the panels standing in for it. */
+export function layerSteps(steps: PanelSteps): LayerSteps {
   const out = {} as LayerSteps;
   for (const layer of LAYERS) {
-    out[layer.key] = Math.min(...layer.domains.map((k) => steps[k]));
+    out[layer.key] = Math.min(...layer.panels.map((p) => steps[p]));
   }
   return out;
+}
+
+/** Sanity check the adapter and the panel list agree — pinned by `layers.test.ts`. */
+export function coversEveryPanel(): boolean {
+  return PANEL_KEYS.every((p) => ADAPTED_PANEL_KEYS.includes(p));
 }

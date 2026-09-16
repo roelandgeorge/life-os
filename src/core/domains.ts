@@ -1,123 +1,51 @@
 /**
- * Domains are data, not code (§1).
+ * The 10 catalogue domains (§1.1, §1.2 of docs/plan/phase-1.md), and which of
+ * the 5 panels each one drives.
  *
- * Everything downstream — scoring, visual mapping, the check-in list — iterates
- * this array. Adding an eighth domain must never require editing the engine.
+ * Domains are data, not code — nothing downstream may branch on a domain key.
+ * `DomainKey` is owned by `core/catalog.ts` (the catalogue needed it first);
+ * this module re-exports it so nothing else has to know that.
  */
 
-export type DomainKey =
-  | 'SLEEP'
-  | 'FOOD'
-  | 'SPORT'
-  | 'ORDER'
-  | 'RELATIONSHIP'
-  | 'MIND'
-  | 'INCOME';
+import type { DomainKey } from './catalog';
+export type { DomainKey } from './catalog';
+export { DOMAIN_KEYS } from './catalog';
+
+/**
+ * The five panels the avatar renders from (§1.1 "5 delen"). `visual/layers.ts`
+ * holds the temporary adapter from these onto the 3 PNG sets that exist today;
+ * phase 2 gives each panel its own artwork and that adapter goes away.
+ */
+export type PanelKey = 'body' | 'head' | 'network' | 'partner' | 'wealth';
+
+export const PANEL_KEYS: readonly PanelKey[] = ['body', 'head', 'network', 'partner', 'wealth'];
 
 export interface DomainConfig {
   key: DomainKey;
-  /** i18n key into src/i18n/en.ts (§5.3). The literal string lives there, not here. */
+  /** i18n key into src/i18n/en.ts. The literal string lives there, not here. */
   label: string;
-  /**
-   * Target rate `r` (§1), as the rational cadence it actually is: `n` hits per
-   * `per` days. Two reasons this is not a decimal.
-   *
-   * 1. §1 gives both decimals and fractions; the fractions are normative.
-   *    0.143 rounds 1/7 *up*, capping a perfectly adherent weekly domain at
-   *    A = 4/(0.143·28) = 0.999 — the user does exactly what was asked and
-   *    never reaches 100. The other roundings happen to fall the generous way.
-   *    Relying on that is luck, not design.
-   * 2. Even with exact fractions, `hits / (r · W)` is not 1.0 in doubles:
-   *    (3/90)·90 is 3.0000000000000004. Keeping numerator and denominator
-   *    separate makes `adherence` integer arithmetic, so exact cadence gives
-   *    exactly 1.0 rather than something that merely rounds to it.
-   *
-   * It is also the form a user would type: "4 times per 7 days", not "0.571".
-   */
-  r: { n: number; per: number };
   color: string;
   /**
-   * True when the domain is expected every day. Drives §2.6 Full Day and the
-   * "not due today, shown collapsed" rule on the main screen (§6).
+   * Which panel(s) this domain moves. A domain can drive more than one
+   * (sleep and nutrition both feed body and head); a domain with an empty
+   * list would be invisible in the same sense the old `visible: false` was,
+   * but every current domain drives at least one.
    */
-  daily: boolean;
-  /**
-   * False hides the domain completely: no artwork layer, and no checkbox
-   * either. A tick that changes nothing on screen would break the causal link
-   * the whole app rests on, so a domain with no layer gets no check-in.
-   *
-   * Must agree with `visual/layers.ts`, which decides what artwork exists;
-   * `layers.test.ts` asserts the two tables match.
-   */
-  visible: boolean;
+  panels: readonly PanelKey[];
 }
 
 export const DOMAINS: readonly DomainConfig[] = [
-  {
-    key: 'SLEEP',
-    label: 'domain.sleep',
-    r: { n: 1, per: 1 },
-    color: '#6C8EBF',
-    daily: true,
-    visible: true,
-  },
-  {
-    key: 'FOOD',
-    label: 'domain.food',
-    r: { n: 1, per: 1 },
-    color: '#B85C38',
-    daily: true,
-    visible: true,
-  },
-  {
-    key: 'SPORT',
-    // Strength training every other day, which §1's "4 per 7 days" already
-    // rounded to a two-day period. Stated directly so the intent is legible.
-    label: 'domain.sport',
-    r: { n: 1, per: 2 },
-    color: '#C08A2E',
-    // Not daily: a rest day is correct behaviour, so it must neither collapse
-    // the check-in into a miss nor block a Full Day.
-    daily: false,
-    visible: true,
-  },
-  {
-    key: 'ORDER',
-    label: 'domain.order',
-    r: { n: 6, per: 7 }, // §1 lists 0.857
-    color: '#5C8A72',
-    daily: true,
-    visible: false,
-  },
-  {
-    key: 'RELATIONSHIP',
-    label: 'domain.relationship',
-    r: { n: 1, per: 7 }, // §1 lists 0.143
-    color: '#A8557F',
-    daily: false,
-    visible: true,
-  },
-  {
-    key: 'MIND',
-    label: 'domain.mind',
-    r: { n: 1, per: 7 }, // §1 lists 0.143
-    color: '#7A6BA8',
-    daily: false,
-    visible: false,
-  },
-  {
-    key: 'INCOME',
-    label: 'domain.income',
-    // §1 asked for 3 per 90 days. Weekly instead: a quarterly cadence moves
-    // the picture so rarely that the tick stops feeling connected to it.
-    r: { n: 1, per: 7 },
-    color: '#4F6F7A',
-    daily: false,
-    visible: true,
-  },
+  { key: 'sleep', label: 'domain.sleep', color: '#6C8EBF', panels: ['body', 'head'] },
+  { key: 'nutrition', label: 'domain.nutrition', color: '#B85C38', panels: ['body', 'head'] },
+  { key: 'training', label: 'domain.training', color: '#C08A2E', panels: ['body'] },
+  { key: 'appearance', label: 'domain.appearance', color: '#8A7A66', panels: ['body', 'head'] },
+  { key: 'mindset', label: 'domain.mindset', color: '#7A6BA8', panels: ['head'] },
+  { key: 'productivity', label: 'domain.productivity', color: '#5C8A72', panels: ['head'] },
+  { key: 'social', label: 'domain.social', color: '#A8557F', panels: ['network'] },
+  { key: 'hospitality', label: 'domain.hospitality', color: '#C97B63', panels: ['network'] },
+  { key: 'family', label: 'domain.family', color: '#B5793F', panels: ['partner'] },
+  { key: 'finance', label: 'domain.finance', color: '#4F6F7A', panels: ['wealth'] },
 ] as const;
-
-export const DOMAIN_KEYS: readonly DomainKey[] = DOMAINS.map((d) => d.key);
 
 const BY_KEY = new Map<DomainKey, DomainConfig>(DOMAINS.map((d) => [d.key, d]));
 
@@ -127,46 +55,7 @@ export function getDomain(key: DomainKey): DomainConfig {
   return d;
 }
 
-/** Everything the app shows a checkbox for. */
-export const VISIBLE_DOMAINS: readonly DomainConfig[] = DOMAINS.filter((d) => d.visible);
-
-/**
- * The daily domains that must all be ticked for a Full Day (§2.6) — visible
- * ones only, so a hidden domain cannot make a Full Day unreachable.
- */
-export const DAILY_DOMAIN_KEYS: readonly DomainKey[] = DOMAINS.filter(
-  (d) => d.daily && d.visible,
-).map((d) => d.key);
-
-/**
- * The line between "part of the daily rhythm" and "a commitment on a long
- * cycle". Three rules need it and must agree: the lapse warning only nags
- * about the long ones, only the short ones can have a rest day, and only the
- * short ones have to be ticked for a day to count as finished.
- */
-export const WEEKLY_PERIOD_DAYS = 7;
-
-export function isWeeklyCadence(d: DomainConfig): boolean {
-  return expectedGapDays(d) >= WEEKLY_PERIOD_DAYS;
+/** Every domain that feeds a given panel — the reverse of `DomainConfig.panels`. */
+export function domainsForPanel(panel: PanelKey): readonly DomainConfig[] {
+  return DOMAINS.filter((d) => d.panels.includes(panel));
 }
-
-/** `r` as a decimal, for display and for sanity checks against the §1 table. */
-export function targetRate(d: DomainConfig): number {
-  return d.r.n / d.r.per;
-}
-
-/**
- * How many days a domain may sit untouched before it is due, derived from the
- * cadence rather than configured separately. Drives the "not due today" collapse
- * on the main screen (§6), so a user-defined domain gets it for free.
- */
-export function expectedGapDays(d: DomainConfig): number {
-  return Math.max(1, Math.round(d.r.per / d.r.n));
-}
-
-export type DomainTicks = Record<DomainKey, boolean>;
-
-export function emptyTicks(): DomainTicks {
-  return Object.fromEntries(DOMAIN_KEYS.map((k) => [k, false])) as DomainTicks;
-}
-
