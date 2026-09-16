@@ -60,6 +60,12 @@ export function habitHitDates(logs: readonly DayLog[], habitId: string): Set<Dat
   return out;
 }
 
+/** Blank falls back to a placeholder rather than rendering a nameless row. */
+export function habitTitle(habit: UserHabit, fallback: string): string {
+  const trimmed = habit.title.trim();
+  return trimmed.length > 0 ? trimmed : fallback;
+}
+
 export function isHabitTicked(log: DayLog | undefined, habitId: string): boolean {
   return log?.ticks[habitId] === true;
 }
