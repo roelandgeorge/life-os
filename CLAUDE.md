@@ -21,11 +21,16 @@ the EWMA scoring engine gave way to the step model. README explains both.
 
 Live on the user's Vercel deployment, which builds from `main` on GitHub.
 
-The real artwork is in, and web push is built (`api/`, `public/push-sw.js`) —
-but it only works once the Vercel side is configured: a **private** Blob store
-plus the VAPID/CRON env vars listed in README. Until then the toggle in
-Settings reports the failure rather than pretending, and "Send a test
-notification" names which of those is missing — README has the table.
+The real artwork is in, and web push works end to end on the user's phone:
+the private Blob store and the VAPID/CRON env vars are configured in Vercel.
+If it breaks, Settings → "Send a test notification" names the failing step —
+README has the table.
+
+**Push is single-user.** `api/subscribe.ts` writes the one subscription to a
+fixed path, so a second person switching the reminder on silently replaces
+the first. Everything else is per-device and already works for any number of
+users. Fix this before the app is shared: one blob per subscription, and a
+cron that walks them all.
 
 History shows step tracks per domain plus a per-period strip for each custom
 task. It still does not show *which* day a domain was missed.
@@ -44,19 +49,61 @@ npm run slice        # cut public/avatar/<layer>.png sheets into <layer>1..5.png
 npm run compress     # losslessly shrink the artwork PNGs
 ```
 
-## Layout
+## Tech stack, and why
+
+| Choice | Why |
+|---|---|
+| **React 18 + TypeScript**, Vite 6 | Small single-page app; Vite gives the dev server, the build and the PWA plugin in one. |
+| TS `strict` + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes` | The model is date and index arithmetic; these catch the off-by-one and "absent vs undefined" bugs that matter in an append-only log. Helpers return concrete values rather than `T \| undefined` to satisfy them. |
+| **No UI library, no router, no state library** | Three screens switched by a tab bar (`app/Shell.tsx`); one hook (`useLifeOS`) owns state. Plain CSS in `src/styles.css`. |
+| **IndexedDB**, behind a `Store` interface | Local-first: no account, no server database, works offline. The interface keeps storage swappable and lets tests use `MemoryStore`. |
+| **PWA** via `vite-plugin-pwa` (generateSW) | Installable to the home screen, which iOS requires before it allows push. Push handlers are imported into the generated worker from `public/push-sw.js`. |
+| **Vercel** hosting + serverless functions in `api/` | Deploys from `main`. The only server code, and only for push. |
+| **Web Push** (`web-push`, VAPID) + **Vercel Cron** + **Vercel Blob** (private) | Hobby plan: one cron a day, UTC, ±59 min — hence a reminder toggle, not a time picker. |
+| **Vitest** | Pure model tests; `environment: node`, only `src/**/*.test.ts`. |
+| Drawn **PNG artwork**, 3 panels × 5 states | Replaced a parametric SVG figure; see README for why. `sharp` (dev only) slices, compresses and makes icons. |
+
+## Project structure
 
 ```
-src/core/      the model — no DOM, no clock, no storage
-src/store/     Store interface + IndexedDB and in-memory impls (§5.1)
-src/visual/    layers.ts (domain -> artwork map) and the compositing Avatar
-src/app/       the shell: useLifeOS bridges Store+clock, every screen takes props
-src/i18n/      §5.3 — every user-facing string, as a flat key map
-api/           the only server-side code: push subscription, the daily send,
-               and the on-demand test that says where the chain breaks
-scripts/       icons, artwork slicing, placeholder sheets — not app code
-public/avatar/ the artwork: <layer>.png contact sheets and their sliced states
+index.html, src/main.tsx   entry
+src/core/       the model — pure: no DOM, no clock, no storage
+  domains.ts      the building blocks as data: cadence, colour, daily, visible
+  steps.ts        the step model: 0–4 per domain, recomputed from the log
+  periods.ts      period arithmetic anchored at logs[0].date, shared by all
+  due.ts          due today, rest day, edit window, dailyTasksDone
+  atRisk.ts       the weekly lapse warning + the id-only digest sent to the server
+  customTasks.ts  user-added tasks: cadence, colour, streaks
+  projection.ts   what the screen shows now; scoring.ts: Full Day, log trimming
+  types.ts        AppState, DayLog, CustomTask, Projection
+src/store/      Store interface (types.ts), indexeddb.ts, memory.ts, serialize.ts
+src/visual/     layers.ts (domain -> panel table), Avatar.tsx (the only file naming PNGs)
+src/app/        App (onboarding gate), Shell (tabs), Main/History/Settings screens,
+                useLifeOS (the only bridge to Store + clock), push.ts, Celebration
+src/i18n/en.ts  every user-facing string
+src/styles.css  all styling
+api/            subscribe.ts, cron.ts, test-push.ts — push only
+public/         push-sw.js, icons/, avatar/
+scripts/        artwork slicing, compression, icons, placeholders — not app code
+vercel.json     the cron schedule;  vite.config.ts  PWA + test config
 ```
+
+Tests sit next to the code they cover (`*.test.ts`).
+
+## Where the data lives
+
+| Data | Location |
+|---|---|
+| **The user's state** — log, check-in names, own tasks, reminder flag | On the device, IndexedDB database `life-os`, object store `state`, key `current`. One record, written whole. Never leaves the phone. |
+| Its shape | `AppState` in `src/core/types.ts`; log capped at 400 days (`MAX_LOG_DAYS`, `core/scoring.ts`). |
+| Backups | Settings → Export writes `life-os-export-<date>.json` (envelope with `schemaVersion`, currently 1, in `src/store/types.ts`); Import validates it in `src/store/serialize.ts`. The only defence against a cleared browser. |
+| **Push subscription** + weekly digest (ids, dates, period lengths — no names, no log) | Vercel Blob, **private** store, `push/subscription.json` (`SUBSCRIPTION_PATH`, `api/subscribe.ts`). |
+| Secrets and keys | Vercel env vars: `VITE_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET`, `BLOB_READ_WRITE_TOKEN`. Locally only `VITE_VAPID_PUBLIC_KEY` in `.env.local` (gitignored via `*.local`). The private key never goes in the repo. |
+| Building-block definitions | `src/core/domains.ts` |
+| Panel mapping | `src/visual/layers.ts` |
+| Artwork | `public/avatar/<layer><1-5>.png` — layers `achtergrond`, `user`, `lief`. A new `<layer>.png` contact sheet dropped there is cut by `npm run slice`. |
+| Copy | `src/i18n/en.ts` |
+| Icons | `public/icons/` (generated) |
 
 ## The contract that must not break
 
