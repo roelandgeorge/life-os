@@ -8,8 +8,8 @@
  */
 
 import { addDays, rangeDates, type DateKey } from './dates';
-import { DAILY_DOMAIN_KEYS } from './domains';
-import type { DayLog } from './types';
+import { cadencePeriodDays, isActiveOn } from './habits';
+import type { DayLog, UserHabit } from './types';
 
 export const MAX_LOG_DAYS = 400;
 
@@ -24,19 +24,29 @@ export function startDateOf(logs: readonly DayLog[]): DateKey | null {
 }
 
 /**
- * §2.6 — every daily domain ticked. Reads `DAILY_DOMAIN_KEYS`, which now
- * covers only the domains the app actually shows, so a hidden domain cannot
- * make a Full Day unreachable.
+ * §2.6 — every active habit on a strictly daily cadence, with a domain, is
+ * ticked. A domain-less habit still doesn't count (a Full Day is about the
+ * picture); a day with no such habit at all is never a Full Day — there is
+ * nothing to have finished.
  */
-export function isFullDay(log: DayLog | undefined): boolean {
+export function isFullDay(log: DayLog | undefined, habits: readonly UserHabit[], today: DateKey): boolean {
   if (!log) return false;
-  return DAILY_DOMAIN_KEYS.every((k) => log.ticks[k]);
+  const daily = habits.filter(
+    (h) => h.domain !== undefined && isActiveOn(h, today) && cadencePeriodDays(h.cadence) === 1,
+  );
+  if (daily.length === 0) return false;
+  return daily.every((h) => log.ticks[h.id]);
 }
 
 /** §4.7 — a density view over the last `days` days, not a streak. */
-export function fullDayStrip(logs: readonly DayLog[], today: DateKey, days = 30): boolean[] {
+export function fullDayStrip(
+  logs: readonly DayLog[],
+  habits: readonly UserHabit[],
+  today: DateKey,
+  days = 30,
+): boolean[] {
   const index = indexLogs(logs);
-  return rangeDates(addDays(today, -(days - 1)), today).map((d) => isFullDay(index.get(d)));
+  return rangeDates(addDays(today, -(days - 1)), today).map((d) => isFullDay(index.get(d), habits, d));
 }
 
 export function daysOfHistory(logs: readonly DayLog[], today: DateKey): number {
