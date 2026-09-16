@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit && tsc --noEmit -p api",
+    "import-catalog": "node scripts/import-catalog.mjs",
     "icons": "node scripts/generate-icons.mjs",
     "slice": "node scripts/slice-sheets.mjs",
     "placeholders": "node scripts/make-placeholder-sheets.mjs",

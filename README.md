@@ -8,14 +8,15 @@ since been deliberately reversed — listed under "Departures from the spec"
 below, with the reasoning. Read those before "fixing" anything back.
 
 ```
-npm run dev          # app at :5173
-npm run preview      # production build, served — the real PWA/service worker
+npm run dev            # app at :5173
+npm run preview        # production build, served — the real PWA/service worker
 npm test
 npm run typecheck
-npm run icons        # regenerate public/icons/*.png
-npm run placeholders # throwaway placeholder artwork sheets
-npm run slice        # cut public/avatar/<layer>.png into <layer>1..5.png
-npm run compress     # losslessly shrink the artwork PNGs
+npm run import-catalog  # regenerate src/content/catalog.json from docs/habits.csv
+npm run icons           # regenerate public/icons/*.png
+npm run placeholders    # throwaway placeholder artwork sheets
+npm run slice           # cut public/avatar/<layer>.png into <layer>1..5.png
+npm run compress        # losslessly shrink the artwork PNGs
 ```
 
 ## The model
@@ -45,6 +46,57 @@ makes the three-day edit window below matter rather than being a nicety.
 Steps are **recomputed from the log on every read**, never accumulated, so a
 retroactive edit is absorbed and opening the app twice in a day cannot
 double-count.
+
+## v2 model
+
+Phase 1 of `docs/plan/phase-1.md` replaced the fixed five-domain model above
+with one the user builds themselves, out of a curated catalogue. The step
+model — 0 to 4, start at 2, one period a step — is unchanged; what moves is
+what feeds it.
+
+**A catalogue, not a fixed list.** `docs/habits.csv` — 123 Dutch items —
+was translated and tagged once (`scripts/import-catalog.mjs`) into
+`src/content/catalog.json`, read through `core/catalog.ts`. Each item
+carries a domain, cadence, importance (1–5), effort, evidence and — for
+partner/family content — an `audience`/`requires` filter. The CSV is now
+archive; the JSON is what ships.
+
+**One habit shape, not two.** `UserHabit` (`core/types.ts`) replaces both
+the old fixed `DomainTicks` and the separate `CustomTask`. Every habit —
+catalogue or self-written — has a title, a cadence, an importance and its
+own `startDate`; whether it moves the picture is just whether `domain` is
+set. `DayLog.ticks` is keyed by habit id, not a fixed set of domain keys.
+
+**Ten domains, five panels, not seven domains and three layers.** `body`,
+`head`, `network`, `partner`, `wealth` (`core/domains.ts`) replace the old
+one-domain-one-layer wiring; a domain can feed more than one panel (sleep
+and nutrition both feed `body` and `head`). `visual/layers.ts` is a
+*temporary* adapter onto the 3 PNG sets phase 1 inherited —
+body/head → `user`, network+partner → `lief`, wealth → `achtergrond`, each
+taking the minimum of the panels standing in for it. Phase 2 gives each
+panel its own artwork and this adapter collapses to the identity map.
+
+**A weighted panel, not one tick equals one step.** `core/steps.ts`'s
+`panelSteps` replaces the old one-domain-one-step engine. On the day a
+habit's own period closes (anchored at its own `startDate`, not a shared
+`logs[0].date`), it contributes `importance` to the panel's weighted score;
+the panel steps up at ≥70%, down otherwise, and a day nothing closes on
+leaves it untouched. A panel fed by no habits never moves — the old "empty
+domain stays put" rule, generalised. Only `daily`, `weekly` and
+`{everyDays}` cadences drive a panel; `monthly` exists for streaks only,
+and `situational`/`once` are reminders and milestones, not a recurring
+commitment.
+
+**Migration, not a fresh start.** `store/migrate.ts` turns an existing v1
+record into v2 on first load: each of the five domains v1 ever showed
+(SLEEP, FOOD, SPORT, RELATIONSHIP, INCOME — ORDER and MIND were never
+visible) becomes a domain habit, and each old custom task becomes a
+domain-less one, both anchored at the old `logs[0].date`. The migrated
+record is written straight back, so this runs once per install.
+
+See `docs/plan/PLAN.md` for what is still ahead — the renderer, the design
+system, onboarding, gamification — and `docs/plan/phase-1.md` for the
+decisions this phase locked in.
 
 ## The artwork
 
@@ -77,6 +129,15 @@ consistent than five separate prompts. Every state of a panel must share its
 dimensions, or the panels stop tiling.
 
 ## Departures from the spec
+
+This section documents what v1 changed from `life-os-spec.md`. Where a
+passage below names a file that v2 has since replaced — `core/customTasks.ts`
+is now `core/habits.ts`, `DomainTicks`/`DayLog.customTicks` are now one
+`DayLog.ticks` keyed by habit id, `VISIBLE_DOMAINS`/`TASK_PALETTE` are now
+`DOMAINS`/`HABIT_COLOR_PALETTE` — the underlying mechanism moved in the "v2
+model" section above, but the departure itself is unchanged: a domain-less
+habit still moves no panel, still gets a streak, still may carry a filing
+colour that nothing reads back.
 
 **Discrete artwork states replace the continuous parameter system** (§4).
 The spec ruled out sprite sets and required every parameter to render at any
@@ -304,24 +365,33 @@ the endpoint is refusing to run at all.
 
 ```
 src/core/      the model — no DOM, no clock, no storage
-  dates.ts     bare "YYYY-MM-DD" arithmetic, 04:00 boundary (§5.2)
-  domains.ts   the domains as data (§1), including what is visible
-  steps.ts     the step model
-  due.ts       "is this domain due today"
+  dates.ts       bare "YYYY-MM-DD" arithmetic, 04:00 boundary (§5.2)
+  catalog.ts     the habit catalogue (§1.1), read from src/content/catalog.json
+  domains.ts     the 10 domains and the 5 panels they feed (§1.2)
+  habits.ts      cadence/streak/CRUD helpers for UserHabit (§1.5, §1.6)
+  steps.ts       the weighted panel engine (§1.5)
+  due.ts         "is this habit due today"
+  atRisk.ts      the lapse warning + the digest sent to the server
   projection.ts  AppState + a date -> what the screen needs
-  scoring.ts   what survives of §2: log bookkeeping and the Full Day rule
-src/store/     Store interface + IndexedDB and in-memory impls (§5.1)
-src/visual/    layers.ts (the domain -> artwork map) and the compositing Avatar
+  scoring.ts     Full Day + log bookkeeping (§5)
+src/store/     Store interface, IndexedDB/in-memory impls, migrate.ts (v1 -> v2)
+src/visual/    layers.ts (the temporary panel -> artwork adapter) and the compositing Avatar
 src/app/       the shell: useLifeOS is the one place touching Store and clock;
                every screen takes state as props
-src/i18n/      §5.3 — every user-facing string, flat key map, English only
+src/i18n/      every fixed user-facing string, flat key map, English only —
+               habit titles are data now, not i18n
+src/content/   catalog.json, generated by scripts/import-catalog.mjs
 api/           the only server-side code: push subscription + the daily send
-scripts/       icon generation, artwork slicing, placeholder sheets
+scripts/       catalogue import, icon generation, artwork slicing, placeholder sheets
+docs/plan/     the v2 roadmap and per-phase plans
 ```
 
 ## The contract
 
-`domain steps -> layerSteps() -> <Avatar>`. The renderer sees layer steps and
-nothing else — not scores, not a profile, not why a layer sits where it does.
-That is what keeps the model and the artwork independently replaceable: swap
-the PNGs and no code changes; change the step rules and no artwork changes.
+`habits -> panelSteps() -> layerSteps() -> <Avatar>`. The renderer sees layer
+steps and nothing else — not scores, not weights, not a profile, not why a
+layer sits where it does. That is what keeps the model and the artwork
+independently replaceable: swap the PNGs and no code changes; change the
+panel rules and no artwork changes. `layerSteps()` is itself a temporary
+stand-in (see "v2 model" above) — phase 2 removes it and panels render
+directly.

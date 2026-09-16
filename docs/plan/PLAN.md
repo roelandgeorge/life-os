@@ -7,7 +7,7 @@ fresh session. Decisions from the planning interview live in
 
 | Phase | Scope | Status |
 |---|---|---|
-| 1 | Catalog as data, data model v2, migration v1→v2, weighted panel engine, habit CRUD; current UI minimally adapted | **Planned** — [`phase-1.md`](phase-1.md) |
+| 1 | Catalog as data, data model v2, migration v1→v2, weighted panel engine, habit CRUD; current UI minimally adapted | **Built** — [`phase-1.md`](phase-1.md) |
 | 2 | Renderer: panels + overlays + variant manifest + placeholders; artwork prompt guide | Not planned |
 | 3 | Dark editorial design system: tokens, type, grain, base components | Not planned |
 | 4 | Onboarding decision tree + profile + Discover/edit | Not planned |
