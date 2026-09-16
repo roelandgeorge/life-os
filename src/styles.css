@@ -797,6 +797,89 @@ button.small {
   box-shadow: 0 0 0 1px var(--line);
 }
 
+/* ---- habit editor (§1.6/§1.7) ------------------------------------------- */
+
+.habit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.habit-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.habit-row-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-left: 2px;
+}
+
+.habit-weight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.habit-weight input {
+  width: 44px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 6px;
+  font: inherit;
+}
+
+.habit-row-controls select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 12px;
+}
+
+.add-custom-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.add-custom-row input {
+  flex: 1;
+  min-width: 0;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.domain-heading {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  border: none;
+  padding: 0;
+  margin: 16px 0 8px;
+}
+
+.checkins:first-of-type .domain-heading {
+  margin-top: 0;
+}
+
 /* Same specificity as the rule above and later in the file, so without this
    the "no colour" swatch loses its selected ring — the one state that is on
    by default. */

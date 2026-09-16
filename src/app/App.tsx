@@ -41,7 +41,7 @@ export function App() {
   }, []);
 
   async function finishOnboarding() {
-    const initial: AppState = { logs: [], notificationTime: null };
+    const initial: AppState = { schemaVersion: 2, logs: [], habits: [], notificationTime: null };
     await store.save(initial);
     setPhase({ kind: 'ready' });
   }

@@ -1,33 +1,23 @@
 /**
- * §6 screen 1. The portrait fills the upper two-thirds; below it the age
- * line, then today's check-ins.
+ * §6 screen 1, minimally adapted for §1.7 of docs/plan/phase-1.md: the
+ * portrait fills the upper two-thirds; below it the age line, then today's
+ * check-ins — now the user's own habit list, grouped by domain, instead of
+ * five fixed blocks plus a separate custom-task section.
  *
  * Purely presentational — `Shell` owns the `useLifeOS` hook so History and
  * Settings can share the same live state without a second store read.
- *
- * The "best version" toggle is a deliberate reversal of §3's "no idealised
- * self for comparison"; see README.
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { VISIBLE_DOMAINS, type DomainKey } from '../core/domains';
+import { DOMAINS, PANEL_KEYS, type DomainConfig } from '../core/domains';
 import { dailyTasksDone, editableDays, isDueToday, isRestDay, lastHit } from '../core/due';
 import { fullDayStrip } from '../core/scoring';
 import { MAX_STEP } from '../core/steps';
-import type { AppState, Projection } from '../core/types';
+import type { AppState, Projection, UserHabit } from '../core/types';
 import { diffDays, type DateKey } from '../core/dates';
-import { en, t } from '../i18n/en';
-import { taskLabel } from './taskLabels';
-import {
-  cadenceOf,
-  customTaskDoneThisPeriod,
-  customTaskName,
-  customTaskStreak,
-  isCustomTicked,
-} from '../core/customTasks';
+import { en, t, type I18nKey } from '../i18n/en';
+import { effectiveColor, habitStreak, habitTitle, isActiveOn, isHabitTicked } from '../core/habits';
 import { atRiskItems, type RiskItem } from '../core/atRisk';
-import { daysLeftInPeriod as daysLeftIn } from '../core/periods';
-import { getDomain } from '../core/domains';
 import { Avatar } from '../visual/Avatar';
 import { LAYER_KEYS, layerSteps, type LayerSteps } from '../visual/layers';
 import { Celebration } from './Celebration';
@@ -39,18 +29,30 @@ const CELEBRATION_MS = 3000;
 /** Every layer at its ceiling — the same scene, maximally adherent. */
 const BEST: LayerSteps = Object.fromEntries(LAYER_KEYS.map((k) => [k, MAX_STEP])) as LayerSteps;
 
+type Group = { domain: DomainConfig | null; habits: UserHabit[] };
+
+function groupHabits(habits: readonly UserHabit[], today: DateKey): Group[] {
+  const active = habits.filter((h) => isActiveOn(h, today));
+  const groups: Group[] = [];
+  for (const domain of DOMAINS) {
+    const inDomain = active.filter((h) => h.domain === domain.key);
+    if (inDomain.length > 0) groups.push({ domain, habits: inDomain });
+  }
+  const own = active.filter((h) => h.domain === undefined);
+  if (own.length > 0) groups.push({ domain: null, habits: own });
+  return groups;
+}
+
 export function MainScreen({
   state,
   projection,
   today,
-  toggle,
-  toggleCustom,
+  toggleHabit,
 }: {
   state: AppState;
   projection: Projection;
   today: DateKey;
-  toggle: (key: DomainKey, on?: DateKey) => void;
-  toggleCustom: (id: string, on?: DateKey) => void;
+  toggleHabit: (id: string, on?: DateKey) => void;
 }) {
   const [showBest, setShowBest] = useState(false);
   // §5.2 — which day the check-ins are writing to. The picture always shows
@@ -59,12 +61,10 @@ export function MainScreen({
   const [editing, setEditing] = useState<DateKey>(today);
   const editingLog = state.logs.find((l) => l.date === editing) ?? null;
   const steps = showBest ? BEST : layerSteps(projection.preview);
-  const strip = fullDayStrip(state.logs, today, 30);
+  const strip = fullDayStrip(state.logs, state.habits, today, 30);
+  const groups = groupHabits(state.habits, today);
 
-  // Fires once, on the transition into "done" — not on every render while it
-  // stays true, and not for a day that was already complete when the app
-  // opened.
-  const allDone = dailyTasksDone(state.logs, VISIBLE_DOMAINS, state.customTasks, today);
+  const allDone = dailyTasksDone(state.logs, state.habits, today);
   const wasAllDone = useRef(allDone);
   const [celebrate, setCelebrate] = useState(false);
   useEffect(() => {
@@ -110,62 +110,25 @@ export function MainScreen({
 
             <DayPicker today={today} editing={editing} onPick={setEditing} />
 
-            <div className="checkins">
-              {VISIBLE_DOMAINS.map((d) => {
-                const due = isDueToday(d, state.logs, today);
-                const checked = editingLog?.ticks[d.key] ?? false;
-                const last = lastHit(state.logs, d.key, today);
-                // Left tickable on purpose. The box writes to whichever day
-                // the picker is on, so disabling it on today's rest day would
-                // also block filling in the training you forgot to log — and a
-                // second tick inside one period changes nothing anyway.
-                const rest = !due && isRestDay(d, state.logs, today);
-                return (
-                  <label key={d.key} className={due ? 'checkin' : 'checkin collapsed'}>
-                    <input type="checkbox" checked={checked} onChange={() => toggle(d.key, editing)} />
-                    <span className="label" style={{ color: d.color }}>
-                      {taskLabel(d, state.taskLabels)}
-                    </span>
-                    <StepPips step={projection.preview[d.key]} color={d.color} />
-                    {!due && (
-                      <span className={rest ? 'lastHit rest' : 'lastHit'}>
-                        {rest
-                          ? en['main.restDay']
-                          : last
-                            ? t('main.lastHit', { date: last })
-                            : en['main.neverHit']}
-                      </span>
-                    )}
-                  </label>
-                );
-              })}
-            </div>
+            {groups.length === 0 && <p className="note">{en['settings.habits.empty']}</p>}
 
-            {(state.customTasks?.length ?? 0) > 0 && (
-              <div className="custom-tasks">
-                <h2 className="custom-heading">{en['main.custom.title']}</h2>
-                {state.customTasks?.map((task) => {
-                  const weekly = cadenceOf(task) === 'weekly';
-                  const streak = customTaskStreak(state.logs, task, today);
-                  return (
-                    <label key={task.id} className={weekly ? 'checkin custom weekly' : 'checkin custom'}>
-                      <input
-                        type="checkbox"
-                        checked={isCustomTicked(editingLog ?? undefined, task.id)}
-                        onChange={() => toggleCustom(task.id, editing)}
-                      />
-                      <span
-                        className="label"
-                        style={task.color === undefined ? undefined : { color: task.color }}
-                      >
-                        {customTaskName(task, en['settings.custom.unnamed'])}
-                      </span>
-                      <span className="lastHit">{customNote(state, task, today, streak)}</span>
-                    </label>
-                  );
-                })}
+            {groups.map(({ domain, habits }) => (
+              <div className="checkins" key={domain?.key ?? 'own'}>
+                <h2 className={domain ? 'domain-heading' : 'custom-heading'}>
+                  {domain ? en[domain.label as I18nKey] : en['habits.own']}
+                </h2>
+                {habits.map((habit) => (
+                  <HabitRow
+                    key={habit.id}
+                    habit={habit}
+                    state={state}
+                    today={today}
+                    editingLog={editingLog}
+                    onToggle={() => toggleHabit(habit.id, editing)}
+                  />
+                ))}
               </div>
-            )}
+            ))}
 
             {editing !== today && (
               <p className="note editing-past">{t('main.editingPast', { day: dayLabel(editing, today) })}</p>
@@ -175,6 +138,46 @@ export function MainScreen({
         )}
       </div>
     </div>
+  );
+}
+
+function HabitRow({
+  habit,
+  state,
+  today,
+  editingLog,
+  onToggle,
+}: {
+  habit: UserHabit;
+  state: AppState;
+  today: DateKey;
+  editingLog: AppState['logs'][number] | null;
+  onToggle: () => void;
+}) {
+  const due = isDueToday(habit, state.logs, today);
+  const checked = isHabitTicked(editingLog ?? undefined, habit.id);
+  const last = lastHit(state.logs, habit.id, today);
+  // Left tickable on purpose. The box writes to whichever day the picker is
+  // on, so disabling it on today's rest day would also block filling in a
+  // session you forgot to log — and a second tick inside one period changes
+  // nothing anyway.
+  const rest = !due && isRestDay(habit, state.logs, today);
+  const streak = habitStreak(state.logs, habit, today);
+  const color = effectiveColor(habit);
+
+  return (
+    <label className={due ? 'checkin' : 'checkin collapsed'}>
+      <input type="checkbox" checked={checked} onChange={onToggle} />
+      <span className="label" style={color === undefined ? undefined : { color }}>
+        {habitTitle(habit, en['settings.habits.title.placeholder'])}
+      </span>
+      {!due && (
+        <span className={rest ? 'lastHit rest' : 'lastHit'}>
+          {rest ? en['main.restDay'] : last ? t('main.lastHit', { date: last }) : en['main.neverHit']}
+        </span>
+      )}
+      {due && streak > 1 && <span className="lastHit">{t('habits.streak', { count: streak })}</span>}
+    </label>
   );
 }
 
@@ -198,11 +201,7 @@ function pickerLabel(date: DateKey, today: DateKey): string {
 
 /**
  * §5.2's three-day window. Without it a day the app was not opened is an
- * unfixable -1, even when the thing was actually done — which would punish
- * forgetting to log rather than forgetting to live.
- *
- * Laid out oldest-to-newest so today sits on the right, where the thumb is
- * and where it is selected by default.
+ * unfixable -1, even when the thing was actually done.
  */
 function DayPicker({
   today,
@@ -231,64 +230,24 @@ function DayPicker({
   );
 }
 
-/** Five pips, one per artwork state, so the step is legible without the picture. */
-function StepPips({ step, color }: { step: number; color: string }) {
-  return (
-    <span className="pips" aria-label={`step ${step + 1} of ${MAX_STEP + 1}`}>
-      {Array.from({ length: MAX_STEP + 1 }, (_, i) => (
-        <span key={i} className="pip" style={i <= step ? { background: color } : undefined} />
-      ))}
-    </span>
-  );
-}
-
 /**
- * With five states, most days change nothing on screen — the one thing this
- * model costs versus the old continuous one. Naming what today's ticks have
- * already bought, or how soon the next period closes, keeps the daily action
- * worth taking.
+ * With five states, most days change nothing on screen. Naming how many of
+ * the five panels today's ticks have already moved up keeps the daily
+ * action worth taking.
  */
 function nextMove(projection: Projection): string {
-  const climbing = VISIBLE_DOMAINS.filter(
-    (d) => projection.preview[d.key] > projection.steps[d.key],
-  ).length;
+  const climbing = PANEL_KEYS.filter((p) => projection.preview[p] > projection.steps[p]).length;
   if (climbing > 0) return t('main.nextMove.gained', { count: climbing });
-
   return en['main.nextMove.waiting'];
 }
 
 /**
- * A weekly task shows the state of its week, not a day count: "done this
- * week" or how long is left. A daily task keeps the plain streak.
- */
-function customNote(
-  state: AppState,
-  task: Parameters<typeof cadenceOf>[0],
-  today: DateKey,
-  streak: number,
-): string {
-  if (cadenceOf(task) !== 'daily') {
-    if (customTaskDoneThisPeriod(state.logs, task, today)) {
-      return streak > 1
-        ? t('main.custom.streakWeeks', { weeks: streak })
-        : en['main.custom.weeklyDone'];
-    }
-    const start = state.logs[0]?.date ?? today;
-    const left = daysLeftIn(start, today, 7);
-    // English has no plural machinery in `t`, and "1 day(s)" is worse than
-    // two keys.
-    return left <= 1 ? en['main.custom.weeklyLast'] : t('main.custom.weeklyLeft', { days: left });
-  }
-  return streak > 1 ? t('main.custom.streak', { days: streak }) : '';
-}
-
-/**
- * The one warning the app gives. A weekly thing changes nothing on screen for
- * six days and then drops a step — the only case where the picture alone is
- * not enough feedback in time to act on.
+ * The one warning the app gives. A weekly-or-longer habit changes nothing on
+ * screen for days and then drops a step — the only case where the picture
+ * alone is not enough feedback in time to act on.
  */
 function RiskWarning({ state, today }: { state: AppState; today: DateKey }) {
-  const risks = atRiskItems(state.logs, VISIBLE_DOMAINS, state.customTasks, today);
+  const risks = atRiskItems(state.logs, state.habits, today);
   if (risks.length === 0) return null;
 
   const first = risks[0] as RiskItem;
@@ -301,9 +260,8 @@ function RiskWarning({ state, today }: { state: AppState; today: DateKey }) {
 }
 
 function riskName(state: AppState, risk: RiskItem): string {
-  if (risk.kind === 'domain') return taskLabel(getDomain(risk.id as DomainKey), state.taskLabels);
-  const task = state.customTasks?.find((t2) => t2.id === risk.id);
-  return task ? customTaskName(task, en['settings.custom.unnamed']) : '';
+  const habit = state.habits.find((h) => h.id === risk.id);
+  return habit ? habitTitle(habit, en['settings.habits.title.placeholder']) : '';
 }
 
 function whenText(daysLeft: number): string {

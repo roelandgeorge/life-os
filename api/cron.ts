@@ -32,20 +32,21 @@ function daysBetween(from: string, to: string): number {
  */
 function countAtRisk(record: StoredRecord, todayIso: string): number {
   const digest = record.digest;
-  if (!digest || digest.anchor === null) return 0;
+  if (!digest) return 0;
 
   let count = 0;
   for (const entry of digest.entries) {
     const period = entry.periodDays;
     if (period <= 1) continue;
-    const elapsed = daysBetween(digest.anchor, todayIso);
+    // Each habit is anchored at its own startDate, not a shared one.
+    const elapsed = daysBetween(entry.anchor, todayIso);
     if (elapsed < 0) continue;
     const periodStartOffset = Math.floor(elapsed / period) * period;
     const daysLeft = period - (elapsed % period);
     if (daysLeft > RISK_DAYS_LEFT) continue;
 
     // Satisfied within the period in progress? Then it is not at risk.
-    const doneAt = entry.lastHit === null ? null : daysBetween(digest.anchor, entry.lastHit);
+    const doneAt = entry.lastHit === null ? null : daysBetween(entry.anchor, entry.lastHit);
     if (doneAt !== null && doneAt >= periodStartOffset) continue;
     count++;
   }

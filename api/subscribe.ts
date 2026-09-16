@@ -19,20 +19,21 @@ type StoredSubscription = {
 };
 
 /**
- * What the app tells the server about its weekly commitments: opaque ids,
- * the day each was last satisfied, and how long its period is. Deliberately
- * no names and no log — the server can work out urgency from this alone, on
- * whatever day it fires.
+ * What the app tells the server about its weekly-or-longer commitments:
+ * opaque ids, each habit's own period anchor (habits are anchored at their
+ * own startDate, not a single shared one), the day each was last satisfied,
+ * and how long its period is. Deliberately no titles and no log — the server
+ * can work out urgency from this alone, on whatever day it fires.
  */
-type DigestEntry = { id: string; lastHit: string | null; periodDays: number };
+type DigestEntry = { id: string; anchor: string; lastHit: string | null; periodDays: number };
 export type StoredRecord = {
   subscription: StoredSubscription;
-  digest?: { anchor: string | null; entries: DigestEntry[] };
+  digest?: { entries: DigestEntry[] };
 };
 
 function parseDigest(value: unknown): StoredRecord['digest'] {
   if (typeof value !== 'object' || value === null) return undefined;
-  const raw = value as { anchor?: unknown; entries?: unknown };
+  const raw = value as { entries?: unknown };
   if (!Array.isArray(raw.entries)) return undefined;
 
   const entries: DigestEntry[] = [];
@@ -40,11 +41,12 @@ function parseDigest(value: unknown): StoredRecord['digest'] {
     if (typeof entry !== 'object' || entry === null) continue;
     const e = entry as Record<string, unknown>;
     if (typeof e.id !== 'string') continue;
+    if (typeof e.anchor !== 'string') continue;
     if (typeof e.periodDays !== 'number' || !Number.isFinite(e.periodDays)) continue;
     const lastHit = typeof e.lastHit === 'string' ? e.lastHit : null;
-    entries.push({ id: e.id, lastHit, periodDays: e.periodDays });
+    entries.push({ id: e.id, anchor: e.anchor, lastHit, periodDays: e.periodDays });
   }
-  return { anchor: typeof raw.anchor === 'string' ? raw.anchor : null, entries };
+  return { entries };
 }
 
 function isSubscription(value: unknown): value is StoredSubscription {

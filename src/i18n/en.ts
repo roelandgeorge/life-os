@@ -1,17 +1,30 @@
 /**
  * §5.3 — all user-facing strings live here as a flat key map. English only in
- * v1. `domains.ts` labels reference these keys by name; nothing else hardcodes
- * copy.
+ * v1. `domains.ts` labels and `visual/layers.ts` panels reference these keys
+ * by name; nothing else hardcodes copy. Habit *titles* are data now
+ * (`UserHabit.title`, from the catalogue or typed by the user), not i18n —
+ * only the fixed chrome around them lives here.
  */
 
 export const en = {
-  'domain.sleep': 'Slept 8 hours',
-  'domain.food': 'Hit calories & protein',
-  'domain.sport': 'Strength training',
-  'domain.order': 'Cleared a todo',
-  'domain.relationship': 'Invested in the relationship',
-  'domain.mind': 'Learned something deliberately',
-  'domain.income': 'Worked on career or income',
+  // The 10 catalogue domains (§1.2) — group headings in the habit list.
+  'domain.sleep': 'Sleep',
+  'domain.nutrition': 'Nutrition',
+  'domain.training': 'Training',
+  'domain.appearance': 'Appearance',
+  'domain.mindset': 'Mindset',
+  'domain.productivity': 'Productivity',
+  'domain.social': 'Social',
+  'domain.hospitality': 'Hospitality',
+  'domain.family': 'Family',
+  'domain.finance': 'Finance',
+
+  // The 5 panels (§1.2) — row labels in History.
+  'panel.body': 'Body',
+  'panel.head': 'Head',
+  'panel.network': 'Network',
+  'panel.partner': 'Partner',
+  'panel.wealth': 'Wealth',
 
   'main.headline': 'This is future you.',
   'main.subhead': 'If today holds.',
@@ -19,34 +32,13 @@ export const en = {
   'main.nextMove.waiting': 'Tick a box today and the picture moves.',
   'main.day.today': 'Today',
   'main.day.yesterday': 'Yesterday',
-  'main.custom.title': 'Also today',
-  'main.custom.streak': '{days}-day streak',
-  'settings.custom': 'Your own tasks',
-  'settings.custom.note': "Things you want to track that are not one of the five. They do not move the picture — nothing in the artwork answers to them — but the app will keep your streak.",
-  'settings.custom.add': 'Add a task',
-  'settings.custom.placeholder': 'e.g. No alcohol',
-  'settings.custom.remove': 'Remove',
-  'settings.custom.full': 'That is the maximum. Remove one to add another.',
-  'settings.custom.unnamed': 'Unnamed task',
-  'settings.custom.daily': 'Daily',
-  'settings.custom.weekly': 'Weekly',
-  'settings.custom.color': 'Colour',
-  'settings.custom.color.none': 'No colour',
-  'settings.custom.color.match': 'Same colour as {name}',
+  'habits.own': 'Your own habits',
+  'habits.streak': '{count}× streak',
   'main.restDay': 'Rest day',
-  'main.custom.weeklyDone': 'done this week',
-  'main.custom.weeklyLeft': '{days} days left this week',
-  'main.custom.weeklyLast': 'last day this week',
-  'main.custom.streakWeeks': '{weeks}-week streak',
   'main.risk.one': '{name} runs out {when} — that streak is about to break.',
-  'main.risk.many': '{count} weekly things are about to lapse — check them below.',
+  'main.risk.many': '{count} things are about to lapse — check them below.',
   'main.risk.today': 'today',
   'main.risk.tomorrow': 'tomorrow',
-  'history.custom': 'Your own tasks',
-  'history.custom.daily': 'last 30 days',
-  'history.custom.weekly': 'last 12 weeks',
-  'settings.tasks': 'What each box means',
-  'settings.tasks.note': 'Name the thing you actually do. Leave a box empty to use the default.',
   'main.editingPast': "Filling in {day}. The picture still shows today's standing.",
   'main.fullDay': 'Full day. This is the trajectory.',
   'main.allDone': 'Daily tasks all done',
@@ -56,36 +48,52 @@ export const en = {
   'error.storage.title': "Can't reach your data",
   'error.storage.retry': 'Try again',
 
-  // Best-version comparison. §3 says "no idealised self for comparison" — this
-  // is a deliberate, documented reversal of that call, not an oversight; see
-  // README.
+  // Best-version comparison. A deliberate, documented reversal of the spec's
+  // "no idealised self for comparison" — see README.
   'main.bestVersion.show': 'See your best version',
   'main.bestVersion.hide': 'Back to now',
   'main.bestVersion.headline': 'This is future you, at your best.',
   'main.bestVersion.subhead': 'Every part at its top step. Two good days is all any one of them takes.',
 
-  // §7 onboarding — one question per screen, then the closing explanation.
-
-
+  // Onboarding — one explanation screen; the decision tree is phase 4.
   'onboarding.closing.title': 'How this works',
-  'onboarding.closing.line1': 'Each day you check off a handful of small things — sleep, food, training, and the people and work that matter. The last two only need a tick once a week.',
-  'onboarding.closing.line2': 'Nothing here scores your day. Each part of the picture moves one step at a time: a tick takes it up, a period without one takes it down.',
-  'onboarding.closing.line3': 'The picture above is you in fifteen years. Everything starts halfway, so it can move either way from day one: two good days takes any part of it to the top, two missed ones take it down.',
+  'onboarding.closing.line1': 'Each day you check off the habits you picked — sleep, food, training, and whatever else you added. Some only need a tick once a week or once a month.',
+  'onboarding.closing.line2': "Nothing here scores your day. Each part of the picture moves one step at a time: enough of your habits closing out well takes it up, a stretch of them missing takes it down.",
+  'onboarding.closing.line3': 'The picture above is you in fifteen years. Everything starts halfway, so it can move either way from day one.',
   'onboarding.closing.iosNote': "On iPhone: add this to your home screen from the share menu — that's what lets the evening reminder in Settings actually notify you.",
   'onboarding.closing.start': 'Start',
 
-  // §6 navigation
   'nav.main': 'Home',
   'nav.history': 'History',
   'nav.settings': 'Settings',
 
-  // §6 screen 2 — history
   'history.title': 'History',
   'history.subhead': 'Last {days} days.',
   'history.fullDay': 'Full Day density, last 30 days',
+  'history.habit.daily': 'last 30 days',
+  'history.habit.periods': 'last {count} periods',
 
-  // §6 screen 3 — settings
   'settings.title': 'Settings',
+
+  'settings.habits': 'Your habits',
+  'settings.habits.note': 'Weight decides how much a habit counts towards the picture. A habit with no domain still counts for streaks but moves nothing.',
+  'settings.habits.title.placeholder': 'Habit name',
+  'settings.habits.weight': 'Weight',
+  'settings.habits.domain.none': 'No domain (your own)',
+  'settings.habits.cadence.daily': 'Daily',
+  'settings.habits.cadence.weekly': 'Weekly',
+  'settings.habits.cadence.monthly': 'Monthly',
+  'settings.habits.cadence.other': 'Other (catalogue default)',
+  'settings.habits.remove': 'Remove',
+  'settings.habits.empty': 'No habits yet — add one below or from the catalogue.',
+  'settings.habits.add.placeholder': 'e.g. No alcohol',
+  'settings.habits.add.button': 'Add a habit of your own',
+
+  'settings.catalog': 'Add from the catalogue',
+  'settings.catalog.note': 'Curated habits, tagged by domain and how well-evidenced they are.',
+  'settings.catalog.add': 'Add',
+  'settings.catalog.added': 'Added',
+
   'settings.notifications': 'Daily reminder',
   'settings.notifications.note': 'One notification a day, in the evening. The exact minute is not guaranteed — the free plan schedules it within the hour.',
   'settings.notifications.enable': 'Remind me each evening',

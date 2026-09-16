@@ -7,13 +7,13 @@
  */
 
 import { useMemo } from 'react';
-import { VISIBLE_DOMAINS } from '../core/domains';
+import { DOMAINS } from '../core/domains';
 import { en } from '../i18n/en';
 
 const CONFETTI_COUNT = 36;
 // The building blocks' own colours, so the celebration reads as belonging to
 // the same picture rather than introducing a palette of its own.
-const CONFETTI_COLORS = VISIBLE_DOMAINS.map((d) => d.color);
+const CONFETTI_COLORS = DOMAINS.map((d) => d.color);
 
 type Piece = { left: number; delay: number; duration: number; color: string };
 

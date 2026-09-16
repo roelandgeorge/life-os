@@ -51,10 +51,10 @@ function decodeKey(base64: string): ArrayBuffer {
 
 /**
  * Ships alongside the subscription so the evening reminder can say something
- * true. Only opaque ids, dates and period lengths — never a task's name, and
- * never the log. See `core/atRisk.ts`.
+ * true. Only opaque ids, each habit's own period anchor, its last hit and its
+ * period length — never a title, and never the log. See `core/atRisk.ts`.
  */
-export type PushDigest = { anchor: string | null; entries: unknown[] };
+export type PushDigest = { entries: unknown[] };
 
 /**
  * Refresh the server's copy of what is weekly and when it was last done.

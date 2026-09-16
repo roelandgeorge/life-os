@@ -1,63 +1,61 @@
 /**
- * §6 screen 3. Check-in names, own tasks, the reminder, export/import and
- * reset — nothing else. Export/import round-trip through the same `Store.export` /
- * `Store.import` the spec calls "the only defence against a cleared cache"
- * (§5.1); reset just clears the store and reloads, which drops the app back
- * into onboarding.
+ * §6 screen 3, merged per §1.7 of docs/plan/phase-1.md: "What each box means"
+ * and "Your own tasks" become one habit editor (title, weight, cadence,
+ * domain, remove) plus a simple "Add from catalogue" picker. Everything else
+ * — the reminder, export/import, reset — is unchanged mechanics.
  */
 
 import { useRef, useState } from 'react';
 import { disablePush, enablePush, testPush, type PushResult } from './push';
 import { weeklyDigest } from '../core/atRisk';
-import { VISIBLE_DOMAINS } from '../core/domains';
-import type { DomainKey } from '../core/domains';
-import type { AppState, CustomTask, TaskCadence } from '../core/types';
-import { defaultTaskLabel, MAX_LABEL_LENGTH } from './taskLabels';
-import {
-  cadenceOf,
-  canAddCustomTask,
-  MAX_TASK_NAME_LENGTH,
-  TASK_PALETTE,
-} from '../core/customTasks';
-import { en, t, type I18nKey } from '../i18n/en';
+import { CATALOG, catalogById } from '../core/catalog';
+import { DOMAINS, type DomainKey } from '../core/domains';
+import type { HabitPatch } from '../core/habits';
+import { MAX_HABIT_TITLE_LENGTH, canAddCustomHabit } from '../core/habits';
+import type { DateKey } from '../core/dates';
+import type { AppState, Cadence } from '../core/types';
+import { en, type I18nKey } from '../i18n/en';
 import { ImportError } from '../store/serialize';
 import type { Store } from '../store/types';
+import type { NewHabitSource } from './useLifeOS';
+
+const NAMED_CADENCES: readonly Cadence[] = ['daily', 'weekly', 'monthly'];
+
+function cadenceLabel(c: Cadence): I18nKey | null {
+  if (c === 'daily') return 'settings.habits.cadence.daily';
+  if (c === 'weekly') return 'settings.habits.cadence.weekly';
+  if (c === 'monthly') return 'settings.habits.cadence.monthly';
+  return null;
+}
 
 export function SettingsScreen({
   state,
+  today,
   store,
   onNotificationTimeChange,
-  onTaskLabelChange,
-  onAddCustom,
-  onRenameCustom,
-  onRemoveCustom,
-  onSetCustomCadence,
-  onSetCustomColor,
+  onAddHabit,
+  onUpdateHabit,
+  onRemoveHabit,
 }: {
   state: AppState;
+  today: DateKey;
   store: Store;
   onNotificationTimeChange: (value: string | null) => void;
-  onTaskLabelChange: (key: DomainKey, raw: string) => void;
-  onAddCustom: (name: string) => void;
-  onRenameCustom: (id: string, name: string) => void;
-  onRemoveCustom: (id: string) => void;
-  onSetCustomCadence: (id: string, cadence: TaskCadence) => void;
-  onSetCustomColor: (id: string, color: string | null) => void;
+  onAddHabit: (source: NewHabitSource) => void;
+  onUpdateHabit: (id: string, patch: HabitPatch) => void;
+  onRemoveHabit: (id: string) => void;
 }) {
   const [message, setMessage] = useState<string | null>(null);
   const [pushError, setPushError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; detail: string } | null>(null);
+  const [newTitle, setNewTitle] = useState('');
+  const [catalogChoice, setCatalogChoice] = useState(CATALOG[0]?.id ?? '');
   const fileInput = useRef<HTMLInputElement>(null);
 
-  /**
-   * The permission prompt must come from this click — browsers refuse it
-   * otherwise, and iOS refuses it entirely unless the app was launched from
-   * the home screen. The stored time only records that reminders are on; the
-   * schedule itself lives in vercel.json, because the free plan allows one
-   * fixed daily cron and no more.
-   */
+  const habits = state.habits.filter((h) => h.removedDate === undefined);
+
   async function handleReminder(wanted: boolean) {
     setPushError(null);
     if (!wanted) {
@@ -67,10 +65,8 @@ export function SettingsScreen({
     }
 
     setBusy(true);
-    // Send the digest with the very first subscription, so the reminder is
-    // useful from the first evening rather than the second.
-    const digest = weeklyDigest(state.logs, VISIBLE_DOMAINS, state.customTasks, state.logs[0]?.date ?? null);
-    const result = await enablePush(digest);
+    const digest = weeklyDigest(state.logs, state.habits, today);
+    const result = await enablePush({ entries: digest });
     setBusy(false);
 
     if (result.ok) {
@@ -104,8 +100,7 @@ export function SettingsScreen({
       const text = await file.text();
       await store.import(text);
       // Simplest correct way to resync every screen (and App's onboarding
-      // gate) with the freshly-imported state, rather than threading a
-      // full-state reload through every hook consumer.
+      // gate) with the freshly-imported state.
       window.location.reload();
     } catch (err) {
       setMessage(err instanceof ImportError ? err.message : 'Import failed.');
@@ -118,74 +113,141 @@ export function SettingsScreen({
     window.location.reload();
   }
 
+  function handleAddCustom() {
+    const title = newTitle.trim();
+    if (!title) return;
+    onAddHabit({ title });
+    setNewTitle('');
+  }
+
+  function handleAddFromCatalog() {
+    if (!catalogChoice) return;
+    onAddHabit({ catalogId: catalogChoice });
+  }
+
   return (
     <div className="settings-screen">
       <h1 className="headline">{en['settings.title']}</h1>
 
       <section>
-        <h2>{en['settings.tasks']}</h2>
-        <p className="note">{en['settings.tasks.note']}</p>
-        <div className="task-labels">
-          {VISIBLE_DOMAINS.map((d) => (
-            <label className="task-label" key={d.key}>
-              <span className="swatch-dot" style={{ background: d.color }} aria-hidden="true" />
-              <input
-                type="text"
-                maxLength={MAX_LABEL_LENGTH}
-                placeholder={defaultTaskLabel(d)}
-                value={state.taskLabels?.[d.key] ?? ''}
-                onChange={(e) => onTaskLabelChange(d.key, e.target.value)}
-              />
-            </label>
-          ))}
-        </div>
-      </section>
+        <h2>{en['settings.habits']}</h2>
+        <p className="note">{en['settings.habits.note']}</p>
 
-      <section>
-        <h2>{en['settings.custom']}</h2>
-        <p className="note">{en['settings.custom.note']}</p>
-        <div className="task-labels">
-          {state.customTasks?.map((task) => (
-            <div className="custom-row" key={task.id}>
+        {habits.length === 0 && <p className="note">{en['settings.habits.empty']}</p>}
+
+        <div className="habit-list">
+          {habits.map((habit) => (
+            <div className="habit-row" key={habit.id}>
               <div className="task-label">
                 <input
                   type="text"
-                  maxLength={MAX_TASK_NAME_LENGTH}
-                  placeholder={en['settings.custom.placeholder']}
-                  value={task.name}
-                  onChange={(e) => onRenameCustom(task.id, e.target.value)}
+                  maxLength={MAX_HABIT_TITLE_LENGTH}
+                  placeholder={en['settings.habits.title.placeholder']}
+                  value={habit.title}
+                  onChange={(e) => onUpdateHabit(habit.id, { title: e.target.value })}
                 />
                 <button
                   type="button"
                   className="danger small"
-                  aria-label={`${en['settings.custom.remove']}: ${task.name}`}
-                  onClick={() => onRemoveCustom(task.id)}
+                  aria-label={`${en['settings.habits.remove']}: ${habit.title}`}
+                  onClick={() => onRemoveHabit(habit.id)}
                 >
                   ×
                 </button>
               </div>
-              <div className="chips cadence">
-                {(['daily', 'weekly'] as const).map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    className={cadenceOf(task) === c ? 'on' : ''}
-                    onClick={() => onSetCustomCadence(task.id, c)}
-                  >
-                    {c === 'daily' ? en['settings.custom.daily'] : en['settings.custom.weekly']}
-                  </button>
-                ))}
-                <ColorPicker task={task} onPick={onSetCustomColor} />
+
+              <div className="habit-row-controls">
+                <label className="habit-weight">
+                  {en['settings.habits.weight']}
+                  <input
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={habit.importance}
+                    onChange={(e) => {
+                      const n = Number(e.target.value);
+                      if (Number.isFinite(n)) onUpdateHabit(habit.id, { importance: Math.min(5, Math.max(1, n)) });
+                    }}
+                  />
+                </label>
+
+                <select
+                  value={habit.domain ?? 'none'}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    onUpdateHabit(habit.id, { domain: value === 'none' ? null : (value as DomainKey) });
+                  }}
+                >
+                  <option value="none">{en['settings.habits.domain.none']}</option>
+                  {DOMAINS.map((d) => (
+                    <option key={d.key} value={d.key}>
+                      {en[d.label as I18nKey]}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="chips cadence">
+                  {NAMED_CADENCES.map((c) => {
+                    const label = cadenceLabel(c);
+                    if (!label) return null;
+                    return (
+                      <button
+                        key={String(c)}
+                        type="button"
+                        className={habit.cadence === c ? 'on' : ''}
+                        onClick={() => onUpdateHabit(habit.id, { cadence: c })}
+                      >
+                        {en[label]}
+                      </button>
+                    );
+                  })}
+                  {cadenceLabel(habit.cadence) === null && (
+                    <span className="note">{en['settings.habits.cadence.other']}</span>
+                  )}
+                </div>
               </div>
             </div>
           ))}
         </div>
-        {canAddCustomTask(state.customTasks) ? (
-          <button type="button" className="add-custom" onClick={() => onAddCustom('')}>
-            + {en['settings.custom.add']}
+
+        <div className="add-custom-row">
+          <input
+            type="text"
+            maxLength={MAX_HABIT_TITLE_LENGTH}
+            placeholder={en['settings.habits.add.placeholder']}
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleAddCustom();
+            }}
+          />
+          <button type="button" disabled={!canAddCustomHabit(state.habits)} onClick={handleAddCustom}>
+            {en['settings.habits.add.button']}
           </button>
-        ) : (
-          <p className="note">{en['settings.custom.full']}</p>
+        </div>
+      </section>
+
+      <section>
+        <h2>{en['settings.catalog']}</h2>
+        <p className="note">{en['settings.catalog.note']}</p>
+        <div className="row">
+          <select value={catalogChoice} onChange={(e) => setCatalogChoice(e.target.value)}>
+            {DOMAINS.map((d) => (
+              <optgroup key={d.key} label={en[d.label as I18nKey]}>
+                {CATALOG.filter((item) => item.domain === d.key).map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.title}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+          <button type="button" onClick={handleAddFromCatalog}>
+            {en['settings.catalog.add']}
+          </button>
+        </div>
+        {catalogChoice && catalogById(catalogChoice) && (
+          <p className="note">{catalogById(catalogChoice)?.note}</p>
         )}
       </section>
 
@@ -252,42 +314,6 @@ export function SettingsScreen({
         </button>
       </section>
     </div>
-  );
-}
-
-/**
- * Swatches, not a colour wheel: the point is matching a building block, and
- * an arbitrary colour would only make the list harder to read. Clicking the
- * chosen one again clears it.
- */
-function ColorPicker({
-  task,
-  onPick,
-}: {
-  task: CustomTask;
-  onPick: (id: string, color: string | null) => void;
-}) {
-  return (
-    <span className="swatches" role="group" aria-label={en['settings.custom.color']}>
-      {TASK_PALETTE.map(({ color, label }) => (
-        <button
-          key={color}
-          type="button"
-          className={task.color === color ? 'swatch on' : 'swatch'}
-          style={{ background: color }}
-          aria-pressed={task.color === color}
-          aria-label={t('settings.custom.color.match', { name: t(label as I18nKey) })}
-          onClick={() => onPick(task.id, task.color === color ? null : color)}
-        />
-      ))}
-      <button
-        type="button"
-        className={task.color === undefined ? 'swatch none on' : 'swatch none'}
-        aria-pressed={task.color === undefined}
-        aria-label={en['settings.custom.color.none']}
-        onClick={() => onPick(task.id, null)}
-      />
-    </span>
   );
 }
 

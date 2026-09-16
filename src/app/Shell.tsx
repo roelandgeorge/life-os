@@ -2,7 +2,7 @@
  * §6 — "Three [screens], no more." Owns the one `useLifeOS` subscription so
  * Main, History and Settings share the same live state instead of each
  * reading the store independently, and switches between them with a plain
- * tab bar (the spec doesn't specify chrome beyond the three screens).
+ * tab bar.
  */
 
 import { useEffect, useState } from 'react';
@@ -13,34 +13,21 @@ import { SettingsScreen } from './SettingsScreen';
 import { store } from './store';
 import { useLifeOS } from './useLifeOS';
 import { weeklyDigest } from '../core/atRisk';
-import { VISIBLE_DOMAINS } from '../core/domains';
 import { syncDigest } from './push';
 
 type Tab = 'main' | 'history' | 'settings';
 
 export function Shell() {
-  const {
-    state,
-    projection,
-    today,
-    toggle,
-    updateNotificationTime,
-    updateTaskLabel,
-    toggleCustom,
-    addCustom,
-    renameCustom,
-    removeCustom,
-    setCustomCadence,
-    setCustomColor,
-  } = useLifeOS(store);
+  const { state, projection, today, toggleHabit, addHabit, updateHabit, removeHabit, updateNotificationTime } =
+    useLifeOS(store);
   const [tab, setTab] = useState<Tab>('main');
 
-  // Refresh what the server knows about the weekly commitments, once per open.
-  // Only ids and dates travel; see core/atRisk.ts. Reminders being off makes
-  // this a no-op, so there is nothing to gate it on.
-  const digestKey = state ? JSON.stringify(weeklyDigest(state.logs, VISIBLE_DOMAINS, state.customTasks, state.logs[0]?.date ?? null)) : null;
+  // Refresh what the server knows about the weekly-or-longer commitments,
+  // once per open. Only ids, anchors and dates travel; see core/atRisk.ts.
+  // Reminders being off makes this a no-op, so there is nothing to gate it on.
+  const digestKey = state ? JSON.stringify(weeklyDigest(state.logs, state.habits, today)) : null;
   useEffect(() => {
-    if (digestKey) void syncDigest(JSON.parse(digestKey));
+    if (digestKey) void syncDigest({ entries: JSON.parse(digestKey) });
   }, [digestKey]);
 
   if (!state || !projection) {
@@ -55,26 +42,18 @@ export function Shell() {
     <div className="shell">
       <div className="shell-body">
         {tab === 'main' && (
-          <MainScreen
-            state={state}
-            projection={projection}
-            today={today}
-            toggle={toggle}
-            toggleCustom={toggleCustom}
-          />
+          <MainScreen state={state} projection={projection} today={today} toggleHabit={toggleHabit} />
         )}
         {tab === 'history' && <HistoryScreen state={state} today={today} />}
         {tab === 'settings' && (
           <SettingsScreen
             state={state}
+            today={today}
             store={store}
             onNotificationTimeChange={updateNotificationTime}
-            onTaskLabelChange={updateTaskLabel}
-            onAddCustom={addCustom}
-            onRenameCustom={renameCustom}
-            onRemoveCustom={removeCustom}
-            onSetCustomCadence={setCustomCadence}
-            onSetCustomColor={setCustomColor}
+            onAddHabit={addHabit}
+            onUpdateHabit={updateHabit}
+            onRemoveHabit={removeHabit}
           />
         )}
       </div>
