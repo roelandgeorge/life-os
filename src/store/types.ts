@@ -14,7 +14,8 @@ export interface Store {
   clear(): Promise<void>;
 }
 
-export const SCHEMA_VERSION = 1;
+/** §1.4 — bumped for the v1 -> v2 migration (`store/migrate.ts`). */
+export const SCHEMA_VERSION = 2;
 
 export type Envelope = {
   schemaVersion: number;

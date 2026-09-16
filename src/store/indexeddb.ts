@@ -7,6 +7,7 @@
  */
 
 import type { AppState } from '../core/types';
+import { migrateV1ToV2, type V1AppState } from './migrate';
 import { deserialize, serialize } from './serialize';
 import type { Store } from './types';
 
@@ -69,7 +70,14 @@ export class IndexedDBStore implements Store {
 
   async load(): Promise<AppState | null> {
     const raw = await this.tx('readonly', (s) => request<unknown>(s.get(RECORD_KEY)));
-    return (raw as AppState | undefined) ?? null;
+    if (raw === undefined) return null;
+    // §1.4 — a record written before schema 2 has no `schemaVersion` field at
+    // all. Migrate once, then write the result straight back so this branch
+    // is never taken again for this install.
+    if ((raw as { schemaVersion?: unknown }).schemaVersion === 2) return raw as AppState;
+    const migrated = migrateV1ToV2(raw as V1AppState);
+    await this.save(migrated);
+    return migrated;
   }
 
   async save(state: AppState): Promise<void> {

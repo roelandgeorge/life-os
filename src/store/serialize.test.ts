@@ -1,25 +1,37 @@
 import { describe, expect, it } from 'vitest';
 import { addDays } from '../core/dates';
-import { DOMAIN_KEYS, emptyTicks } from '../core/domains';
-import { domainStep } from '../core/steps';
-import { getDomain } from '../core/domains';
-import type { AppState, DayLog } from '../core/types';
+import type { AppState, DayLog, UserHabit } from '../core/types';
 import { MemoryStore } from './memory';
 import { deserialize, ImportError, serialize } from './serialize';
 
 const START = '2026-01-01';
 
+const HABITS: UserHabit[] = [
+  { id: 'sleep', title: 'Slept 8 hours', domain: 'sleep', cadence: 'daily', importance: 5, startDate: START },
+  {
+    id: 'alcohol',
+    title: 'No alcohol',
+    cadence: 'weekly',
+    importance: 4,
+    startDate: START,
+    color: '#B85C38',
+  },
+];
+
 function sampleState(): AppState {
   const logs: DayLog[] = Array.from({ length: 40 }, (_, i) => {
-    const ticks = emptyTicks();
-    for (const k of DOMAIN_KEYS) ticks[k] = i % 2 === 0;
-    return { date: addDays(START, i), opened: true, ticks, customTicks: i % 3 === 0 ? { t1: true } : {} };
+    const ticks: Record<string, true> = {};
+    if (i % 2 === 0) {
+      ticks.sleep = true;
+      ticks.alcohol = true;
+    }
+    return { date: addDays(START, i), opened: true, ticks };
   });
   return {
+    schemaVersion: 2,
     logs,
+    habits: HABITS,
     notificationTime: null,
-    taskLabels: { SLEEP: 'Went to bed before 22:30' },
-    customTasks: [{ id: 't1', name: 'No alcohol', cadence: 'weekly', color: '#B85C38' }],
   };
 }
 
@@ -34,15 +46,6 @@ describe('export/import', () => {
     expect(await restored.load()).toEqual(await store.load());
   });
 
-  it('survives a round trip through the step model identically', () => {
-    const original = sampleState();
-    const restored = deserialize(serialize(original));
-    const today = addDays(START, 40);
-    const sleep = getDomain('SLEEP');
-
-    expect(domainStep(restored.logs, sleep, today)).toBe(domainStep(original.logs, sleep, today));
-  });
-
   it('rejects a file from a newer schema rather than guessing', () => {
     const json = JSON.stringify({ schemaVersion: 99, exportedAt: '', state: sampleState() });
     expect(() => deserialize(json)).toThrow(ImportError);
@@ -52,12 +55,12 @@ describe('export/import', () => {
   it('rejects garbage with a reason', () => {
     expect(() => deserialize('not json')).toThrow(/valid JSON/);
     expect(() => deserialize('{}')).toThrow(/Life OS export/);
-    expect(() => deserialize(JSON.stringify({ schemaVersion: 1 }))).toThrow(/no state/);
+    expect(() => deserialize(JSON.stringify({ schemaVersion: 2 }))).toThrow(/no state/);
   });
 
   it('rejects a duplicated log date, which would double-count in the window', () => {
     const state = sampleState();
-    state.logs.push({ ...(state.logs[0] as AppState['logs'][number]) });
+    state.logs.push({ ...(state.logs[0] as DayLog) });
     expect(() => deserialize(serialize(state))).toThrow(/Duplicate log entry/);
   });
 
@@ -69,66 +72,70 @@ describe('export/import', () => {
     );
   });
 
-  it('tolerates unknown and missing tick keys', () => {
-    const state = sampleState();
-    const raw = JSON.parse(serialize(state));
-    raw.state.logs[0].ticks = { SLEEP: true, LEGACY_DOMAIN: true };
+  it('drops a tick for a habit that no longer exists', () => {
+    const raw = JSON.parse(serialize(sampleState()));
+    raw.state.habits = raw.state.habits.filter((h: UserHabit) => h.id !== 'alcohol');
 
-    const [first] = deserialize(JSON.stringify(raw)).logs;
-    expect(first?.ticks.SLEEP).toBe(true);
-    expect(first?.ticks.FOOD).toBe(false);
-    expect(Object.keys(first?.ticks ?? {}).sort()).toEqual([...DOMAIN_KEYS].sort());
+    const restored = deserialize(JSON.stringify(raw));
+    expect(restored.logs[0]?.ticks.alcohol).toBeUndefined();
+    expect(restored.logs[0]?.ticks.sleep).toBe(true);
+  });
+
+  it('drops a malformed habit rather than failing the whole import', () => {
+    const raw = JSON.parse(serialize(sampleState()));
+    raw.state.habits = [...raw.state.habits, { id: 42 }, { name: 'no id' }, 'junk'];
+    const restored = deserialize(JSON.stringify(raw));
+    expect(restored.habits.map((h) => h.id).sort()).toEqual(['alcohol', 'sleep']);
+  });
+
+  it('drops an unknown domain rather than failing the import', () => {
+    const raw = JSON.parse(serialize(sampleState()));
+    raw.state.habits[0].domain = 'NOT-A-DOMAIN';
+    const restored = deserialize(JSON.stringify(raw));
+    expect(restored.habits.find((h) => h.id === 'sleep')?.domain).toBeUndefined();
+  });
+
+  it('drops a colour that is not one, keeping the habit', () => {
+    const raw = JSON.parse(serialize(sampleState()));
+    raw.state.habits[1].color = 'chartreuse';
+    const restored = deserialize(JSON.stringify(raw));
+    const alcohol = restored.habits.find((h) => h.id === 'alcohol');
+    expect(alcohol?.title).toBe('No alcohol');
+    expect(alcohol && 'color' in alcohol).toBe(false);
+  });
+
+  it('normalises an out-of-range importance rather than rejecting the habit', () => {
+    const raw = JSON.parse(serialize(sampleState()));
+    raw.state.habits[0].importance = 99;
+    expect(deserialize(JSON.stringify(raw)).habits[0]?.importance).toBe(5);
+  });
+
+  it('accepts an { everyDays } cadence and rejects a malformed one to the daily default', () => {
+    const raw = JSON.parse(serialize(sampleState()));
+    raw.state.habits[0].cadence = { everyDays: 3 };
+    expect(deserialize(JSON.stringify(raw)).habits[0]?.cadence).toEqual({ everyDays: 3 });
+
+    raw.state.habits[0].cadence = { everyDays: -1 };
+    expect(deserialize(JSON.stringify(raw)).habits[0]?.cadence).toBe('daily');
   });
 
   it('leaves existing state intact when an import fails', async () => {
     const store = new MemoryStore(sampleState());
     const before = await store.load();
 
-    await expect(store.import('{"schemaVersion":1}')).rejects.toThrow(ImportError);
+    await expect(store.import('{"schemaVersion":2}')).rejects.toThrow(ImportError);
     expect(await store.load()).toEqual(before);
   });
-  it('carries renamed check-ins through a round trip', () => {
+
+  it('carries a profile through a round trip when present', () => {
+    const state = sampleState();
+    state.profile = { gender: 'male', partner: { wanted: true, gender: 'female' } };
+    const restored = deserialize(serialize(state));
+    expect(restored.profile).toEqual({ gender: 'male', partner: { wanted: true, gender: 'female' } });
+  });
+
+  it('omits profile entirely rather than storing an empty object', () => {
     const restored = deserialize(serialize(sampleState()));
-    expect(restored.taskLabels?.SLEEP).toBe('Went to bed before 22:30');
-  });
-
-  it('drops a label that is not a string rather than failing the import', () => {
-    const raw = JSON.parse(serialize(sampleState()));
-    raw.state.taskLabels = { SLEEP: 42, NONSENSE: 'x', FOOD: '  spaces trimmed  ' };
-    const restored = deserialize(JSON.stringify(raw));
-    expect(restored.taskLabels?.SLEEP).toBeUndefined();
-    expect(restored.taskLabels?.FOOD).toBe('spaces trimmed');
-  });
-
-  it('carries user-added tasks and their ticks through a round trip', () => {
-    const restored = deserialize(serialize(sampleState()));
-    expect(restored.customTasks).toEqual([
-      { id: 't1', name: 'No alcohol', cadence: 'weekly', color: '#B85C38' },
-    ]);
-    expect(restored.logs[0]?.customTicks).toEqual({ t1: true });
-    expect(restored.logs[1]?.customTicks).toEqual({});
-  });
-
-  it('drops ticks for a task that no longer exists', () => {
-    const raw = JSON.parse(serialize(sampleState()));
-    raw.state.customTasks = [];
-    const restored = deserialize(JSON.stringify(raw));
-    expect(restored.logs[0]?.customTicks).toEqual({});
-  });
-
-  it('drops a colour that is not one, keeping the task', () => {
-    const raw = JSON.parse(serialize(sampleState()));
-    raw.state.customTasks[0].color = 'chartreuse';
-    const [task] = deserialize(JSON.stringify(raw)).customTasks ?? [];
-    expect(task?.name).toBe('No alcohol');
-    expect(task && 'color' in task).toBe(false);
-  });
-
-  it('drops a malformed task rather than failing the whole import', () => {
-    const raw = JSON.parse(serialize(sampleState()));
-    raw.state.customTasks = [{ id: 't1', name: 'Keep me' }, { id: 42 }, { name: 'no id' }, 'junk'];
-    expect(deserialize(JSON.stringify(raw)).customTasks).toEqual([
-      { id: 't1', name: 'Keep me', cadence: 'daily' },
-    ]);
+    expect(restored.profile).toBeUndefined();
   });
 });

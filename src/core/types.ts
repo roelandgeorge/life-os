@@ -73,6 +73,16 @@ export type AppState = {
   notificationTime?: string | null;
 };
 
+/**
+ * Shared by the store (parsing an import / a stored record) and the habit
+ * editor (§1.6): a colour is stored as `#rrggbb` and nothing more specific,
+ * so a later change to the offered palette can never strip one on the next
+ * import or read.
+ */
+export function isHexColor(v: unknown): v is string {
+  return typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
+}
+
 /** Everything the UI needs for one moment in time. Derived, never persisted. */
 export type Projection = {
   /** Steps from closed periods only. */
