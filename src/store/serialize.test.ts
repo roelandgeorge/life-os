@@ -162,6 +162,35 @@ describe('export/import', () => {
     expect(restored.profile).toBeUndefined();
   });
 
+  it('carries gym, employed, selfEmployed and pendingOfferIds through a round trip', () => {
+    const state = sampleState();
+    state.profile = { gym: true, employed: false, selfEmployed: true, pendingOfferIds: ['H077', 'H020'] };
+    const restored = deserialize(serialize(state));
+    expect(restored.profile).toEqual({
+      gym: true,
+      employed: false,
+      selfEmployed: true,
+      pendingOfferIds: ['H077', 'H020'],
+    });
+  });
+
+  it("carries hair: 'none' through a round trip", () => {
+    const state = sampleState();
+    state.profile = { hair: 'none' };
+    const restored = deserialize(serialize(state));
+    expect(restored.profile).toEqual({ hair: 'none' });
+  });
+
+  it('drops an empty pendingOfferIds rather than storing it', () => {
+    const json = JSON.stringify({
+      schemaVersion: 2,
+      exportedAt: '',
+      state: { ...sampleState(), profile: { pendingOfferIds: [] } },
+    });
+    const restored = deserialize(json);
+    expect(restored.profile).toBeUndefined();
+  });
+
   it('drops a hair value outside the closed union rather than storing it', () => {
     const json = JSON.stringify({
       schemaVersion: 2,

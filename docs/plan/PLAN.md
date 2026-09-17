@@ -10,7 +10,7 @@ fresh session. Decisions from the planning interview live in
 | 1 | Catalog as data, data model v2, migration v1→v2, weighted panel engine, habit CRUD; current UI minimally adapted | **Built** — [`phase-1.md`](phase-1.md) |
 | 2 | Renderer: panels + overlays + variant manifest + placeholders; artwork prompt guide | **Built** — [`phase-2.md`](phase-2.md) |
 | 3 | Dark editorial design system: tokens, type, grain, base components; existing screens converted | **Built** — [`phase-3.md`](phase-3.md) |
-| 4 | Onboarding decision tree + profile + Discover/edit | **Built** — [`phase-4.md`](phase-4.md). Its onboarding is being replaced before phase 5, see [`docs/onboarding/`](../onboarding/) |
+| 4 | Onboarding decision tree + profile + Discover/edit | **Built** — [`phase-4.md`](phase-4.md). Its decision tree (the domain picker, three starters per domain) has since been replaced — see [`docs/onboarding/`](../onboarding/), built per its own `00-brief.md` |
 | 5 | Check-in UI (Home) | Not planned |
 | 6 | Content layer + gamification: personas, Guide tab, side quests, milestones, badges, XP/level, weekly recap, story card | Not planned |
 | 7 | Release-ready: multi-user push, real artwork, copy pass, PWA/iOS check, docs, tester instructions | Not planned |
@@ -25,5 +25,8 @@ fresh session. Decisions from the planning interview live in
 
 ## Sources
 
-- `docs/habits.csv` — 123 items, the source for the catalog (Dutch).
+- `docs/habits.csv` — 123 items, the original source for the catalog (Dutch).
+  `src/content/catalog.json` has since grown to 137 via `docs/onboarding/`,
+  which is now the catalogue's source of record — see
+  `docs/onboarding/02-catalog-changes.md`.
 - `docs/lifeguide.docx` — the distilled life guide (Dutch).

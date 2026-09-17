@@ -34,7 +34,7 @@ exact rect over the box behind them: the frame the drawing itself must be
 made against, not just where the app happens to place it. `wealth` and
 `network` have no variants, so it's one drawing per state, full stop.
 
-## The twelve sheets
+## The fourteen sheets
 
 Draw five states per sheet, one image, states side by side, **worst on the
 left, best on the right**, and save it under the exact name below. Sheet
@@ -49,8 +49,10 @@ unchanged.
 | `body-female.png` | `public/avatar/you/` | 2045 × 632 |
 | `head-male-blond.png` | `public/avatar/you/` | 820 × 164 |
 | `head-male-dark.png` | `public/avatar/you/` | 820 × 164 |
+| `head-male-none.png` | `public/avatar/you/` | 820 × 164 |
 | `head-female-blond.png` | `public/avatar/you/` | 820 × 164 |
 | `head-female-dark.png` | `public/avatar/you/` | 820 × 164 |
+| `head-female-none.png` | `public/avatar/you/` | 820 × 164 |
 | `partner-male-blond.png` | `public/avatar/you/` | 845 × 518 |
 | `partner-male-dark.png` | `public/avatar/you/` | 845 × 518 |
 | `partner-female-blond.png` | `public/avatar/you/` | 845 × 518 |
@@ -105,10 +107,17 @@ verbatim.
 
 **head-{gender}-{hair}**
 > [preamble]. Five panels left to right on one canvas, each `164×164`, the
-> same [male/female] figure's head and face with [blond/dark] hair, from a
-> tired, unkempt expression to a clear, well-rested one. Face fills the
-> frame, chin at a fixed height (see registration below). Transparent
-> background, figure only, nothing behind it.
+> same [male/female] figure's head and face with [blond/dark/bald — no hair
+> at all, for the `none` variant] hair, from a tired, unkempt expression to
+> a clear, well-rested one. Face fills the frame, chin at a fixed height
+> (see registration below). Transparent background, figure only, nothing
+> behind it.
+
+`none` exists because onboarding's hair question has to offer a bald option
+(`Hair` gained `'none'` — a haircut habit, H033, requires having hair to
+begin with). It draws only `head`, not `partner`: onboarding no longer asks
+what a partner looks like at all (Settings' Profile section still can, for
+whoever sets it there), so `partner-*-none` is not on this list.
 
 **partner-{gender}-{hair}**
 > [preamble]. Five panels left to right on one canvas, each `169×518`, a
@@ -163,7 +172,7 @@ Drop one file at a time. The fallback chain in `visual/scene.ts` means a
 slot with no drawing yet just doesn't render (an overlay) or keeps its
 shared fallback (a box), never a broken image.
 
-## Checklist, all sixty files
+## Checklist, all seventy files
 
 Box slots (`public/avatar/`):
 
@@ -176,13 +185,15 @@ Variant slots (`public/avatar/you/`):
 - [ ] `body-female1.png` through `body-female5.png`
 - [ ] `head-male-blond1.png` through `head-male-blond5.png`
 - [ ] `head-male-dark1.png` through `head-male-dark5.png`
+- [ ] `head-male-none1.png` through `head-male-none5.png`
 - [ ] `head-female-blond1.png` through `head-female-blond5.png`
 - [ ] `head-female-dark1.png` through `head-female-dark5.png`
+- [ ] `head-female-none1.png` through `head-female-none5.png`
 - [ ] `partner-male-blond1.png` through `partner-male-blond5.png`
 - [ ] `partner-male-dark1.png` through `partner-male-dark5.png`
 - [ ] `partner-female-blond1.png` through `partner-female-blond5.png`
 - [ ] `partner-female-dark1.png` through `partner-female-dark5.png`
 
-Ten groups of five, plus the two box groups: sixty files. Nothing has to
-arrive at once, the app renders correctly with any subset of this list
+Twelve groups of five, plus the two box groups: seventy files. Nothing has
+to arrive at once, the app renders correctly with any subset of this list
 present, falling back one rung for whatever's still missing.

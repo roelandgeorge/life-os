@@ -66,6 +66,26 @@ the persona is phase 6's to ask for, once it has quotes behind it, and it
 must never steer which habits get picked. Home itself (§4.8's one-line
 `groupHabits` edit aside) and the gamification layer are still ahead.
 
+**The onboarding rebuild (`docs/onboarding/`) has since shipped too**,
+replacing phase 4's decision tree: the domain picker and its per-domain
+"three starters" step are gone, along with the appearance questions as the
+opener. `core/onboarding.ts` now reads the tree as data
+(`src/content/onboarding-tree.json`, `src/content/landings.json`) instead of
+holding a fixed sequence — `currentNode()`/`chooseOption()`/
+`chooseDrawing()`/`advanceScreen()`/`buildInitialState()` — and
+`app/Onboarding.tsx` is a thin renderer over it. `catalog.json` is now 137
+items (14 added, 13 edited, nothing removed); `Requirement` grew from
+`partner | children` to also cover `hair`, `gym`, `employed`,
+`self-employed`, `single`, and any catalogue habit id. `Hair` gained
+`'none'`; `Profile` gained optional `gym`/`employed`/`selfEmployed` (read
+only for `requires`) and `pendingOfferIds` (the landing screen's un-added
+offers, now a permanent `MainScreen` feature, not an onboarding-only one).
+`Profile.domainOrder` and the partner-appearance question both lost their
+onboarding step but kept their Settings control — nothing about how they
+work changed, only how they first get set. README's "Onboarding" section
+explains the tree walk in full; `docs/onboarding/03-decisions.md` has the
+reasoning behind each call the brief left open.
+
 Live on the user's Vercel deployment, which builds from `main` on GitHub.
 
 The fifteen real drawings from phase 1 are in as the fallback rung for
@@ -120,7 +140,7 @@ npm run manifest        # regenerate src/content/artwork.json from public/avatar
 ```
 index.html, src/main.tsx   entry
 src/core/       the model — pure: no DOM, no clock, no storage
-  catalog.ts      the habit catalogue (123 items), read from src/content/catalog.json
+  catalog.ts      the habit catalogue (137 items), read from src/content/catalog.json
   domains.ts      the 10 domains as data: colour, which panel(s) they feed
   habits.ts       UserHabit helpers: cadence/streak arithmetic, colour, CRUD
   steps.ts        the weighted panel engine: 0–4 per panel, recomputed from the log
@@ -129,27 +149,32 @@ src/core/       the model — pure: no DOM, no clock, no storage
   atRisk.ts       the lapse warning + the id-only digest sent to the server
   projection.ts   what the screen shows now; scoring.ts: Full Day, log trimming
   types.ts        AppState, DayLog, UserHabit, Profile, Projection
-  onboarding.ts   the decision tree: steps()/profileFrom()/buildInitialState()
+  onboarding.ts   the tree (docs/onboarding/): currentNode()/chooseOption()/
+                  chooseDrawing()/advanceScreen()/profileFrom()/buildInitialState()
   personas.ts     the persona catalogue (id/name/blurb), from content/personas.json
 src/store/      Store interface (types.ts), indexeddb.ts, memory.ts, serialize.ts,
                 migrate.ts (v1 -> v2, run on first load of an old record)
 src/visual/     scene.ts (the slot table + the fallback-chain resolver, the
                 only file naming PNGs), Avatar.tsx (paints a resolved Scene)
-src/app/        App (onboarding gate), Onboarding (the decision tree renderer),
-                Shell (tabs), Main/History/Settings screens, DiscoverScreen
-                (full-screen catalogue browser, from Settings), ProfileFields
-                (Gender/Hair/Partner/Children/DomainOrder fields, shared by
-                Onboarding and Settings), HabitPicker (shared by Onboarding's
-                starters step and Discover), useLifeOS (the only bridge to
-                Store + clock — habit CRUD lives here as thin wiring around
-                core/habits.ts), push.ts, warmArtwork.ts, Celebration
+src/app/        App (onboarding gate), Onboarding (a thin renderer over
+                core/onboarding.ts's tree walk), Shell (tabs), Main/History/
+                Settings screens, DiscoverScreen (full-screen catalogue
+                browser, from Settings), ProfileFields (Gender/Hair/Partner/
+                Children/DomainOrder fields, shared by Onboarding's drawing
+                questions and Settings), HabitPicker (shared by Onboarding's
+                Q1 offers + landing row and Discover), useLifeOS (the only
+                bridge to Store + clock — habit CRUD lives here as thin
+                wiring around core/habits.ts), push.ts, warmArtwork.ts,
+                Celebration
 src/ui/         Button, Chip/ChipRow, Checkbox, Card, Field, Select,
                 SectionHeading, Note, FullDayStrip — thin components over
                 components.css; tokens.ts (parser + contrast helper),
                 tokens.test.ts, chrome.test.ts
-src/content/    catalog.json (scripts/import-catalog.mjs), scene.json
+src/content/    catalog.json (docs/onboarding/, 137 items), scene.json
                 (hand-written scene geometry), artwork.json (scripts/build-
                 artwork-manifest.mjs, the file inventory scene.ts resolves against),
+                onboarding-tree.json + landings.json (docs/onboarding/, the
+                onboarding tree and its landing points as static data),
                 personas.json (hand-written, id/name/blurb)
 src/i18n/en.ts  every fixed user-facing string; habit titles are data, not i18n
 src/styles/     tokens.css (the only file with a colour literal), base.css,
@@ -175,7 +200,8 @@ Tests sit next to the code they cover (`*.test.ts`).
 | Backups | Settings → Export writes `life-os-export-<date>.json` (envelope with `schemaVersion`, currently 2, in `src/store/types.ts`); Import validates it in `src/store/serialize.ts`, migrating a v1 export on the way in. The only defence against a cleared browser. |
 | **Push subscription** + digest (ids, each habit's own period anchor, last hit, period length — no titles, no log) | Vercel Blob, **private** store, `push/subscription.json` (`SUBSCRIPTION_PATH`, `api/subscribe.ts`). |
 | Secrets and keys | Vercel env vars: `VITE_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET`, `BLOB_READ_WRITE_TOKEN`. Locally only `VITE_VAPID_PUBLIC_KEY` in `.env.local` (gitignored via `*.local`). The private key never goes in the repo. |
-| Catalogue content | `docs/habits.csv` (source) → `src/content/catalog.json` (what ships), via `scripts/import-catalog.mjs` |
+| Catalogue content | `src/content/catalog.json` (137 items) is now the source of record — `docs/habits.csv` is the original 123-item Dutch archive `scripts/import-catalog.mjs` translated once; regenerating from it would lose the 14 items `docs/onboarding/catalog.json` added. |
+| Onboarding tree + landings | `src/content/onboarding-tree.json`, `src/content/landings.json`, copied verbatim from `docs/onboarding/` (the source of truth), read by `src/core/onboarding.ts` |
 | Persona content | `src/content/personas.json`, hand-written, read by `src/core/personas.ts` |
 | Domain/panel definitions | `src/core/domains.ts` |
 | Scene geometry (slots, rects, variants) | `src/content/scene.json`, typed and resolved by `src/visual/scene.ts` |
