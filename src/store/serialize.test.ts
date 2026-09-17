@@ -142,6 +142,21 @@ describe('export/import', () => {
     });
   });
 
+  it('carries children, domainOrder and personaId through a round trip', () => {
+    const state = sampleState();
+    state.profile = {
+      children: true,
+      domainOrder: ['finance', 'sleep', 'mindset'],
+      personaId: 'marcus-aurelius',
+    };
+    const restored = deserialize(serialize(state));
+    expect(restored.profile).toEqual({
+      children: true,
+      domainOrder: ['finance', 'sleep', 'mindset'],
+      personaId: 'marcus-aurelius',
+    });
+  });
+
   it('omits profile entirely rather than storing an empty object', () => {
     const restored = deserialize(serialize(sampleState()));
     expect(restored.profile).toBeUndefined();

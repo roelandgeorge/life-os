@@ -108,11 +108,6 @@ export const en = {
 
   'settings.appearance': 'Appearance',
   'settings.appearance.note': 'Decides which drawing of you and your partner the picture uses.',
-  'settings.appearance.gender.male': 'Male',
-  'settings.appearance.gender.female': 'Female',
-  'settings.appearance.hair.blond': 'Blond',
-  'settings.appearance.hair.dark': 'Dark',
-  'settings.appearance.partner.wanted': 'I have a partner',
   'settings.domainOrder': 'Domain order',
   'settings.domainOrder.note': 'Turn on as many as you like. The order decides where each group sits on Home — nothing is ever hidden by this.',
 
