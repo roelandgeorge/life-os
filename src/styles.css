@@ -19,44 +19,6 @@ body {
   font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-.debug {
-  display: grid;
-  grid-template-columns: minmax(320px, 480px) 1fr;
-  gap: 24px;
-  min-height: 100vh;
-  padding: 24px;
-}
-
-@media (max-width: 900px) {
-  .debug {
-    grid-template-columns: 1fr;
-  }
-}
-
-.stage {
-  position: sticky;
-  top: 24px;
-  align-self: start;
-}
-
-.stage svg {
-  width: 100%;
-  height: auto;
-  background: #0b0e14;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-}
-
-.disclaimer {
-  color: var(--muted);
-  font-size: 12px;
-  margin: 8px 2px 0;
-}
-
-.controls {
-  min-width: 0;
-}
-
 h1 {
   font-size: 18px;
   margin: 0 0 12px;
@@ -70,12 +32,6 @@ h2 {
   margin: 24px 0 10px;
   padding-bottom: 6px;
   border-bottom: 1px solid var(--line);
-}
-
-.modes {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
 }
 
 button {
@@ -93,49 +49,10 @@ button.on {
   color: var(--accent);
 }
 
-.slider {
-  margin-bottom: 14px;
-}
-
-.slider label {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-}
-
-.slider .name {
-  font-weight: 600;
-}
-
 .num {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
   font-size: 12px;
-}
-
-.slider input[type='range'] {
-  width: 100%;
-  margin: 4px 0 2px;
-  accent-color: var(--accent);
-}
-
-.slider code {
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.extremes {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  margin: 2px 0 0;
-  font-size: 11px;
-  color: #5f6673;
-}
-
-.extremes span:last-child {
-  text-align: right;
 }
 
 .row {
@@ -144,57 +61,6 @@ button.on {
   gap: 16px;
   margin-top: 12px;
   flex-wrap: wrap;
-}
-
-.check {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.derived {
-  color: var(--muted);
-}
-
-.derived strong {
-  color: var(--text);
-}
-
-.readout {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-.readout th {
-  text-align: left;
-  font-weight: 500;
-  color: var(--muted);
-  padding: 2px 8px 2px 0;
-  white-space: nowrap;
-}
-
-.readout td {
-  padding: 2px 0;
-}
-
-.readout .num {
-  padding-left: 8px;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.bar {
-  background: var(--panel);
-  border-radius: 3px;
-  height: 8px;
-  overflow: hidden;
-}
-
-.bar span {
-  display: block;
-  height: 100%;
-  background: var(--accent);
 }
 
 .chips {
@@ -280,13 +146,6 @@ button.on {
   font-size: 13px;
 }
 
-.warmup {
-  color: var(--muted);
-  font-style: italic;
-  font-size: 12px;
-  margin: 10px 0 0;
-}
-
 .fullday {
   color: var(--accent);
   font-weight: 600;
@@ -369,14 +228,6 @@ button.on {
 
 /* ---- onboarding (§7) --------------------------------------------------- */
 
-.onboarding .progress {
-  color: var(--muted);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin: 0 0 12px;
-}
-
 .onboarding h2 {
   font-size: 17px;
   text-transform: none;
@@ -391,48 +242,6 @@ button.on {
   color: var(--muted);
   font-size: 13px;
   margin: 0 0 16px;
-}
-
-.onboarding input[type='range'] {
-  width: 100%;
-  accent-color: var(--accent);
-  margin-top: 8px;
-}
-
-.onboarding .ageValue {
-  font-size: 24px;
-  font-weight: 600;
-  margin: 8px 0 0;
-}
-
-.onboarding .chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.onboarding .chips button {
-  padding: 8px 16px;
-}
-
-.swatches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.swatch {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 2px solid var(--line);
-  padding: 0;
-  cursor: pointer;
-}
-
-.swatch.on {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent);
 }
 
 .onboarding-nav {
@@ -460,10 +269,6 @@ button.primary {
 section p {
   line-height: 1.6;
   margin: 0 0 10px;
-}
-
-.start {
-  margin-top: 8px;
 }
 
 /* ---- shell / nav -------------------------------------------------------- */
@@ -588,15 +393,6 @@ section p {
   gap: 10px;
 }
 
-.notification-row input[type='time'] {
-  background: var(--panel);
-  color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 6px 8px;
-  font: inherit;
-}
-
 .note.error {
   color: #d97a6c;
 }
@@ -625,20 +421,6 @@ button.danger {
   position: absolute;
   object-fit: fill;
   user-select: none;
-}
-
-.pips {
-  display: inline-flex;
-  gap: 3px;
-  margin-left: auto;
-  flex: none;
-}
-
-.pip {
-  width: 10px;
-  height: 6px;
-  border-radius: 2px;
-  background: var(--line);
 }
 
 .next-move {
@@ -678,12 +460,6 @@ button.danger {
   text-align: center;
 }
 
-.task-labels {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .task-label {
   display: flex;
   align-items: center;
@@ -705,20 +481,7 @@ button.danger {
   color: var(--muted);
 }
 
-.swatch-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex: none;
-}
-
 /* ---- user-added tasks --------------------------------------------------- */
-
-/* Deliberately plainer than a building block: these move no panel, and the
-   screen should say so before the user has to read anything. */
-.custom-tasks {
-  margin-top: 22px;
-}
 
 .custom-heading {
   font-size: 11px;
@@ -730,33 +493,10 @@ button.danger {
   margin: 0 0 8px;
 }
 
-.checkin.custom {
-  background: none;
-  border-style: dashed;
-  margin-bottom: 8px;
-}
-
-.checkin.custom .label {
-  font-weight: 400;
-  color: var(--text);
-}
-
 button.small {
   padding: 4px 10px;
   line-height: 1;
   flex: none;
-}
-
-.add-custom {
-  margin-top: 10px;
-}
-
-.custom-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--line);
 }
 
 .chips.cadence {
@@ -767,34 +507,6 @@ button.small {
 .chips.cadence button {
   padding: 2px 10px;
   font-size: 11px;
-}
-
-/* Filing colours, taken from the building blocks. Round and small so the row
-   reads as a property of the task rather than another pair of buttons. */
-.swatches {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-  margin-left: auto;
-}
-
-.chips button.swatch {
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  box-shadow: 0 0 0 1px var(--line);
-}
-
-.chips button.swatch.on {
-  border-color: var(--bg);
-  box-shadow: 0 0 0 2px var(--text);
-}
-
-.chips button.swatch.none {
-  background: none;
-  box-shadow: 0 0 0 1px var(--line);
 }
 
 /* ---- habit editor (§1.6/§1.7) ------------------------------------------- */
@@ -880,25 +592,11 @@ button.small {
   margin-top: 0;
 }
 
-/* Same specificity as the rule above and later in the file, so without this
-   the "no colour" swatch loses its selected ring — the one state that is on
-   by default. */
-.chips button.swatch.none.on {
-  box-shadow: 0 0 0 2px var(--text);
-}
-
 /* The rest day is the plan working, so it says so in the same quiet voice as
    a last-hit date rather than shouting about it. */
 .checkin .lastHit.rest {
   font-style: italic;
   opacity: 0.9;
-}
-
-/* The weekly ones carry a deadline, so their note earns a little more weight
-   than a daily streak count. */
-.checkin.custom.weekly .lastHit {
-  color: var(--text);
-  opacity: 0.75;
 }
 
 .risk-warning {
