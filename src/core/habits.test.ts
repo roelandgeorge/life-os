@@ -177,20 +177,27 @@ describe('constructing new habits', () => {
     });
   });
 
-  it('gives a self-written habit the default weight and a daily cadence', () => {
-    const h = newCustomHabit('id2', 'No alcohol', START);
-    expect(h).toMatchObject({ id: 'id2', title: 'No alcohol', cadence: 'daily', importance: 3 });
-    expect(h.domain).toBeUndefined();
+  it('carries the domain the form was opened from, and an emoji when given', () => {
+    const h = newCustomHabit('id2', { title: 'No alcohol', importance: 5, cadence: 'weekly', domain: 'nutrition', emoji: '🍷' }, START);
+    expect(h).toMatchObject({ id: 'id2', title: 'No alcohol', cadence: 'weekly', importance: 5, domain: 'nutrition', emoji: '🍷' });
+    expect(h.color).toBeUndefined();
+  });
+
+  it('omits emoji entirely when none is given', () => {
+    const h = newCustomHabit('id2', { title: 'No alcohol', importance: 3, cadence: 'daily', domain: 'nutrition' }, START);
+    expect(h.emoji).toBeUndefined();
   });
 });
 
 describe('canAddCustomHabit', () => {
-  it('caps active, domain-less habits but not catalogue ones', () => {
-    const domainHabits = Array.from({ length: 20 }, (_, i) => habit({ id: `d${i}`, domain: 'sleep' }));
-    expect(canAddCustomHabit(domainHabits)).toBe(true);
+  it('caps active, self-written habits but not catalogue ones', () => {
+    const catalogHabits = Array.from({ length: 20 }, (_, i) =>
+      habit({ id: `d${i}`, domain: 'sleep', catalogId: `H${i}` }),
+    );
+    expect(canAddCustomHabit(catalogHabits)).toBe(true);
 
     let habits: UserHabit[] = [];
-    for (let i = 0; i < MAX_CUSTOM_HABITS; i++) habits.push(habit({ id: `c${i}` }));
+    for (let i = 0; i < MAX_CUSTOM_HABITS; i++) habits.push(habit({ id: `c${i}`, domain: 'sleep' }));
     expect(canAddCustomHabit(habits)).toBe(false);
   });
 

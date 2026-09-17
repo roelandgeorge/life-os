@@ -1,70 +1,52 @@
 /**
- * §6 screen 3, merged per §1.7 of docs/plan/phase-1.md: "What each box means"
- * and "Your own tasks" become one habit editor (title, weight, cadence,
- * domain, remove) plus a simple "Add from catalogue" picker. Everything else
- * — the reminder, export/import, reset — is unchanged mechanics.
+ * Settings, reduced to exactly four things (docs/onboarding/04-revisions.md
+ * §10): the figure and "what you work on" each get their own redo button —
+ * running one writes only its own fields (§5) — plus the daily reminder and
+ * data (export/import/reset). The old Profile section, the habit editor and
+ * the catalogue button are gone: profile fields are onboarding's alone now,
+ * a habit is edited from its own row on Home, and the catalogue is reached
+ * per domain from there too.
  */
 
 import { useRef, useState } from 'react';
 import { disablePush, enablePush, testPush, type PushResult } from './push';
 import { weeklyDigest } from '../core/atRisk';
-import { DOMAINS, type DomainKey } from '../core/domains';
-import type { HabitPatch } from '../core/habits';
-import { MAX_HABIT_TITLE_LENGTH, canAddCustomHabit } from '../core/habits';
 import type { DateKey } from '../core/dates';
-import type { AppState, Cadence, Profile } from '../core/types';
-import { en, type I18nKey } from '../i18n/en';
+import { FIGURE_START_NODE, LANDING_NODE, WORK_ON_START_NODE, type Answers } from '../core/onboarding';
+import type { AppState } from '../core/types';
+import { en } from '../i18n/en';
 import { ImportError } from '../store/serialize';
 import type { Store } from '../store/types';
 import { Button } from '../ui/Button';
 import { Checkbox } from '../ui/Checkbox';
-import { Chip, ChipRow } from '../ui/Chip';
-import { Field } from '../ui/Field';
 import { Note } from '../ui/Note';
 import { SectionHeading } from '../ui/SectionHeading';
-import { Select } from '../ui/Select';
-import { DiscoverScreen } from './DiscoverScreen';
-import { ChildrenField, DomainOrderField, GenderField, HairField, PartnerFields } from './ProfileFields';
-import type { NewHabitSource } from './useLifeOS';
+import { Onboarding } from './Onboarding';
 
-const NAMED_CADENCES: readonly Cadence[] = ['daily', 'weekly', 'monthly'];
-
-function cadenceLabel(c: Cadence): I18nKey | null {
-  if (c === 'daily') return 'settings.habits.cadence.daily';
-  if (c === 'weekly') return 'settings.habits.cadence.weekly';
-  if (c === 'monthly') return 'settings.habits.cadence.monthly';
-  return null;
-}
+type Redo = 'figure' | 'workOn' | null;
 
 export function SettingsScreen({
   state,
   today,
   store,
   onNotificationTimeChange,
-  onAddHabit,
-  onUpdateHabit,
-  onRemoveHabit,
-  onUpdateProfile,
+  onCompleteWorkOnRedo,
+  onCompleteFigureRedo,
 }: {
   state: AppState;
   today: DateKey;
   store: Store;
   onNotificationTimeChange: (value: string | null) => void;
-  onAddHabit: (source: NewHabitSource) => void;
-  onUpdateHabit: (id: string, patch: HabitPatch) => void;
-  onRemoveHabit: (id: string) => void;
-  onUpdateProfile: (patch: Partial<Profile>) => void;
+  onCompleteWorkOnRedo: (answers: Answers) => void;
+  onCompleteFigureRedo: (answers: Answers) => void;
 }) {
   const [message, setMessage] = useState<string | null>(null);
   const [pushError, setPushError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; detail: string } | null>(null);
-  const [newTitle, setNewTitle] = useState('');
-  const [discoverOpen, setDiscoverOpen] = useState(false);
+  const [redo, setRedo] = useState<Redo>(null);
   const fileInput = useRef<HTMLInputElement>(null);
-
-  const habits = state.habits.filter((h) => h.removedDate === undefined);
 
   async function handleReminder(wanted: boolean) {
     setPushError(null);
@@ -123,117 +105,44 @@ export function SettingsScreen({
     window.location.reload();
   }
 
-  function handleAddCustom() {
-    const title = newTitle.trim();
-    if (!title) return;
-    onAddHabit({ title });
-    setNewTitle('');
+  if (redo === 'workOn') {
+    return (
+      <Onboarding
+        start={WORK_ON_START_NODE}
+        terminal={FIGURE_START_NODE}
+        onComplete={(answers) => {
+          onCompleteWorkOnRedo(answers);
+          setRedo(null);
+        }}
+      />
+    );
   }
 
-  if (discoverOpen) {
-    return <DiscoverScreen state={state} onAddHabit={onAddHabit} onClose={() => setDiscoverOpen(false)} />;
+  if (redo === 'figure') {
+    return (
+      <Onboarding
+        start={FIGURE_START_NODE}
+        terminal={LANDING_NODE}
+        onComplete={(answers) => {
+          onCompleteFigureRedo(answers);
+          setRedo(null);
+        }}
+      />
+    );
   }
 
   return (
     <div className="settings-screen">
       <h1 className="headline">{en['settings.title']}</h1>
 
-      <ProfileSection profile={state.profile} onUpdateProfile={onUpdateProfile} />
-
       <section>
-        <SectionHeading>{en['settings.habits']}</SectionHeading>
-        <Note>{en['settings.habits.note']}</Note>
-
-        {habits.length === 0 && <Note>{en['settings.habits.empty']}</Note>}
-
-        <div className="habit-list">
-          {habits.map((habit) => (
-            <div className="habit-row" key={habit.id}>
-              <div className="task-label">
-                <input
-                  type="text"
-                  maxLength={MAX_HABIT_TITLE_LENGTH}
-                  placeholder={en['settings.habits.title.placeholder']}
-                  value={habit.title}
-                  onChange={(e) => onUpdateHabit(habit.id, { title: e.target.value })}
-                />
-                <Button
-                  variant="danger"
-                  small
-                  aria-label={`${en['settings.habits.remove']}: ${habit.title}`}
-                  onClick={() => onRemoveHabit(habit.id)}
-                >
-                  ×
-                </Button>
-              </div>
-
-              <div className="habit-row-controls">
-                <Field className="habit-weight" label={en['settings.habits.weight']}>
-                  <input
-                    type="number"
-                    min={1}
-                    max={5}
-                    value={habit.importance}
-                    onChange={(e) => {
-                      const n = Number(e.target.value);
-                      if (Number.isFinite(n)) onUpdateHabit(habit.id, { importance: Math.min(5, Math.max(1, n)) });
-                    }}
-                  />
-                </Field>
-
-                <Select
-                  value={habit.domain ?? 'none'}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    onUpdateHabit(habit.id, { domain: value === 'none' ? null : (value as DomainKey) });
-                  }}
-                >
-                  <option value="none">{en['settings.habits.domain.none']}</option>
-                  {DOMAINS.map((d) => (
-                    <option key={d.key} value={d.key}>
-                      {en[d.label as I18nKey]}
-                    </option>
-                  ))}
-                </Select>
-
-                <ChipRow className="chips cadence">
-                  {NAMED_CADENCES.map((c) => {
-                    const label = cadenceLabel(c);
-                    if (!label) return null;
-                    return (
-                      <Chip key={String(c)} on={habit.cadence === c} onClick={() => onUpdateHabit(habit.id, { cadence: c })}>
-                        {en[label]}
-                      </Chip>
-                    );
-                  })}
-                  {cadenceLabel(habit.cadence) === null && <Note>{en['settings.habits.cadence.other']}</Note>}
-                </ChipRow>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="add-custom-row">
-          <input
-            type="text"
-            maxLength={MAX_HABIT_TITLE_LENGTH}
-            placeholder={en['settings.habits.add.placeholder']}
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleAddCustom();
-            }}
-          />
-          <Button disabled={!canAddCustomHabit(state.habits)} onClick={handleAddCustom}>
-            {en['settings.habits.add.button']}
-          </Button>
-        </div>
+        <SectionHeading>{en['settings.figure']}</SectionHeading>
+        <Button onClick={() => setRedo('figure')}>{en['settings.figure.redo']}</Button>
       </section>
 
       <section>
-        <SectionHeading>{en['settings.catalog']}</SectionHeading>
-        <Note>{en['settings.catalog.note']}</Note>
-        <Button onClick={() => setDiscoverOpen(true)}>{en['settings.catalog.discover']}</Button>
+        <SectionHeading>{en['settings.workOn']}</SectionHeading>
+        <Button onClick={() => setRedo('workOn')}>{en['settings.workOn.redo']}</Button>
       </section>
 
       <section>
@@ -280,49 +189,13 @@ export function SettingsScreen({
           />
         </div>
         {message && <Note variant="error">{message}</Note>}
-      </section>
 
-      <section>
-        <SectionHeading>{en['settings.reset']}</SectionHeading>
-        <Note>{en['settings.reset.note']}</Note>
         <Button variant="danger" onClick={() => void handleReset()}>
           {en['settings.reset']}
         </Button>
+        <Note>{en['settings.reset.note']}</Note>
       </section>
     </div>
-  );
-}
-
-/**
- * The Profile section (§4.8 of docs/plan/phase-4.md) — gender, hair, partner,
- * children and domain order, replacing the old bare Appearance section.
- * Built from the same ProfileFields onboarding uses, so a control changed
- * here is literally the same control met during onboarding.
- */
-function ProfileSection({
-  profile,
-  onUpdateProfile,
-}: {
-  profile: Profile | undefined;
-  onUpdateProfile: (patch: Partial<Profile>) => void;
-}) {
-  return (
-    <section>
-      <SectionHeading>{en['settings.appearance']}</SectionHeading>
-      <Note>{en['settings.appearance.note']}</Note>
-
-      <div className="row">
-        <GenderField value={profile?.gender} onChange={(gender) => onUpdateProfile({ gender })} />
-        <HairField value={profile?.hair} onChange={(hair) => onUpdateProfile({ hair })} />
-      </div>
-
-      <PartnerFields value={profile?.partner} onChange={(partner) => onUpdateProfile({ partner })} />
-      <ChildrenField value={profile?.children} onChange={(children) => onUpdateProfile({ children })} />
-
-      <SectionHeading>{en['settings.domainOrder']}</SectionHeading>
-      <Note>{en['settings.domainOrder.note']}</Note>
-      <DomainOrderField order={profile?.domainOrder} onChange={(domainOrder) => onUpdateProfile({ domainOrder })} />
-    </section>
   );
 }
 

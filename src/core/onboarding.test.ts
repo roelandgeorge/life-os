@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { catalogById, CATALOG } from './catalog';
 import treeJson from '../content/onboarding-tree.json';
 import landingsJson from '../content/landings.json';
+import { en } from '../i18n/en';
 import {
   buildInitialState,
   choose,
@@ -22,8 +23,19 @@ import {
 const TODAY = '2026-09-17';
 
 type TreeOptionJson = { id?: string; label: string };
-type TreeNodeJson = { kind: string; text: string; field?: string; options?: readonly TreeOptionJson[] };
+type TreeNodeJson = {
+  kind: string;
+  text: string;
+  field?: string;
+  options?: readonly TreeOptionJson[];
+  countLine?: Readonly<Record<string, string>>;
+};
 const NODES = (treeJson as { nodes: Record<string, TreeNodeJson> }).nodes;
+function node(id: string): TreeNodeJson {
+  const n = NODES[id];
+  if (!n) throw new Error(`Unknown node ${id}`);
+  return n;
+}
 type LandingJson = { seeds: readonly string[]; offers: readonly string[] };
 const LANDINGS: Record<string, LandingJson> = Object.fromEntries(
   Object.entries(landingsJson as Record<string, unknown>).filter(
@@ -79,17 +91,17 @@ describe('landings.json against catalog.json', () => {
 
 describe('the copy — pinned verbatim against docs/onboarding/04-revisions.md, the final word', () => {
   it('S0 opens with the fixed explainer and "Go on"', () => {
-    expect(NODES.S0.text).toBe(
+    expect(node('S0').text).toBe(
       "This is you in fifteen years.\nEverything starts in the middle. It moves with what you do, both ways.",
     );
   });
 
   it('Q1 asks what the revision replaces it with, not the original spec wording', () => {
-    expect(NODES.Q1.text).toBe('What do you most want to work on?');
+    expect(node('Q1').text).toBe('What do you most want to work on?');
   });
 
   it('Q1 carries the five panel cards plus the unchanged sixth row', () => {
-    const labels = NODES.Q1.options?.map((o) => o.label);
+    const labels = node('Q1').options?.map((o) => o.label);
     expect(labels).toEqual([
       'Body',
       'Head',
@@ -101,27 +113,38 @@ describe('the copy — pinned verbatim against docs/onboarding/04-revisions.md, 
   });
 
   it('the partner and children questions are asked plainly (§2)', () => {
-    expect(NODES.Q2N.text).toBe('Do you have a partner?');
-    expect(NODES.Q3Ny.text).toBe('Do you have children?');
+    expect(node('Q2N').text).toBe('Do you have a partner?');
+    expect(node('Q3Ny').text).toBe('Do you have children?');
   });
 
   it('Q-More is reworded and shows Yes / No, that\'s it (§11)', () => {
-    expect(NODES.QMORE.text).toBe('Is there anything else you want to work on?');
-    expect(NODES.QMORE.options?.map((o) => o.label)).toEqual(['Yes.', "No, that's it."]);
+    expect(node('QMORE').text).toBe('Is there anything else you want to work on?');
+    expect(node('QMORE').options?.map((o) => o.label)).toEqual(['Yes.', "No, that's it."]);
   });
 
   it('the Situation block is gone entirely (§3)', () => {
     expect(NODES.SIT).toBeUndefined();
     expect(NODES.SIT_partner).toBeUndefined();
     expect(NODES.SIT_children).toBeUndefined();
-    for (const node of Object.values(NODES)) {
-      expect(node.text).not.toContain('Two things the drawing needs');
+    for (const n of Object.values(NODES)) {
+      expect(n.text).not.toContain('Two things the drawing needs');
     }
   });
 
   it('the figure questions keep their original wording', () => {
-    expect(NODES.FIG_gender.text).toBe('Now the figure. Which one?');
-    expect(NODES.FIG_hair.text).toBe('Hair?');
+    expect(node('FIG_gender').text).toBe('Now the figure. Which one?');
+    expect(node('FIG_hair').text).toBe('Hair?');
+  });
+
+  it("the landing screen's headline and count line match app/MainScreen.tsx's own copy — LAND itself is never rendered", () => {
+    expect(node('LAND').text.split('\n')[0]).toBe(en['main.landing.headline']);
+    expect(node('LAND').countLine).toEqual({
+      '0': en['main.landing.count.0'],
+      '1': en['main.landing.count.1'],
+      '2': en['main.landing.count.2'],
+      '3': en['main.landing.count.3'],
+      '4': en['main.landing.count.4'],
+    });
   });
 
   it('partner and children are written exactly once each, only inside the Partner branch', () => {

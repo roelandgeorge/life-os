@@ -28,7 +28,7 @@ import type { DateKey } from './dates';
 import { catalogById, requirementsMet, type CatalogItem } from './catalog';
 import { catalogFilterFor, newHabitFromCatalog } from './habits';
 import type { DomainKey } from './domains';
-import type { AppState, Gender, Hair, Profile, UserHabit } from './types';
+import type { AppState, Gender, Hair, Profile } from './types';
 
 // ---------------------------------------------------------------------------
 // The tree, as typed data.
@@ -42,6 +42,7 @@ type NextRef = string | { if: 'children'; then: string; else: string };
 type TreeOption = {
   id?: string;
   label: string;
+  sub?: string;
   next: NextRef;
   sets?: Readonly<Record<string, boolean>>;
   value?: boolean;
@@ -68,6 +69,8 @@ export const START_NODE = TREE.start;
 export const WORK_ON_START_NODE = 'Q1';
 /** Entry point for Settings' "Redo the figure". */
 export const FIGURE_START_NODE = 'FIG_gender';
+/** The terminal hand-off for a full run and for "Redo the figure" — never rendered, see `app/Onboarding.tsx`. */
+export const LANDING_NODE = 'LAND';
 
 type LandingData = { seeds: readonly string[]; offers: readonly string[]; dailyAnchor: string | null };
 
@@ -128,7 +131,7 @@ export function profileFrom(answers: Answers): Profile {
 // Rendering the current node.
 // ---------------------------------------------------------------------------
 
-export type StepOption = { index: number; id?: string; label: string };
+export type StepOption = { index: number; id?: string; label: string; sub?: string };
 
 export type Step = {
   id: string;
@@ -175,6 +178,7 @@ export function step(nodeId: string, answers: Answers): Step {
       .map(({ option, index }) => {
         const resolved: StepOption = { index, label: option.label };
         if (option.id !== undefined) resolved.id = option.id;
+        if (option.sub !== undefined) resolved.sub = option.sub;
         return resolved;
       });
   }
@@ -238,8 +242,12 @@ export function choose(nodeId: string, answers: Answers, optionIndex: number): A
   if (!option) throw new Error(`${nodeId} has no option at index ${optionIndex}`);
 
   let next = answers;
-  if (node.kind === 'profile' && node.field === 'partner') next = { ...next, partner: option.value };
-  if (node.kind === 'profile' && node.field === 'children') next = { ...next, children: option.value };
+  if (node.kind === 'profile' && node.field === 'partner' && option.value !== undefined) {
+    next = { ...next, partner: option.value };
+  }
+  if (node.kind === 'profile' && node.field === 'children' && option.value !== undefined) {
+    next = { ...next, children: option.value };
+  }
   next = applySets(option.sets, next);
 
   if (nodeId === 'Q1' && option.id !== undefined && option.id !== 'none') {
@@ -248,6 +256,13 @@ export function choose(nodeId: string, answers: Answers, optionIndex: number): A
   }
 
   return advanceThroughLandings(resolveNextRef(option.next, next), next);
+}
+
+/** Advances past a `screen` node's single button (S0's "Go on"). */
+export function advanceScreen(nodeId: string, answers: Answers): Advance {
+  const node = TREE.nodes[nodeId];
+  if (!node || node.kind !== 'screen' || !node.next) throw new Error(`${nodeId} is not an advanceable screen`);
+  return advanceThroughLandings(node.next, answers);
 }
 
 /** Advances past FIG_gender/FIG_hair, whose options are drawings rather than tree data. */
@@ -316,29 +331,33 @@ export function dailySeedCount(answers: Answers): number {
   return resolveSeeds(answers).filter((item) => item.cadence === 'daily').length;
 }
 
-function domainOrderFromHabits(habits: readonly UserHabit[]): DomainKey[] {
+/**
+ * `Profile.domainOrder` for a set of seeded catalogue items: the order their
+ * domains first appear, repeats dropped — not the order panels were chosen,
+ * since a domain can feed more than one panel and the mapping is not one to
+ * one (docs/onboarding/04-revisions.md §11). Exposed so Settings' "Redo what
+ * you work on" can rebuild it from that redo's own seeds alone, the same way
+ * changing the order is meant to work: run the work-on part again.
+ */
+export function domainOrderFromSeeds(items: readonly CatalogItem[]): DomainKey[] {
   const order: DomainKey[] = [];
   const seen = new Set<DomainKey>();
-  for (const habit of habits) {
-    if (habit.domain === undefined || seen.has(habit.domain)) continue;
-    seen.add(habit.domain);
-    order.push(habit.domain);
+  for (const item of items) {
+    if (seen.has(item.domain)) continue;
+    seen.add(item.domain);
+    order.push(item.domain);
   }
   return order;
 }
 
-/**
- * Seeded and ready to save. `Profile.domainOrder` is the order these seeds'
- * domains first appear, not the order panels were chosen — a domain can feed
- * more than one panel, so the mapping is not one to one
- * (docs/onboarding/04-revisions.md §11).
- */
+/** Seeded and ready to save — the first, full onboarding run. */
 export function buildInitialState(answers: Answers, newId: () => string, today: DateKey): AppState {
-  const habits = resolveSeeds(answers).map((item) => newHabitFromCatalog(item, newId(), today));
+  const items = resolveSeeds(answers);
+  const habits = items.map((item) => newHabitFromCatalog(item, newId(), today));
   const state: AppState = { schemaVersion: 2, logs: [], habits, notificationTime: null };
 
   const profile = profileFrom(answers);
-  const order = domainOrderFromHabits(habits);
+  const order = domainOrderFromSeeds(items);
   if (order.length > 0) profile.domainOrder = order;
   if (Object.keys(profile).length > 0) state.profile = profile;
   return state;

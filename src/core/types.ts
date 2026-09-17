@@ -34,8 +34,10 @@ export type UserHabit = {
    * habit simply stops asking anything of the user from here on.
    */
   removedDate?: DateKey;
-  /** A filing colour, `#rrggbb`. For a domain habit this defaults to the domain's own. */
+  /** A filing colour, `#rrggbb`. For a domain habit this defaults to the domain's own. Kept for habits migrated from v1 and the domain default — the write-a-habit form offers no colour picker. */
   color?: string;
+  /** A filing mark the write-a-habit form offers instead of a colour (docs/onboarding/04-revisions.md §9). Filing only — nothing maps it back to a domain or a panel. */
+  emoji?: string;
 };
 
 export type DayLog = {

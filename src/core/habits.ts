@@ -171,9 +171,6 @@ export function byColor(habits: readonly UserHabit[]): UserHabit[] {
 // that generates ids and calls the clock, then saves the result.
 // ---------------------------------------------------------------------------
 
-/** Own habits default to weight 3 — the middle of the scale, same reasoning as the v1 migration. */
-export const DEFAULT_IMPORTANCE = 3;
-
 /**
  * The profile-to-catalogue bridge: `has` is set the moment any of the
  * questions it can answer has an answer, so a "no" hides a requiring item
@@ -220,18 +217,46 @@ export function newHabitFromCatalog(item: CatalogItem, id: string, startDate: Da
   };
 }
 
-export function newCustomHabit(id: string, title: string, startDate: DateKey): UserHabit {
-  return {
+/**
+ * The three choices a user-written habit's weight offers on screen
+ * (docs/onboarding/04-revisions.md §9) — never a free 1-5 number.
+ */
+export const CUSTOM_IMPORTANCE: readonly { value: number; key: 'important' | 'medium' | 'notImportant' }[] = [
+  { value: 5, key: 'important' },
+  { value: 3, key: 'medium' },
+  { value: 1, key: 'notImportant' },
+];
+
+export type NewCustomHabitInput = {
+  title: string;
+  importance: number;
+  cadence: Cadence;
+  /** Pre-filled from the domain catalogue screen the form was opened from. */
+  domain: DomainKey;
+  emoji?: string;
+};
+
+/**
+ * A habit the user writes themselves, opened from a domain's catalogue
+ * screen (§9) — it always carries that domain, unlike the old bare "add a
+ * habit of your own" field. `color` is left unset: no colour picker is
+ * offered here, `emoji` is the one filing mark this form gives instead.
+ */
+export function newCustomHabit(id: string, input: NewCustomHabitInput, startDate: DateKey): UserHabit {
+  const habit: UserHabit = {
     id,
-    title: title.slice(0, MAX_HABIT_TITLE_LENGTH),
-    cadence: 'daily',
-    importance: DEFAULT_IMPORTANCE,
+    title: input.title.slice(0, MAX_HABIT_TITLE_LENGTH),
+    domain: input.domain,
+    cadence: input.cadence,
+    importance: input.importance,
     startDate,
   };
+  if (input.emoji !== undefined) habit.emoji = input.emoji;
+  return habit;
 }
 
 export function canAddCustomHabit(habits: readonly UserHabit[]): boolean {
-  const activeCustom = habits.filter((h) => h.domain === undefined && h.removedDate === undefined);
+  const activeCustom = habits.filter((h) => h.catalogId === undefined && h.removedDate === undefined);
   return activeCustom.length < MAX_CUSTOM_HABITS;
 }
 
@@ -243,6 +268,8 @@ export type HabitPatch = {
   color?: string | null;
   /** `null` clears back to a domain-less habit. */
   domain?: DomainKey | null;
+  /** `null` clears the filing emoji. */
+  emoji?: string | null;
 };
 
 export function updateHabit(habits: readonly UserHabit[], id: string, patch: HabitPatch): UserHabit[] {
@@ -255,6 +282,10 @@ export function updateHabit(habits: readonly UserHabit[], id: string, patch: Hab
     if (patch.color !== undefined) {
       if (patch.color === null) delete next.color;
       else next.color = patch.color;
+    }
+    if (patch.emoji !== undefined) {
+      if (patch.emoji === null) delete next.emoji;
+      else next.emoji = patch.emoji;
     }
     if (patch.domain !== undefined) {
       if (patch.domain === null) delete next.domain;

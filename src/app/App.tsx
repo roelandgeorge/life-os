@@ -5,8 +5,16 @@
  */
 
 import { useEffect, useState } from 'react';
+import type { CatalogItem } from '../core/catalog';
 import { dateKeyFor } from '../core/dates';
-import { buildInitialState, type Answers } from '../core/onboarding';
+import {
+  buildInitialState,
+  dailySeedCount,
+  LANDING_NODE,
+  offeredCatalogItems,
+  START_NODE,
+  type Answers,
+} from '../core/onboarding';
 import { en } from '../i18n/en';
 import { Button } from '../ui/Button';
 import { Note } from '../ui/Note';
@@ -15,10 +23,13 @@ import { Onboarding } from './Onboarding';
 import { Shell } from './Shell';
 import { requestPersistentStorage, store } from './store';
 
+/** What the landing screen shows once, right after the first run (docs/onboarding/01-onboarding-spec.md §6) — lost on reload, which is fine: it is a first-session nicety, not state. */
+export type JustOnboarded = { offers: readonly CatalogItem[]; dailyCount: number };
+
 type Phase =
   | { kind: 'loading' }
   | { kind: 'onboarding' }
-  | { kind: 'ready' }
+  | { kind: 'ready'; justOnboarded?: JustOnboarded }
   | { kind: 'failed'; message: string };
 
 export function App() {
@@ -47,7 +58,11 @@ export function App() {
   async function finishOnboarding(answers: Answers) {
     const initial = buildInitialState(answers, () => crypto.randomUUID(), dateKeyFor(new Date()));
     await store.save(initial);
-    setPhase({ kind: 'ready' });
+    const justOnboarded: JustOnboarded = {
+      offers: offeredCatalogItems(answers),
+      dailyCount: dailySeedCount(answers),
+    };
+    setPhase({ kind: 'ready', justOnboarded });
   }
 
   if (phase.kind === 'loading') {
@@ -73,8 +88,10 @@ export function App() {
   }
 
   if (phase.kind === 'onboarding') {
-    return <Onboarding onComplete={(answers) => void finishOnboarding(answers)} />;
+    return (
+      <Onboarding start={START_NODE} terminal={LANDING_NODE} onComplete={(answers) => void finishOnboarding(answers)} />
+    );
   }
 
-  return <Shell />;
+  return <Shell {...(phase.justOnboarded ? { justOnboarded: phase.justOnboarded } : {})} />;
 }

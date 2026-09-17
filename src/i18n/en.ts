@@ -19,10 +19,12 @@ export const en = {
   'domain.family': 'Family',
   'domain.finance': 'Finance',
 
-  // The 5 panels (§1.2) — row labels in History.
+  // The 5 panels (§1.2) — row labels in History. The third is labelled
+  // People on screen (docs/onboarding/01-onboarding-spec.md §4.4) — the code
+  // keeps calling it network.
   'panel.body': 'Body',
   'panel.head': 'Head',
-  'panel.network': 'Network',
+  'panel.network': 'People',
   'panel.partner': 'Partner',
   'panel.wealth': 'Wealth',
 
@@ -33,6 +35,8 @@ export const en = {
   'main.day.today': 'Today',
   'main.day.yesterday': 'Yesterday',
   'habits.own': 'Your own habits',
+  /** Opens a domain group's own catalogue (docs/onboarding/04-revisions.md §6) — the only route in. */
+  'main.domain.browse': 'Add to {domain}',
   'habits.streak': '{count}× streak',
   'main.restDay': 'Rest day',
   'main.risk.one': '{name} runs out {when} — that streak is about to break.',
@@ -109,6 +113,7 @@ export const en = {
   'profile.gender.female': 'Female',
   'profile.hair.blond': 'Blond',
   'profile.hair.dark': 'Dark',
+  'profile.hair.none': 'None',
   'profile.partner.wanted': 'I have a partner',
   'profile.children': 'I have children',
   'profile.domains.up': 'Move up',
@@ -175,6 +180,46 @@ export const en = {
   'settings.reset': 'Reset',
   'settings.reset.note': 'Deletes everything on this device and returns to onboarding. Export first if you want to keep it.',
   'settings.reset.confirm': 'Delete all Life OS data on this device? This cannot be undone.',
+
+  // Settings' two remaining onboarding controls (docs/onboarding/04-revisions.md
+  // §5, §10) — each re-runs one independent half of onboarding and writes only
+  // its own fields.
+  'settings.figure': 'Figure',
+  'settings.figure.redo': 'Redo the figure',
+  'settings.workOn': 'What you work on',
+  'settings.workOn.redo': 'Redo what you work on',
+
+  // A domain group's own catalogue (docs/onboarding/04-revisions.md §6) — the
+  // only way into the catalogue, replacing the old cross-domain Discover.
+  'domainCatalog.back': 'Back',
+  'domainCatalog.add': 'Add {title}',
+  'domainCatalog.added': 'Added',
+  'domainCatalog.write.open': 'Write your own',
+  'domainCatalog.write.title.placeholder': 'Habit name',
+  'domainCatalog.write.importance.important': 'Important',
+  'domainCatalog.write.importance.medium': 'Medium',
+  'domainCatalog.write.importance.notImportant': 'Not important',
+  'domainCatalog.write.emoji.placeholder': 'Emoji (optional)',
+  'domainCatalog.write.save': 'Add',
+  'domainCatalog.edit.save': 'Save',
+  'action.cancel': 'Cancel',
+
+  // A habit row's menu (§9) — Remove for everyone, Edit for a habit the user
+  // wrote themselves. Remove reuses settings.habits.remove.
+  'habits.menu.open': 'More options',
+  'habits.menu.edit': 'Edit',
+
+  // The landing screen (docs/onboarding/01-onboarding-spec.md §6) — shown
+  // once, right after onboarding, as MainScreen's own headline for that
+  // session. Copy pinned verbatim against src/content/onboarding-tree.json's
+  // LAND node, which App.tsx/Onboarding.tsx never render directly.
+  'main.landing.headline': 'Fifteen years out. Everything in the middle.',
+  'main.landing.count.0': 'Nothing due today.',
+  'main.landing.count.1': 'One box today.',
+  'main.landing.count.2': 'Two boxes today.',
+  'main.landing.count.3': 'Three boxes today.',
+  'main.landing.count.4': 'Four boxes today.',
+  'main.landing.offer.add': 'Add {title}',
 } as const;
 
 export type I18nKey = keyof typeof en;
