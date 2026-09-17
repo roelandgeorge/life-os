@@ -342,6 +342,11 @@ export function profileFrom(answers: Answers): Profile {
  * met the moment its gate is seeded in this same batch, ticked or not, which
  * is what lets `P2n` seed H130 alongside its own gate H129, and `M4` seed
  * H137 alongside H136 (03-decisions.md).
+ *
+ * Every landing's `offers` not already seeded or tapped go into
+ * `Profile.pendingOfferIds` — the landing screen's one-tap-add row (§6)
+ * doesn't disappear the moment onboarding ends, it lives on `MainScreen`
+ * until each one is added.
  */
 export function buildInitialState(answers: Answers, newId: () => string, today: DateKey): AppState {
   const profile = profileFrom(answers);
@@ -353,11 +358,18 @@ export function buildInitialState(answers: Answers, newId: () => string, today: 
 
   const filter: CatalogFilter = catalogFilterFor(profile, new Set(uniqueIds));
   const habits: UserHabit[] = [];
+  const seeded = new Set<string>();
   for (const id of uniqueIds) {
     const item = catalogById(id);
     if (!item || !requirementsMet(item, filter)) continue;
     habits.push(newHabitFromCatalog(item, newId(), today));
+    seeded.add(id);
   }
+
+  const offeredIds = new Set<string>();
+  for (const landingId of answers.landings) for (const id of LANDINGS[landingId]?.offers ?? []) offeredIds.add(id);
+  const pendingOfferIds = [...offeredIds].filter((id) => !seeded.has(id));
+  if (pendingOfferIds.length > 0) profile.pendingOfferIds = pendingOfferIds;
 
   const state: AppState = { schemaVersion: 2, logs: [], habits, notificationTime: null };
   if (Object.keys(profile).length > 0) state.profile = profile;

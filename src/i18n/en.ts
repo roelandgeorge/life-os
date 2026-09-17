@@ -22,7 +22,9 @@ export const en = {
   // The 5 panels (§1.2) — row labels in History.
   'panel.body': 'Body',
   'panel.head': 'Head',
-  'panel.network': 'Network',
+  // Labelled People on screen since the onboarding rebuild (§4.4 of
+  // docs/onboarding/01-onboarding-spec.md) — the code still calls it network.
+  'panel.network': 'People',
   'panel.partner': 'Partner',
   'panel.wealth': 'Wealth',
 

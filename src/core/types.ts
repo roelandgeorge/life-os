@@ -71,6 +71,13 @@ export type Profile = {
   selfEmployed?: boolean;
   domainOrder?: readonly DomainKey[];
   personaId?: string;
+  /**
+   * Catalogue ids offered but not seeded at onboarding's landing screen
+   * (docs/onboarding/01-onboarding-spec.md §6), still worth a one-tap add.
+   * `MainScreen` shows them until each is added, which drops it from this
+   * list; empty or absent both mean "nothing left to offer".
+   */
+  pendingOfferIds?: readonly string[];
 };
 
 export type AppState = {

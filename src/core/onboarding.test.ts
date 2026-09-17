@@ -283,6 +283,14 @@ describe('buildInitialState', () => {
     expect(state.habits).toEqual([]);
   });
 
+  it('carries each landing offer into Profile.pendingOfferIds, unless it was already added', () => {
+    const untapped: Answers = { ...initialAnswers(), landings: ['B1'], current: 'LAND' };
+    expect(buildInitialState(untapped, () => 'id', TODAY).profile?.pendingOfferIds).toEqual(['H020']);
+
+    const tapped = addOffer(untapped, 'H020');
+    expect(buildInitialState(tapped, () => 'id', TODAY).profile?.pendingOfferIds).toBeUndefined();
+  });
+
   it('nothing picked and nothing answered yields a state identical in shape to the pre-onboarding literal', () => {
     const state = buildInitialState(initialAnswers(), () => 'id', TODAY);
     expect(state).toEqual({ schemaVersion: 2, logs: [], habits: [], notificationTime: null });

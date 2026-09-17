@@ -133,6 +133,10 @@ function parseProfile(v: unknown): Profile | undefined {
     if (order.length > 0) profile.domainOrder = order;
   }
   if (typeof v.personaId === 'string') profile.personaId = v.personaId;
+  if (Array.isArray(v.pendingOfferIds)) {
+    const ids = v.pendingOfferIds.filter((id): id is string => typeof id === 'string');
+    if (ids.length > 0) profile.pendingOfferIds = ids;
+  }
   return Object.keys(profile).length > 0 ? profile : undefined;
 }
 

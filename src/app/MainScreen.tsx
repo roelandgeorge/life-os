@@ -11,9 +11,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { orderedDomains, PANEL_KEYS, type DomainConfig, type DomainKey, type PanelSteps } from '../core/domains';
 import { dailyTasksDone, editableDays, isDueToday, isRestDay, lastHit } from '../core/due';
+import { catalogById } from '../core/catalog';
+import { countLine, landHeadline } from '../core/onboarding';
 import { fullDayStrip } from '../core/scoring';
 import { MAX_STEP } from '../core/steps';
-import type { AppState, Projection, UserHabit } from '../core/types';
+import type { AppState, Profile, Projection, UserHabit } from '../core/types';
 import { diffDays, type DateKey } from '../core/dates';
 import { en, t, type I18nKey } from '../i18n/en';
 import { effectiveColor, habitStreak, habitTitle, isActiveOn, isHabitTicked } from '../core/habits';
@@ -21,6 +23,8 @@ import { atRiskItems, type RiskItem } from '../core/atRisk';
 import { Avatar } from '../visual/Avatar';
 import { scene as buildScene } from '../visual/scene';
 import { Celebration } from './Celebration';
+import { HabitPicker, type PickerItem } from './HabitPicker';
+import type { NewHabitSource } from './useLifeOS';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Checkbox } from '../ui/Checkbox';
@@ -58,11 +62,15 @@ export function MainScreen({
   projection,
   today,
   toggleHabit,
+  addHabit,
+  updateProfile,
 }: {
   state: AppState;
   projection: Projection;
   today: DateKey;
   toggleHabit: (id: string, on?: DateKey) => void;
+  addHabit: (source: NewHabitSource) => void;
+  updateProfile: (patch: Partial<Profile>) => void;
 }) {
   const [showBest, setShowBest] = useState(false);
   // §5.2 — which day the check-ins are writing to. The picture always shows
@@ -73,6 +81,13 @@ export function MainScreen({
   const avatarScene = buildScene(showBest ? BEST_STEPS : projection.preview, state.profile);
   const strip = fullDayStrip(state.logs, state.habits, today, 30);
   const groups = groupHabits(state.habits, today, state.profile?.domainOrder);
+
+  // Onboarding's landing screen (docs/onboarding/01-onboarding-spec.md §6) is
+  // this same screen on its very first day — one log entry means today is
+  // still the only day the app has been opened.
+  const landingDay = state.logs.length === 1;
+  const dailyCount = state.habits.filter((h) => h.cadence === 'daily' && isActiveOn(h, today)).length;
+  const pendingOfferIds = state.profile?.pendingOfferIds ?? [];
 
   const allDone = dailyTasksDone(state.logs, state.habits, today);
   const wasAllDone = useRef(allDone);
@@ -99,6 +114,12 @@ export function MainScreen({
           <>
             <h1 className="headline">{en['main.bestVersion.headline']}</h1>
             <Note variant="subhead">{en['main.bestVersion.subhead']}</Note>
+          </>
+        ) : landingDay ? (
+          <>
+            <h1 className="headline">{landHeadline()}</h1>
+            <Note variant="subhead">{countLine(dailyCount)}</Note>
+            {projection.fullDay && <p className="fullday">{en['main.fullDay']}</p>}
           </>
         ) : (
           <>
@@ -140,11 +161,42 @@ export function MainScreen({
               </div>
             ))}
 
+            {pendingOfferIds.length > 0 && (
+              <OffersRow
+                catalogIds={pendingOfferIds}
+                onAdd={(id) => {
+                  addHabit({ catalogId: id });
+                  updateProfile({ pendingOfferIds: pendingOfferIds.filter((x) => x !== id) });
+                }}
+              />
+            )}
+
             {editing !== today && <Note className="editing-past">{t('main.editingPast', { day: dayLabel(editing, today) })}</Note>}
             <Note className="next-move">{nextMove(projection)}</Note>
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Onboarding's landing screen offers (§6): what a landing suggested but the
+ * user didn't seed, still one tap away. Reuses `HabitPicker` the same
+ * one-directional way `DiscoverScreen` already does — every row shows
+ * unchecked, tapping it always adds.
+ */
+function OffersRow({ catalogIds, onAdd }: { catalogIds: readonly string[]; onAdd: (id: string) => void }) {
+  const items: PickerItem[] = catalogIds
+    .map((id) => catalogById(id))
+    .filter((item): item is NonNullable<typeof item> => item !== undefined)
+    .map((item) => ({ item, checked: false }));
+  if (items.length === 0) return null;
+
+  return (
+    <div className="checkins">
+      <SectionHeading className="custom-heading">{en['settings.catalog']}</SectionHeading>
+      <HabitPicker items={items} onToggle={onAdd} />
     </div>
   );
 }

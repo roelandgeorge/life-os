@@ -69,7 +69,14 @@ export function Shell() {
     <div className="shell">
       <div className="shell-body">
         {tab === 'main' && (
-          <MainScreen state={state} projection={projection} today={today} toggleHabit={toggleHabit} />
+          <MainScreen
+            state={state}
+            projection={projection}
+            today={today}
+            toggleHabit={toggleHabit}
+            addHabit={addHabit}
+            updateProfile={updateProfile}
+          />
         )}
         {tab === 'history' && <HistoryScreen state={state} today={today} />}
         {tab === 'settings' && (
