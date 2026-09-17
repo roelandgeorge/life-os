@@ -30,6 +30,8 @@ describe('tokens.css', () => {
     '--on-bronze',
     '--danger',
     '--focus',
+    '--grain',
+    '--grain-size',
     '--space-0',
     '--space-1',
     '--space-2',

@@ -108,7 +108,9 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  background: var(--surface);
+  background-color: var(--surface);
+  background-image: var(--grain);
+  background-size: var(--grain-size) var(--grain-size);
   border: var(--hairline) solid var(--rule);
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -314,7 +316,11 @@
   /* Height-driven: the frame is portrait and so is the space it sits in, so
      matching the height and letting `aspect-ratio` set the width keeps the
      collage undistorted. `.portrait` clips rather than squashes if it ever
-     comes out wider than the column. */
+     comes out wider than the column.
+
+     No --grain here or on .portrait: the drawings are already grainy
+     editorial illustration, and a second layer over them reads as
+     compression noise rather than texture. */
   position: relative;
   height: 100%;
   width: auto;

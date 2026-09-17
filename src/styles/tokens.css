@@ -22,6 +22,13 @@
   --danger: #d8756a;
   --focus: #c08a4a;
 
+  /* One feTurbulence SVG, tiled, rather than a PNG texture: nothing to
+     precache or slice, and it scales to any device pixel ratio for about
+     300 bytes. `#` and `%` inside a data URI must stay percent-encoded
+     (`%23`, `%25`) or the whole declaration is dropped silently. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  --grain-size: 180px;
+
   /* Spacing */
   --space-0: 2px;
   --space-1: 4px;

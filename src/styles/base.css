@@ -24,7 +24,9 @@
 
 body {
   margin: 0;
-  background: var(--ground);
+  background-color: var(--ground);
+  background-image: var(--grain);
+  background-size: var(--grain-size) var(--grain-size);
   color: var(--paper);
   font: var(--text-base) / var(--leading-base) var(--sans);
 }
