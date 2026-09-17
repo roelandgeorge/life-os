@@ -160,6 +160,14 @@ export const en = {
   'settings.catalog.note': 'Curated habits, tagged by domain and how well-evidenced they are.',
   'settings.catalog.add': 'Add',
   'settings.catalog.added': 'Added',
+  'settings.catalog.discover': 'Browse the catalogue',
+
+  // Discover (app/DiscoverScreen.tsx) — a full-screen sub-view from Settings.
+  'discover.title': 'Discover',
+  'discover.back': 'Back',
+  'discover.search.label': 'Search',
+  'discover.search.placeholder': 'Search habits…',
+  'discover.empty': 'Nothing matches.',
 
   'settings.notifications': 'Daily reminder',
   'settings.notifications.note': 'One notification a day, in the evening. The exact minute is not guaranteed — the free plan schedules it within the hour.',

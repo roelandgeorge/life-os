@@ -61,7 +61,10 @@ export function HabitPicker({
           />
           <div className="habit-picker-body">
             <span className="habit-picker-title">{item.title}</span>
-            <span className="habit-picker-meta">{metaLine(item)}</span>
+            <span className="habit-picker-meta">
+              {metaLine(item)}
+              {locked && ` · ${en['settings.catalog.added']}`}
+            </span>
             {item.note && <Note>{item.note}</Note>}
           </div>
         </Card>
