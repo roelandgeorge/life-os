@@ -6,19 +6,27 @@
  *   npm run icons
  *
  * The mark echoes the app itself: a figure, cropped close, on the same dark
- * ground and gold accent as the real portrait (styles.css --bg / --accent) —
- * not a generic checkmark-in-a-box.
+ * ground and bronze accent as the real portrait — read from
+ * src/styles/tokens.css rather than a second literal here.
  */
 
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
-const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'icons');
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const OUT_DIR = join(ROOT, 'public', 'icons');
 
-const BG = '#14161a';
-const FIGURE = '#c9a227';
+const TOKENS_CSS = readFileSync(join(ROOT, 'src', 'styles', 'tokens.css'), 'utf8');
+function token(name) {
+  const match = new RegExp(`${name}\\s*:\\s*([^;]+);`).exec(TOKENS_CSS);
+  if (!match) throw new Error(`tokens.css has no ${name}`);
+  return match[1].trim();
+}
+
+const BG = token('--ground');
+const FIGURE = token('--bronze');
 
 /** The figure, sized for a 512x512 canvas. Head + shoulders, nothing else — legible at 16px. */
 function figureSvg({ size, padding }) {

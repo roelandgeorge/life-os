@@ -1,6 +1,13 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { parseTokens } from './src/ui/tokens';
+
+// The manifest's colours come from the token file rather than a second
+// literal here — chrome.test.ts pins them equal to --ground.
+const GROUND = parseTokens(readFileSync('./src/styles/tokens.css', 'utf8'))['--ground'];
+if (GROUND === undefined) throw new Error('tokens.css has no --ground');
 
 // §9 step 8. Notifications (§6) need the PWA installed to the home screen on
 // iOS, which needs a manifest + service worker to exist at all — this is
@@ -47,8 +54,8 @@ export default defineConfig({
         description: "This is you at +15. If your current average holds.",
         start_url: '/',
         display: 'standalone',
-        background_color: '#14161a',
-        theme_color: '#14161a',
+        background_color: GROUND,
+        theme_color: GROUND,
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
