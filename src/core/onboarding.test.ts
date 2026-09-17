@@ -1,130 +1,332 @@
 import { describe, expect, it } from 'vitest';
-import { CATALOG } from './catalog';
-import { catalogFilterFor } from './habits';
-import { buildInitialState, profileFrom, steps, type Answers } from './onboarding';
+import { catalogById, CATALOG } from './catalog';
+import treeJson from '../content/onboarding-tree.json';
+import landingsJson from '../content/landings.json';
+import {
+  buildInitialState,
+  choose,
+  chooseDrawing,
+  dailySeedCount,
+  everyLandingCatalogId,
+  offeredCatalogItems,
+  profileFrom,
+  seededCatalogItems,
+  step,
+  START_NODE,
+  WORK_ON_START_NODE,
+  FIGURE_START_NODE,
+  type Advance,
+  type Answers,
+} from './onboarding';
 
 const TODAY = '2026-09-17';
 
-describe('steps', () => {
-  it('holds the fixed order with no partner and no domains chosen', () => {
-    expect(steps({}).map((s) => s.kind)).toEqual(['gender', 'hair', 'partner', 'children', 'domains']);
+type TreeOptionJson = { id?: string; label: string };
+type TreeNodeJson = { kind: string; text: string; field?: string; options?: readonly TreeOptionJson[] };
+const NODES = (treeJson as { nodes: Record<string, TreeNodeJson> }).nodes;
+type LandingJson = { seeds: readonly string[]; offers: readonly string[] };
+const LANDINGS: Record<string, LandingJson> = Object.fromEntries(
+  Object.entries(landingsJson as Record<string, unknown>).filter(
+    (entry): entry is [string, LandingJson] => typeof entry[1] === 'object' && entry[1] !== null && Array.isArray((entry[1] as LandingJson).seeds),
+  ),
+);
+const LANDING_IDS = Object.keys(LANDINGS);
+
+function chooseById(nodeId: string, answers: Answers, optionId: string): Advance {
+  const s = step(nodeId, answers);
+  const opt = s.options?.find((o) => o.id === optionId || o.label === optionId);
+  if (!opt) throw new Error(`No option "${optionId}" visible on ${nodeId}`);
+  return choose(nodeId, answers, opt.index);
+}
+
+// ---------------------------------------------------------------------------
+// Structural checks against the raw data (docs/onboarding/01-onboarding-spec.md §9,
+// as replaced by docs/onboarding/04-revisions.md's own acceptance list).
+// ---------------------------------------------------------------------------
+
+describe('landings.json against catalog.json', () => {
+  it('every seed and offer id exists in the catalogue', () => {
+    for (const id of everyLandingCatalogId()) {
+      expect(catalogById(id), `unknown catalogue id ${id}`).toBeDefined();
+    }
   });
 
-  it('partnerLooks appears only once a partner is wanted', () => {
-    expect(steps({ partnerWanted: false }).map((s) => s.kind)).not.toContain('partnerLooks');
-    expect(steps({ partnerWanted: true }).map((s) => s.kind)).toContain('partnerLooks');
+  it('no seeded item has cadence situational', () => {
+    for (const landing of Object.values(LANDINGS)) {
+      for (const id of landing.seeds) {
+        expect(catalogById(id)?.cadence, id).not.toBe('situational');
+      }
+    }
   });
 
-  it('one starters step per enabled domain, in the stored order', () => {
-    const answers: Answers = { domains: ['finance', 'sleep', 'mindset'] };
-    const starterSteps = steps(answers).filter((s) => s.kind === 'starters');
-    expect(starterSteps.map((s) => s.domain)).toEqual(['finance', 'sleep', 'mindset']);
+  it('seeded once-cadence items are exactly H077, H078, H127, H129, H136', () => {
+    const onceSeeded = new Set<string>();
+    for (const landing of Object.values(LANDINGS)) {
+      for (const id of landing.seeds) {
+        if (catalogById(id)?.cadence === 'once') onceSeeded.add(id);
+      }
+    }
+    expect([...onceSeeded].sort()).toEqual(['H077', 'H078', 'H127', 'H129', 'H136']);
   });
 
-  it('no domains on yields a valid sequence with no starters steps', () => {
-    const withNone = steps({ domains: [] });
-    expect(withNone.some((s) => s.kind === 'starters')).toBe(false);
-    expect(withNone[0]).toEqual({ kind: 'gender' });
-    expect(withNone[withNone.length - 1]).toEqual({ kind: 'domains' });
+  it('every landing carries a seeds array of at most two ids', () => {
+    for (const [id, landing] of Object.entries(LANDINGS)) {
+      expect(landing.seeds.length, id).toBeGreaterThan(0);
+      expect(landing.seeds.length, id).toBeLessThanOrEqual(2);
+    }
+  });
+});
+
+describe('the copy — pinned verbatim against docs/onboarding/04-revisions.md, the final word', () => {
+  it('S0 opens with the fixed explainer and "Go on"', () => {
+    expect(NODES.S0.text).toBe(
+      "This is you in fifteen years.\nEverything starts in the middle. It moves with what you do, both ways.",
+    );
   });
 
-  // The tree ends where the answers end, which is what lets the component
-  // wire its last Next to "finish" without knowing which step that is.
-  it('ends on the last domain turned on', () => {
-    const withDomains = steps({ domains: ['sleep', 'finance'] });
-    expect(withDomains[withDomains.length - 1]).toEqual({ kind: 'starters', domain: 'finance' });
+  it('Q1 asks what the revision replaces it with, not the original spec wording', () => {
+    expect(NODES.Q1.text).toBe('What do you most want to work on?');
+  });
+
+  it('Q1 carries the five panel cards plus the unchanged sixth row', () => {
+    const labels = NODES.Q1.options?.map((o) => o.label);
+    expect(labels).toEqual([
+      'Body',
+      'Head',
+      'People',
+      'Partner',
+      'Money',
+      "None of them. I'm here to keep it that way.",
+    ]);
+  });
+
+  it('the partner and children questions are asked plainly (§2)', () => {
+    expect(NODES.Q2N.text).toBe('Do you have a partner?');
+    expect(NODES.Q3Ny.text).toBe('Do you have children?');
+  });
+
+  it('Q-More is reworded and shows Yes / No, that\'s it (§11)', () => {
+    expect(NODES.QMORE.text).toBe('Is there anything else you want to work on?');
+    expect(NODES.QMORE.options?.map((o) => o.label)).toEqual(['Yes.', "No, that's it."]);
+  });
+
+  it('the Situation block is gone entirely (§3)', () => {
+    expect(NODES.SIT).toBeUndefined();
+    expect(NODES.SIT_partner).toBeUndefined();
+    expect(NODES.SIT_children).toBeUndefined();
+    for (const node of Object.values(NODES)) {
+      expect(node.text).not.toContain('Two things the drawing needs');
+    }
+  });
+
+  it('the figure questions keep their original wording', () => {
+    expect(NODES.FIG_gender.text).toBe('Now the figure. Which one?');
+    expect(NODES.FIG_hair.text).toBe('Hair?');
+  });
+
+  it('partner and children are written exactly once each, only inside the Partner branch', () => {
+    const partnerNodes = Object.entries(NODES).filter(([, n]) => n.field === 'partner');
+    const childrenNodes = Object.entries(NODES).filter(([, n]) => n.field === 'children');
+    expect(partnerNodes.map(([id]) => id)).toEqual(['Q2N']);
+    expect(childrenNodes.map(([id]) => id)).toEqual(['Q3Ny']);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Reachability (§9): every landing reachable from Q1 by some path. A single
+// fresh DFS from Q1 with empty answers already reaches every landing any
+// later Q-More loop could — revisiting Q1 only ever removes options, so it
+// unlocks nothing a first pass didn't already see.
+// ---------------------------------------------------------------------------
+
+function collectLandings(nodeId: string, answers: Answers, seen: Set<string>): void {
+  const s = step(nodeId, answers);
+  for (const option of s.options ?? []) {
+    const before = answers.landings?.length ?? 0;
+    const result = choose(nodeId, answers, option.index);
+    const after = result.answers.landings?.length ?? 0;
+    if (after > before) {
+      seen.add(result.answers.landings![result.answers.landings!.length - 1] as string);
+      continue; // a landing was reached — stop, don't walk into QMORE/FIG_gender
+    }
+    collectLandings(result.nextId, result.answers, seen);
+  }
+}
+
+describe('reachability', () => {
+  it('every landing in landings.json is reachable from Q1', () => {
+    const seen = new Set<string>();
+    collectLandings('Q1', {}, seen);
+    expect([...seen].sort()).toEqual([...LANDING_IDS].sort());
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The engine rules docs/onboarding/04-revisions.md adds on top of the tree.
+// ---------------------------------------------------------------------------
+
+describe('Q1 on a repeat visit', () => {
+  it('hides every panel already chosen and never shows "none" again', () => {
+    const q1 = chooseById('Q1', {}, 'body');
+    const first = chooseById('Q2B', q1.answers, 'Tired all the time.'); // B4, one tap
+    // First landing reached — Q-More offered.
+    expect(first.nextId).toBe('QMORE');
+    const afterYes = choose('QMORE', first.answers, 0); // "Yes."
+    expect(afterYes.nextId).toBe('Q1');
+
+    const secondVisit = step('Q1', afterYes.answers);
+    const ids = secondVisit.options?.map((o) => o.id);
+    expect(ids).not.toContain('body');
+    expect(ids).not.toContain('none');
+    expect(ids).toEqual(['head', 'people', 'partner', 'money']);
+  });
+
+  it('answering "none" first skips Q-More and the Situation block entirely, straight to the figure', () => {
+    const result = chooseById('Q1', {}, 'none');
+    expect(result.nextId).toBe(FIGURE_START_NODE);
+    expect(result.answers.landings).toEqual(['Z']);
+  });
+
+  it('choosing a fifth panel skips Q-More too — nothing left to ask', () => {
+    let answers: Answers = {};
+    for (const id of ['body', 'head', 'people', 'partner'] as const) {
+      const chosen = chooseById('Q1', answers, id);
+      answers = choose('QMORE', chosen.answers, 0).answers; // "Yes." back to Q1
+    }
+    // Money is the fifth and last panel — Q3M_low > "It's fine..." branch, take the short "Debt." leaf.
+    const q2m = chooseById('Q2M', chooseById('Q1', answers, 'money').answers, 'Debt.');
+    expect(q2m.nextId).toBe(FIGURE_START_NODE);
+    expect(q2m.answers.chosenPanels).toEqual(['body', 'head', 'people', 'partner', 'money']);
+  });
+});
+
+describe('H033 (maintain your haircut) requires hair', () => {
+  function reachB5(): Answers {
+    const q1 = chooseById('Q1', {}, 'body');
+    return chooseById('Q2B', q1.answers, "I've let myself go. Hair, skin, clothes.").answers;
+  }
+
+  it('is not seeded when hair is none', () => {
+    const answers: Answers = { ...reachB5(), hair: 'none' };
+    expect(seededCatalogItems(answers).map((i) => i.id)).not.toContain('H033');
+  });
+
+  it('is seeded once hair is answered', () => {
+    const answers: Answers = { ...reachB5(), hair: 'blond' };
+    expect(seededCatalogItems(answers).map((i) => i.id)).toContain('H033');
+  });
+});
+
+describe('a habit-id requirement gated at the same landing', () => {
+  it('P2n seeds both H129 and its own gate H130, though H129 has not been ticked yet', () => {
+    const q1 = chooseById('Q1', {}, 'people');
+    const q3pa = chooseById('Q2P', q1.answers, 'There aren\'t many people to lose touch with.');
+    const landed = chooseById('Q3Pa', q3pa.answers, 'No.');
+    expect(landed.answers.landings).toEqual(['P2n']);
+    const ids = seededCatalogItems(landed.answers).map((i) => i.id);
+    expect(ids).toEqual(expect.arrayContaining(['H129', 'H130']));
+  });
+});
+
+describe('the Money branch sets employed / self-employed', () => {
+  it('"Both" sets both flags and lands on the self-employed landing', () => {
+    const q1 = chooseById('Q1', {}, 'money');
+    const q3 = chooseById('Q2M', q1.answers, "I don't earn enough.");
+    const landed = chooseById('Q3M_low', q3.answers, 'Both.');
+    expect(landed.answers.employed).toBe(true);
+    expect(landed.answers.selfEmployed).toBe(true);
+    expect(landed.answers.landings).toEqual(['M3s']);
+  });
+});
+
+describe('offers', () => {
+  it('never repeats an id that was already seeded', () => {
+    const q1 = chooseById('Q1', {}, 'body');
+    const landed = chooseById('Q2B', q1.answers, 'No strength. No shape.');
+    const seededIds = new Set(seededCatalogItems(landed.answers).map((i) => i.id));
+    for (const offer of offeredCatalogItems(landed.answers)) expect(seededIds.has(offer.id)).toBe(false);
+  });
+});
+
+describe('the figure', () => {
+  it('chooseDrawing writes gender then hair and lands on LAND', () => {
+    const afterGender = chooseDrawing(FIGURE_START_NODE, {}, 'male');
+    expect(afterGender.answers.gender).toBe('male');
+    expect(afterGender.nextId).toBe('FIG_hair');
+    const afterHair = chooseDrawing('FIG_hair', afterGender.answers, 'dark');
+    expect(afterHair.answers.hair).toBe('dark');
+    expect(afterHair.nextId).toBe('LAND');
   });
 });
 
 describe('profileFrom', () => {
   it('omits keys rather than writing undefined', () => {
-    const profile = profileFrom({});
-    expect(Object.keys(profile)).toEqual([]);
+    expect(Object.keys(profileFrom({}))).toEqual([]);
   });
 
-  it('carries only what was answered', () => {
-    expect(profileFrom({ gender: 'male' })).toEqual({ gender: 'male' });
-    expect(profileFrom({ children: true })).toEqual({ children: true });
-    expect(profileFrom({ domains: ['sleep', 'finance'] })).toEqual({ domainOrder: ['sleep', 'finance'] });
+  it('partner is written as {wanted} to match what scene.ts already reads', () => {
+    expect(profileFrom({ partner: true })).toEqual({ partner: { wanted: true } });
+    expect(profileFrom({ partner: false })).toEqual({ partner: { wanted: false } });
   });
 
-  it('partner carries gender and hair only when wanted', () => {
-    expect(profileFrom({ partnerWanted: false, partnerGender: 'female', partnerHair: 'dark' })).toEqual({
-      partner: { wanted: false },
+  it('carries gym / employed / selfEmployed only once answered', () => {
+    expect(profileFrom({ gym: true, employed: true, selfEmployed: false })).toEqual({
+      gym: true,
+      employed: true,
+      selfEmployed: false,
     });
-    expect(profileFrom({ partnerWanted: true, partnerGender: 'female', partnerHair: 'dark' })).toEqual({
-      partner: { wanted: true, gender: 'female', hair: 'dark' },
-    });
-    expect(profileFrom({ partnerWanted: true })).toEqual({ partner: { wanted: true } });
   });
 });
 
 describe('buildInitialState', () => {
-  it('seeds one habit per picked id, anchored today, carrying the catalogue importance and catalogId', () => {
-    const first = CATALOG.find((i) => i.kind === 'habit');
-    if (!first) throw new Error('expected at least one habit in the catalogue');
-    const answers: Answers = { picked: { [first.domain]: [first.id] } };
-
+  it('seeds one habit per resolved catalogue item, anchored today', () => {
+    const q1 = chooseById('Q1', {}, 'body');
+    const landed = chooseById('Q2B', q1.answers, 'Tired all the time.'); // B4: H001 only
     let n = 0;
-    const state = buildInitialState(answers, () => `id-${n++}`, TODAY);
-
-    expect(state.habits).toHaveLength(1);
-    const habit = state.habits[0];
-    if (!habit) throw new Error('expected a habit');
-    expect(habit.catalogId).toBe(first.id);
-    expect(habit.title).toBe(first.title);
-    expect(habit.domain).toBe(first.domain);
-    expect(habit.cadence).toEqual(first.cadence);
-    expect(habit.importance).toBe(first.importance);
-    expect(habit.startDate).toBe(TODAY);
+    const state = buildInitialState(landed.answers, () => `id-${n++}`, TODAY);
+    expect(state.habits.map((h) => h.catalogId)).toEqual(['H001']);
+    expect(state.habits[0]?.startDate).toBe(TODAY);
   });
 
-  it('drops an unknown catalogue id rather than throwing', () => {
-    const answers: Answers = { picked: { sleep: ['NOT-AN-ID'] } };
-    const state = buildInitialState(answers, () => 'id', TODAY);
-    expect(state.habits).toEqual([]);
-  });
-
-  it('nothing picked and nothing answered yields a state identical in shape to the pre-onboarding literal', () => {
+  it('nothing answered yields a state identical in shape to the pre-onboarding literal', () => {
     const state = buildInitialState({}, () => 'id', TODAY);
     expect(state).toEqual({ schemaVersion: 2, logs: [], habits: [], notificationTime: null });
   });
 
-  it('multiple picks across domains all seed, each with a fresh id', () => {
-    const habits = CATALOG.filter((i) => i.kind === 'habit');
-    const a = habits.find((i) => i.domain === 'sleep');
-    const b = habits.find((i) => i.domain === 'finance');
-    if (!a || !b) throw new Error('expected at least one sleep and one finance habit in the catalogue');
-    const answers: Answers = { picked: { [a.domain]: [a.id], [b.domain]: [b.id] } };
+  it('domainOrder follows the order the seeded habits\' domains first appear, repeats dropped', () => {
+    let answers: Answers = chooseById('Q1', {}, 'body').answers;
+    answers = chooseById('Q2B', answers, 'Tired all the time.').answers; // B4 -> sleep (H001)
+    answers = choose('QMORE', answers, 0).answers; // Yes.
+    answers = chooseById('Q1', answers, 'money').answers;
+    answers = chooseById('Q2M', answers, 'Debt.').answers; // M4 -> finance (H136, H137)
 
     let n = 0;
     const state = buildInitialState(answers, () => `id-${n++}`, TODAY);
-    expect(state.habits).toHaveLength(2);
-    expect(new Set(state.habits.map((h) => h.id)).size).toBe(2);
+    expect(state.profile?.domainOrder).toEqual(['sleep', 'finance']);
+  });
+
+  it('drops a landing whose seed no longer exists in the catalogue rather than throwing', () => {
+    const answers: Answers = { landings: ['NOT-A-LANDING'] };
+    expect(() => buildInitialState(answers, () => 'id', TODAY)).not.toThrow();
+    expect(buildInitialState(answers, () => 'id', TODAY).habits).toEqual([]);
+  });
+
+  it('dailySeedCount counts only daily-cadence seeds, deduplicated', () => {
+    const answers: Answers = { landings: ['Z'] }; // H001 (daily), H020 (daily) per landings.json
+    expect(dailySeedCount(answers)).toBe(2);
   });
 });
 
-describe('catalogFilterFor', () => {
-  it('leaves audience and has both unset for a profile that has answered nothing', () => {
-    expect(catalogFilterFor(undefined)).toEqual({});
+describe('every catalogue habit-kind item reachable from some landing is a real habit, not a milestone masquerading as one', () => {
+  it('a spot check: every seeded id resolves to a catalogue item', () => {
+    for (const id of everyLandingCatalogId()) expect(CATALOG.some((i) => i.id === id)).toBe(true);
   });
+});
 
-  it('sets audience from gender', () => {
-    expect(catalogFilterFor({ gender: 'female' })).toMatchObject({ audience: 'female' });
-  });
-
-  it('a yes answer becomes a has entry', () => {
-    expect(catalogFilterFor({ partner: { wanted: true }, children: true }).has).toEqual(
-      expect.arrayContaining(['partner', 'children']),
-    );
-  });
-
-  it('a no answer to one question still sets has, just without that entry', () => {
-    expect(catalogFilterFor({ partner: { wanted: false } }).has).toEqual([]);
-  });
-
-  it('leaves has undefined only when neither question has been answered', () => {
-    expect(catalogFilterFor({ gender: 'male' }).has).toBeUndefined();
-    expect(catalogFilterFor({ children: false }).has).toEqual([]);
+describe('starting points', () => {
+  it('START_NODE, WORK_ON_START_NODE and FIGURE_START_NODE are all real nodes', () => {
+    expect(step(START_NODE, {})).toBeDefined();
+    expect(step(WORK_ON_START_NODE, {})).toBeDefined();
+    expect(step(FIGURE_START_NODE, {})).toBeDefined();
   });
 });

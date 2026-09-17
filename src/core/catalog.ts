@@ -125,6 +125,11 @@ function requirementMet(requirement: Requirement, filter: CatalogFilter): boolea
   return filter.completed === undefined || filter.completed.has(requirement);
 }
 
+/** Whether every one of `item.requires` is satisfied by `filter` — the same test `catalogFor` applies per item, exposed for callers (onboarding) that already hold a specific item. */
+export function requirementsMet(item: CatalogItem, filter: CatalogFilter): boolean {
+  return item.requires.every((r) => requirementMet(r, filter));
+}
+
 /** Everything in a domain, honouring `audience` and `requires`. */
 export function catalogFor(domain: DomainKey, filter: CatalogFilter = {}): CatalogItem[] {
   return CATALOG.filter((item) => item.domain === domain)
@@ -132,5 +137,5 @@ export function catalogFor(domain: DomainKey, filter: CatalogFilter = {}): Catal
       (item) =>
         item.audience === 'all' || filter.audience === undefined || item.audience === filter.audience,
     )
-    .filter((item) => item.requires.every((r) => requirementMet(r, filter)));
+    .filter((item) => requirementsMet(item, filter));
 }
