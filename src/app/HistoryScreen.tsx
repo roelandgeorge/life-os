@@ -17,6 +17,8 @@ import { MAX_STEP, panelSteps } from '../core/steps';
 import type { AppState, UserHabit } from '../core/types';
 import { en, t, type I18nKey } from '../i18n/en';
 import { FullDayStrip } from '../ui/FullDayStrip';
+import { Note } from '../ui/Note';
+import { SectionHeading } from '../ui/SectionHeading';
 import { byColor, cadencePeriodDays, effectiveColor, habitHitDates, habitTitle, isActiveOn } from '../core/habits';
 import { completedPeriods, hitInRange, periodAt } from '../core/periods';
 
@@ -39,7 +41,7 @@ export function HistoryScreen({ state, today }: { state: AppState; today: DateKe
   return (
     <div className="history-screen">
       <h1 className="headline">{en['history.title']}</h1>
-      <p className="subhead">{t('history.subhead', { days: HISTORY_DAYS })}</p>
+      <Note variant="subhead">{t('history.subhead', { days: HISTORY_DAYS })}</Note>
 
       <div className="sparklines">
         {panels.map((panel) => {
@@ -59,12 +61,12 @@ export function HistoryScreen({ state, today }: { state: AppState; today: DateKe
         })}
       </div>
 
-      <h2>{en['history.fullDay']}</h2>
+      <SectionHeading>{en['history.fullDay']}</SectionHeading>
       <FullDayStrip strip={strip} />
 
       {(domainHabits.length > 0 || ownHabits.length > 0) && (
         <>
-          <h2>{en['habits.own']}</h2>
+          <SectionHeading>{en['habits.own']}</SectionHeading>
           <div className="sparklines">
             {[...domainHabits, ...ownHabits].map((habit) => (
               <HabitTrack key={habit.id} habit={habit} state={state} today={today} />

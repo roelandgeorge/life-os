@@ -1,8 +1,13 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-/** `.chips` / `.chips.cadence` / `.day-picker` — a row of toggle buttons. */
-export function ChipRow({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={['chips', className].filter(Boolean).join(' ')}>{children}</div>;
+/**
+ * `.chips` / `.chips.cadence` / `.day-picker` — a row of toggle buttons.
+ * `className` is the full class list (e.g. `"chips cadence"` or
+ * `"day-picker"`): the two rows don't share a base rule today, so ChipRow
+ * doesn't invent one by prefixing "chips" on their behalf.
+ */
+export function ChipRow({ className, children }: { className: string; children: ReactNode }) {
+  return <div className={className}>{children}</div>;
 }
 
 export interface ChipProps extends ButtonHTMLAttributes<HTMLButtonElement> {

@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { en } from '../i18n/en';
+import { Button } from '../ui/Button';
 import { HistoryScreen } from './HistoryScreen';
 import { MainScreen } from './MainScreen';
 import { SettingsScreen } from './SettingsScreen';
@@ -86,15 +87,15 @@ export function Shell() {
       </div>
 
       <nav className="tabbar">
-        <button type="button" className={tab === 'main' ? 'on' : ''} onClick={() => setTab('main')}>
+        <Button on={tab === 'main'} onClick={() => setTab('main')}>
           {en['nav.main']}
-        </button>
-        <button type="button" className={tab === 'history' ? 'on' : ''} onClick={() => setTab('history')}>
+        </Button>
+        <Button on={tab === 'history'} onClick={() => setTab('history')}>
           {en['nav.history']}
-        </button>
-        <button type="button" className={tab === 'settings' ? 'on' : ''} onClick={() => setTab('settings')}>
+        </Button>
+        <Button on={tab === 'settings'} onClick={() => setTab('settings')}>
           {en['nav.settings']}
-        </button>
+        </Button>
       </nav>
     </div>
   );

@@ -7,6 +7,9 @@
 import { useEffect, useState } from 'react';
 import type { AppState } from '../core/types';
 import { en } from '../i18n/en';
+import { Button } from '../ui/Button';
+import { Note } from '../ui/Note';
+import { SectionHeading } from '../ui/SectionHeading';
 import { Onboarding } from './Onboarding';
 import { Shell } from './Shell';
 import { requestPersistentStorage, store } from './store';
@@ -58,11 +61,11 @@ export function App() {
     return (
       <div className="main-screen">
         <section className="storage-error">
-          <h2>{en['error.storage.title']}</h2>
-          <p className="note">{phase.message}</p>
-          <button type="button" className="primary" onClick={() => window.location.reload()}>
+          <SectionHeading>{en['error.storage.title']}</SectionHeading>
+          <Note>{phase.message}</Note>
+          <Button variant="primary" onClick={() => window.location.reload()}>
             {en['error.storage.retry']}
-          </button>
+          </Button>
         </section>
       </div>
     );

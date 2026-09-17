@@ -17,6 +17,13 @@ import type { AppState, Cadence, Gender, Hair, Profile } from '../core/types';
 import { en, type I18nKey } from '../i18n/en';
 import { ImportError } from '../store/serialize';
 import type { Store } from '../store/types';
+import { Button } from '../ui/Button';
+import { Checkbox } from '../ui/Checkbox';
+import { Chip, ChipRow } from '../ui/Chip';
+import { Field } from '../ui/Field';
+import { Note } from '../ui/Note';
+import { SectionHeading } from '../ui/SectionHeading';
+import { Select } from '../ui/Select';
 import type { NewHabitSource } from './useLifeOS';
 
 const NAMED_CADENCES: readonly Cadence[] = ['daily', 'weekly', 'monthly'];
@@ -134,10 +141,10 @@ export function SettingsScreen({
       <AppearanceSection profile={state.profile} onUpdateProfile={onUpdateProfile} />
 
       <section>
-        <h2>{en['settings.habits']}</h2>
-        <p className="note">{en['settings.habits.note']}</p>
+        <SectionHeading>{en['settings.habits']}</SectionHeading>
+        <Note>{en['settings.habits.note']}</Note>
 
-        {habits.length === 0 && <p className="note">{en['settings.habits.empty']}</p>}
+        {habits.length === 0 && <Note>{en['settings.habits.empty']}</Note>}
 
         <div className="habit-list">
           {habits.map((habit) => (
@@ -150,19 +157,18 @@ export function SettingsScreen({
                   value={habit.title}
                   onChange={(e) => onUpdateHabit(habit.id, { title: e.target.value })}
                 />
-                <button
-                  type="button"
-                  className="danger small"
+                <Button
+                  variant="danger"
+                  small
                   aria-label={`${en['settings.habits.remove']}: ${habit.title}`}
                   onClick={() => onRemoveHabit(habit.id)}
                 >
                   ×
-                </button>
+                </Button>
               </div>
 
               <div className="habit-row-controls">
-                <label className="habit-weight">
-                  {en['settings.habits.weight']}
+                <Field className="habit-weight" label={en['settings.habits.weight']}>
                   <input
                     type="number"
                     min={1}
@@ -173,9 +179,9 @@ export function SettingsScreen({
                       if (Number.isFinite(n)) onUpdateHabit(habit.id, { importance: Math.min(5, Math.max(1, n)) });
                     }}
                   />
-                </label>
+                </Field>
 
-                <select
+                <Select
                   value={habit.domain ?? 'none'}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -188,27 +194,20 @@ export function SettingsScreen({
                       {en[d.label as I18nKey]}
                     </option>
                   ))}
-                </select>
+                </Select>
 
-                <div className="chips cadence">
+                <ChipRow className="chips cadence">
                   {NAMED_CADENCES.map((c) => {
                     const label = cadenceLabel(c);
                     if (!label) return null;
                     return (
-                      <button
-                        key={String(c)}
-                        type="button"
-                        className={habit.cadence === c ? 'on' : ''}
-                        onClick={() => onUpdateHabit(habit.id, { cadence: c })}
-                      >
+                      <Chip key={String(c)} on={habit.cadence === c} onClick={() => onUpdateHabit(habit.id, { cadence: c })}>
                         {en[label]}
-                      </button>
+                      </Chip>
                     );
                   })}
-                  {cadenceLabel(habit.cadence) === null && (
-                    <span className="note">{en['settings.habits.cadence.other']}</span>
-                  )}
-                </div>
+                  {cadenceLabel(habit.cadence) === null && <Note>{en['settings.habits.cadence.other']}</Note>}
+                </ChipRow>
               </div>
             </div>
           ))}
@@ -225,17 +224,17 @@ export function SettingsScreen({
               if (e.key === 'Enter') handleAddCustom();
             }}
           />
-          <button type="button" disabled={!canAddCustomHabit(state.habits)} onClick={handleAddCustom}>
+          <Button disabled={!canAddCustomHabit(state.habits)} onClick={handleAddCustom}>
             {en['settings.habits.add.button']}
-          </button>
+          </Button>
         </div>
       </section>
 
       <section>
-        <h2>{en['settings.catalog']}</h2>
-        <p className="note">{en['settings.catalog.note']}</p>
+        <SectionHeading>{en['settings.catalog']}</SectionHeading>
+        <Note>{en['settings.catalog.note']}</Note>
         <div className="row">
-          <select value={catalogChoice} onChange={(e) => setCatalogChoice(e.target.value)}>
+          <Select value={catalogChoice} onChange={(e) => setCatalogChoice(e.target.value)}>
             {DOMAINS.map((d) => (
               <optgroup key={d.key} label={en[d.label as I18nKey]}>
                 {CATALOG.filter((item) => item.domain === d.key).map((item) => (
@@ -245,56 +244,43 @@ export function SettingsScreen({
                 ))}
               </optgroup>
             ))}
-          </select>
-          <button type="button" onClick={handleAddFromCatalog}>
-            {en['settings.catalog.add']}
-          </button>
+          </Select>
+          <Button onClick={handleAddFromCatalog}>{en['settings.catalog.add']}</Button>
         </div>
-        {catalogChoice && catalogById(catalogChoice) && (
-          <p className="note">{catalogById(catalogChoice)?.note}</p>
-        )}
+        {catalogChoice && catalogById(catalogChoice) && <Note>{catalogById(catalogChoice)?.note}</Note>}
       </section>
 
       <section>
-        <h2>{en['settings.notifications']}</h2>
-        <p className="note">{en['settings.notifications.note']}</p>
+        <SectionHeading>{en['settings.notifications']}</SectionHeading>
+        <Note>{en['settings.notifications.note']}</Note>
         <label className="notification-row">
-          <input
-            type="checkbox"
+          <Checkbox
             disabled={busy}
             checked={state.notificationTime != null}
             onChange={(e) => void handleReminder(e.target.checked)}
           />
           <span>{en['settings.notifications.enable']}</span>
         </label>
-        {busy && <p className="note">{en['settings.notifications.working']}</p>}
-        {!busy && pushError && <p className="note error">{pushError}</p>}
-        {!busy && !pushError && state.notificationTime != null && (
-          <p className="note">{en['settings.notifications.on']}</p>
-        )}
+        {busy && <Note>{en['settings.notifications.working']}</Note>}
+        {!busy && pushError && <Note variant="error">{pushError}</Note>}
+        {!busy && !pushError && state.notificationTime != null && <Note>{en['settings.notifications.on']}</Note>}
 
         {state.notificationTime != null && (
           <>
-            <button type="button" disabled={testing} onClick={() => void handleTest()}>
+            <Button disabled={testing} onClick={() => void handleTest()}>
               {testing ? en['settings.notifications.testing'] : en['settings.notifications.test']}
-            </button>
-            <p className="note">{en['settings.notifications.test.note']}</p>
-            {testResult && (
-              <p className={testResult.ok ? 'note' : 'note error'}>{testResult.detail}</p>
-            )}
+            </Button>
+            <Note>{en['settings.notifications.test.note']}</Note>
+            {testResult && (testResult.ok ? <Note>{testResult.detail}</Note> : <Note variant="error">{testResult.detail}</Note>)}
           </>
         )}
       </section>
 
       <section>
-        <h2>{en['settings.data']}</h2>
+        <SectionHeading>{en['settings.data']}</SectionHeading>
         <div className="row">
-          <button type="button" onClick={() => void handleExport()}>
-            {en['settings.export']}
-          </button>
-          <button type="button" onClick={() => fileInput.current?.click()}>
-            {en['settings.import']}
-          </button>
+          <Button onClick={() => void handleExport()}>{en['settings.export']}</Button>
+          <Button onClick={() => fileInput.current?.click()}>{en['settings.import']}</Button>
           <input
             ref={fileInput}
             type="file"
@@ -307,15 +293,15 @@ export function SettingsScreen({
             }}
           />
         </div>
-        {message && <p className="note error">{message}</p>}
+        {message && <Note variant="error">{message}</Note>}
       </section>
 
       <section>
-        <h2>{en['settings.reset']}</h2>
-        <p className="note">{en['settings.reset.note']}</p>
-        <button type="button" className="danger" onClick={() => void handleReset()}>
+        <SectionHeading>{en['settings.reset']}</SectionHeading>
+        <Note>{en['settings.reset.note']}</Note>
+        <Button variant="danger" onClick={() => void handleReset()}>
           {en['settings.reset']}
-        </button>
+        </Button>
       </section>
     </div>
   );
@@ -356,8 +342,8 @@ function AppearanceSection({
 
   return (
     <section>
-      <h2>{en['settings.appearance']}</h2>
-      <p className="note">{en['settings.appearance.note']}</p>
+      <SectionHeading>{en['settings.appearance']}</SectionHeading>
+      <Note>{en['settings.appearance.note']}</Note>
 
       <div className="row">
         <GenderSelect value={profile?.gender ?? 'male'} onChange={(gender) => onUpdateProfile({ gender })} />
@@ -365,8 +351,7 @@ function AppearanceSection({
       </div>
 
       <label className="notification-row">
-        <input
-          type="checkbox"
+        <Checkbox
           checked={partnerWanted}
           onChange={(e) => onUpdateProfile({ partner: withPartner(partner, { wanted: e.target.checked }) })}
         />
@@ -391,19 +376,19 @@ function AppearanceSection({
 
 function GenderSelect({ value, onChange }: { value: Gender; onChange: (v: Gender) => void }) {
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value as Gender)}>
+    <Select value={value} onChange={(e) => onChange(e.target.value as Gender)}>
       <option value="male">{en['settings.appearance.gender.male']}</option>
       <option value="female">{en['settings.appearance.gender.female']}</option>
-    </select>
+    </Select>
   );
 }
 
 function HairSelect({ value, onChange }: { value: Hair; onChange: (v: Hair) => void }) {
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value as Hair)}>
+    <Select value={value} onChange={(e) => onChange(e.target.value as Hair)}>
       <option value="blond">{en['settings.appearance.hair.blond']}</option>
       <option value="dark">{en['settings.appearance.hair.dark']}</option>
-    </select>
+    </Select>
   );
 }
 
