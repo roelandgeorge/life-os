@@ -83,6 +83,34 @@ export const en = {
   'settings.appearance.hair.dark': 'Dark',
   'settings.appearance.partner.wanted': 'I have a partner',
 
+  // Profile fields (app/ProfileFields.tsx) — shared by onboarding and
+  // Settings' Profile section, so a control met once reads the same the
+  // second time.
+  'profile.gender.male': 'Male',
+  'profile.gender.female': 'Female',
+  'profile.hair.blond': 'Blond',
+  'profile.hair.dark': 'Dark',
+  'profile.partner.wanted': 'I have a partner',
+  'profile.children': 'I have children',
+  'profile.domains.up': 'Move up',
+  'profile.domains.down': 'Move down',
+
+  // Catalogue metadata line (app/HabitPicker.tsx) — onboarding's starter
+  // step and Discover both read it.
+  'catalog.cadence.daily': 'Daily',
+  'catalog.cadence.weekly': 'Weekly',
+  'catalog.cadence.monthly': 'Monthly',
+  'catalog.cadence.everyDays': 'Every {days} days',
+  'catalog.cadence.situational': 'As needed',
+  'catalog.cadence.once': 'One-time',
+  'catalog.importance': 'Importance {n}/5',
+  'catalog.effort.low': 'Low effort',
+  'catalog.effort.medium': 'Medium effort',
+  'catalog.effort.high': 'High effort',
+  'catalog.evidence.strong': 'Strong evidence',
+  'catalog.evidence.moderate': 'Moderate evidence',
+  'catalog.evidence.anecdotal': 'Anecdotal evidence',
+
   'settings.habits': 'Your habits',
   'settings.habits.note': 'Weight decides how much a habit counts towards the picture. A habit with no domain still counts for streaks but moves nothing.',
   'settings.habits.title.placeholder': 'Habit name',

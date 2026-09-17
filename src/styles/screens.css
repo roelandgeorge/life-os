@@ -324,6 +324,89 @@
   gap: var(--space-2);
 }
 
+/* ---- profile fields (§4.5 of docs/plan/phase-4.md) --------------------- */
+
+.domain-order {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.domain-order-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.domain-order-row label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.domain-order-controls {
+  display: flex;
+  gap: var(--space-1);
+  flex: none;
+}
+
+.domain-order-controls button {
+  min-width: var(--tap);
+}
+
+/* ---- habit picker (§4.5) — onboarding's starters step + Discover -------- */
+
+.habit-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.habit-picker-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--surface);
+  background-image: var(--grain);
+  background-size: var(--grain-size) var(--grain-size);
+  border: var(--hairline) solid var(--rule);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.habit-picker-item input {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--bronze);
+  flex: none;
+}
+
+.habit-picker-item.locked {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.habit-picker-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.habit-picker-title {
+  font-weight: 600;
+}
+
+.habit-picker-meta {
+  color: var(--paper-dim);
+  font-size: var(--text-xs);
+}
+
 /* ---- layered artwork ---------------------------------------------------- */
 
 .avatar {
