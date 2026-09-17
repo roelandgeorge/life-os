@@ -52,3 +52,11 @@ section p {
   line-height: var(--leading-loose);
   margin: 0 0 var(--space-2);
 }
+
+/* Tab through the app and nothing indicated where you were — there was no
+   :focus-visible rule anywhere. :focus-visible only, so a pointer tap does
+   not leave a ring behind. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}

@@ -1,11 +1,16 @@
 /* The classes the src/ui components render (src/ui/*.tsx). */
 
+/* `--tap` is a floor, not padding: `.day-picker button` computed to about
+   29px tall and `button.small` to about 24px, both under the 44px a thumb
+   needs. min-height holds every button and select to it without inflating
+   the ones that are meant to stay visually compact. */
 button {
   background: var(--surface);
   color: var(--paper);
   border: var(--hairline) solid var(--rule);
   border-radius: var(--radius-sm);
   padding: var(--space-2) var(--space-3);
+  min-height: var(--tap);
   font: inherit;
   cursor: pointer;
 }
@@ -69,6 +74,28 @@ button.small {
   font-size: var(--text-sm);
 }
 
+.note {
+  color: var(--paper-dim);
+  font-size: var(--text-sm);
+  margin: var(--space-2) 0 0;
+}
+
 .note.error {
   color: var(--danger);
+}
+
+/* The four bare `<select>` elements had exactly one scoped rule between
+   them (`.habit-row-controls select`) before this — the catalogue picker
+   and both Appearance dropdowns rendered as unstyled browser controls. One
+   generic rule covers all four now that every select goes through
+   `src/ui/Select.tsx`. */
+select {
+  background: var(--surface);
+  color: var(--paper);
+  border: var(--hairline) solid var(--rule);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  min-height: var(--tap);
+  font: inherit;
+  font-size: var(--text-sm);
 }

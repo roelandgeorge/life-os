@@ -193,7 +193,10 @@
 .shell {
   display: flex;
   flex-direction: column;
+  /* 100vh is taller than the visible viewport on iOS Safari; the fallback
+     keeps this working on the handful of engines without dvh. */
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -214,6 +217,9 @@
   border-top: var(--hairline) solid var(--rule);
   background: var(--surface);
   flex: none;
+  /* viewport-fit=cover (index.html) puts the tab bar under the home
+     indicator on iOS otherwise. */
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .tabbar button {
@@ -445,16 +451,6 @@
   border-radius: var(--radius-sm);
   padding: var(--space-1) var(--space-2);
   font: inherit;
-}
-
-.habit-row-controls select {
-  background: var(--surface);
-  color: var(--paper);
-  border: var(--hairline) solid var(--rule);
-  border-radius: var(--radius-sm);
-  padding: var(--space-1) var(--space-2);
-  font: inherit;
-  font-size: var(--text-sm);
 }
 
 .add-custom-row {

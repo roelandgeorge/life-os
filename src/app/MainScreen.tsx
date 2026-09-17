@@ -21,7 +21,7 @@ import { atRiskItems, type RiskItem } from '../core/atRisk';
 import { Avatar } from '../visual/Avatar';
 import { scene as buildScene } from '../visual/scene';
 import { Celebration } from './Celebration';
-import { FullDayStrip } from './FullDayStrip';
+import { FullDayStrip } from '../ui/FullDayStrip';
 
 /** How long the confetti stays up once every box for today is ticked. */
 const CELEBRATION_MS = 3000;

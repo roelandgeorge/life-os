@@ -16,7 +16,7 @@ import { fullDayStrip } from '../core/scoring';
 import { MAX_STEP, panelSteps } from '../core/steps';
 import type { AppState, UserHabit } from '../core/types';
 import { en, t, type I18nKey } from '../i18n/en';
-import { FullDayStrip } from './FullDayStrip';
+import { FullDayStrip } from '../ui/FullDayStrip';
 import { byColor, cadencePeriodDays, effectiveColor, habitHitDates, habitTitle, isActiveOn } from '../core/habits';
 import { completedPeriods, hitInRange, periodAt } from '../core/periods';
 
