@@ -82,10 +82,11 @@ habit's own period closes (anchored at its own `startDate`, not a shared
 `logs[0].date`), it contributes `importance` to the panel's weighted score;
 the panel steps up at ≥70%, down otherwise, and a day nothing closes on
 leaves it untouched. A panel fed by no habits never moves — the old "empty
-domain stays put" rule, generalised. Only `daily`, `weekly` and
-`{everyDays}` cadences drive a panel; `monthly` exists for streaks only,
-and `situational`/`once` are reminders and milestones, not a recurring
-commitment.
+domain stays put" rule, generalised. `daily`, `weekly`, `monthly` and
+`{everyDays}` cadences all drive a panel; `situational`/`once` are
+reminders and milestones, not a recurring commitment, and stay excluded.
+Phase 1 kept `monthly` out too, for streaks and XP only — phase 4 reversed
+that, see "Departures from the spec" below.
 
 **Migration, not a fresh start.** `store/migrate.ts` turns an existing v1
 record into v2 on first load: each of the five domains v1 ever showed
@@ -257,6 +258,16 @@ section stay. `core/customTasks.ts` holds the palette (`TASK_PALETTE`, built
 from `VISIBLE_DOMAINS`) and the sort (`byColor`); the stored value is
 validated as `#rrggbb` rather than as palette membership, so a later change
 to the palette cannot strip everyone's colours on the next import.
+
+**Monthly moves the picture** (`core/habits.drivesPanel`, `docs/plan/phase-4.md`
+§4.1). Phase 1 kept `monthly` out of the panel engine — "Maandelijks bestaat,
+maar alleen voor streaks en XP, niet voor het beeld" — on the theory that a
+month is too coarse a unit to move a drawing. Phase 4 reverses it: the engine
+was already period-generic, `monthly` already had a 30-day period for due-ness
+and the lapse warning, and a commitment the user genuinely keeps once a month
+should move the picture once a month rather than never. A monthly habit ticked
+anywhere inside its month now credits a hit on the day that month closes, the
+same +1/-1 the shorter cadences already got.
 
 ## The weekly warning
 

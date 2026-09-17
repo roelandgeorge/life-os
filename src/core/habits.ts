@@ -28,8 +28,8 @@ export const WEEKLY_PERIOD_DAYS = 7;
 /**
  * The recurring period a cadence implies, in days — or `null` for a cadence
  * with no periodic notion at all (`situational`, `once`). `monthly` has a
- * period (30 days) for due-ness and streaks; it does not drive a panel
- * (`drivesPanel` below) — those are deliberately different questions.
+ * period (30 days) for due-ness and streaks, and — since phase 4 — for
+ * `drivesPanel` below too: they are no longer different questions.
  */
 export function cadencePeriodDays(cadence: Cadence): number | null {
   if (cadence === 'daily') return 1;
@@ -40,13 +40,14 @@ export function cadencePeriodDays(cadence: Cadence): number | null {
 }
 
 /**
- * Whether a habit on this cadence can move a panel (§1.5 of docs/plan/phase-1.md):
- * daily, weekly and every-N-days all count towards the picture; `monthly`
- * exists only for streaks and XP, and `situational`/`once` are reminders and
- * milestones, not a recurring commitment.
+ * Whether a habit on this cadence can move a panel (§1.5 of docs/plan/phase-1.md,
+ * reversed by phase 4 — see README's "Departures from the spec"): daily,
+ * weekly, monthly and every-N-days all count towards the picture;
+ * `situational`/`once` are reminders and milestones, not a recurring
+ * commitment, and stay excluded.
  */
 export function drivesPanel(cadence: Cadence): boolean {
-  return cadence === 'daily' || cadence === 'weekly' || typeof cadence === 'object';
+  return cadence !== 'situational' && cadence !== 'once';
 }
 
 /** A habit still asks something of the user on `date` — before removal, on or after it started. */
