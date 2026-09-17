@@ -52,8 +52,10 @@ export type Gender = 'male' | 'female';
 
 /**
  * Closed so `scene.ts`'s filename axes and a stored profile can never
- * disagree. `none` has no drawing of its own — the resolver drops a rung and
- * renders the variant-free head.
+ * disagree. `none` has no drawing of its own, planned or otherwise
+ * (docs/artwork-guide.md lists no bare `head.png`) — the resolver's fallback
+ * chain runs out and the head overlay simply doesn't render, same as before
+ * any head art exists at all.
  */
 export type Hair = 'blond' | 'dark' | 'none';
 

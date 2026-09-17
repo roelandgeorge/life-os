@@ -60,7 +60,12 @@ was translated and tagged once (`scripts/import-catalog.mjs`) into
 `src/content/catalog.json`, read through `core/catalog.ts`. Each item
 carries a domain, cadence, importance (1–5), effort, evidence and — for
 partner/family content — an `audience`/`requires` filter. The CSV is now
-archive; the JSON is what ships.
+archive; the JSON is what ships. The onboarding rebuild
+(`docs/onboarding/02-catalog-changes.md`) replaced that JSON wholesale with
+137 items — 14 new, 13 edited, nothing removed or renumbered — and widened
+`requires` from the closed `partner | children` pair to a mix of known
+keywords (`hair`, `gym`, `employed`, `self-employed`, `single`) and habit
+ids, an item gated on another one being completed first.
 
 **One habit shape, not two.** `UserHabit` (`core/types.ts`) replaces both
 the old fixed `DomainTicks` and the separate `CustomTask`. Every habit —
@@ -173,47 +178,77 @@ two different screens use it.
 
 ## Onboarding
 
-Phase 4 (`docs/plan/phase-4.md`) replaced the single explainer screen with a
-real decision tree, run once, before the store holds any state.
-`core/onboarding.ts` holds it as data, the same way the catalogue and the
-scene are data: `steps(answers)` is the whole visible sequence — gender,
-hair, partner (and, only if wanted, the partner's own gender and hair),
-children, domains, and one starters step per domain the domains step turned
-on, in the order it was turned on. The last of those is the end of the tree,
-so the final Next finishes rather than advancing, and turning no domain on at
-all leaves `domains` as the last step. `app/Onboarding.tsx` holds `Answers`
-plus an index into that sequence and re-derives both on every render, so
-going back after turning a domain off shortens the tree under the current
-step rather than crashing.
+Phase 4 built a real decision tree in place of the single explainer screen;
+the rebuild documented under `docs/onboarding/` (`04-revisions.md` is the
+final word where it disagrees with the rest of that folder) then replaced
+that tree wholesale. The reasoning: phase 4's tree asked which of ten
+*domains* to work on — Sleep, Training, Productivity — and a domain is a
+means, not something anyone arrives wanting. What a person actually has is a
+want or a hurt, and the app's own five panels already speak that language.
 
-Turning a domain on seeds it with its three catalogue starters — filtered
-through `core/habits.catalogFilterFor`, so a "no" to partner or children
-already hides what it should — and the whole domain's list stays editable
-through `app/HabitPicker.tsx`, the same component `DiscoverScreen` uses.
-`profileFrom(answers)` builds the `Profile` the avatar answers to live, and
-`buildInitialState(answers, newId, today)` is what `App.tsx` saves once the
-user hits Start: every picked catalogue id becomes a `UserHabit` anchored at
-today, and an answer never given is a key never written, not a key holding
-`undefined`.
+**Point at the panel, then ask what's in the way.** Q1 asks "What do you
+most want to work on?" against the five panels — Body, Head, People, Partner,
+Money (the code still calls the third one `network`; only `en.ts`'s
+`panel.network` says "People" on screen, per `01-onboarding-spec.md` §4.4).
+Each branch then asks what's actually wrong, in that panel's own words, down
+to one of 40 landings that seeds at most two catalogue habits and offers a
+third. "Is there anything else you want to work on?" repeats after every
+landing except one reached through "None of them" or once all five panels
+are chosen — `04-revisions.md` §11 reverses phase 4's two-panel cap — and a
+repeat visit to Q1 hides every panel already picked and never re-offers
+"None of them" again.
 
-`Profile.domainOrder` is the one field carrying both halves of "which
-domains, and in what order" — anything absent from it is simply unordered,
-never hidden. `core/domains.orderedDomains()` reads it to put those domains
-first, in the order chosen, then every other domain in the catalogue's own
-order; `MainScreen`'s check-in groups and Settings' own domain-order control
-(`app/ProfileFields.tsx`'s `DomainOrderField`, a checkbox plus small up/down
-buttons, no drag library) both go through it. A habit added later from a
-domain that was left off, or from Discover, still shows on Home — ordering
-is the only effect this has.
+`src/content/onboarding-tree.json` and `landings.json` hold the tree and its
+landings as data, the same way the catalogue is data — copy included, so
+"character for character" is a test (`core/onboarding.test.ts`) rather than
+a review nit. `core/onboarding.ts` is the only code that reads their shape;
+`app/Onboarding.tsx` is a plain `(nodeId, Answers)` renderer with no back
+button and no Next, since every option both answers the question and
+advances in the same tap. Reaching a landing only records its id
+(`Answers.landings`) — the seed ids aren't resolved until the whole run ends
+(`resolveSeeds`), because a requirement like H033's `hair` can be answered
+anywhere in the Q1 loop while hair itself is only asked once, right at the
+end, after every panel is settled.
 
-Settings' Profile section replaced the old bare Appearance section with the
-same fields onboarding uses (`app/ProfileFields.tsx`), plus a control for
-`children`, which had none before. Its catalogue `<select>` is gone too,
-replaced by a button into `app/DiscoverScreen.tsx`: a full-screen, searchable
-browser of the catalogue's `kind: 'habit'` items, grouped the same way as
-Home, with an already-added item shown checked and disabled rather than
-addable twice. Milestones, challenges and reminders stay out of both
-pickers — phase 6's content layer gives them their own screens.
+**Two independent parts, each rerunnable on its own** (§5): "the figure"
+(gender, hair — the whole reason it moved to last, so the questions that
+pick habits never wait on it) and "what you work on" (the Q1 loop). A first
+run does both, work-on first, figure last. Settings keeps exactly the two
+buttons for this — Redo the figure, Redo what you work on — plus the daily
+reminder and data (§10); everything else the old Settings held (Appearance,
+Domain order, the habit editor, "Add from the catalogue") is gone, because
+profile fields are onboarding's alone now and a habit is edited from its own
+row on Home. Each redo runs `<Onboarding>` between a different
+`(start, terminal)` node pair and merges the result into the live state
+(`useLifeOS.completeFigureRedo`/`completeWorkOnRedo`) instead of replacing
+it. Redoing "what you work on" also replaces `Profile.domainOrder` with that
+run's own seed order — the order a domain's habits' domains first appear,
+repeats dropped, not the order panels were chosen, since one domain can feed
+more than one panel. Changing the order is running the part again, on
+purpose: there is no separate reorder control.
+
+The moment the tree reaches its landing, `App.tsx` calls `buildInitialState`
+and hands straight to `Shell` — there is no "you're done" screen of its own.
+For that one session `MainScreen` shows the landing headline ("Fifteen years
+out. Everything in the middle.") and a count line instead of the everyday
+"This is future you.", plus a row of whatever wasn't seeded, each a one-tap
+add; both are gone the moment every offer's been acted on or the app
+reloads (`App.tsx`'s `JustOnboarded`, session-only, never written to disk).
+
+**The catalogue only opens from a domain's own group on Home** — a domain
+never chosen has no group there and so no way in (§6), which is deliberate:
+reaching an off domain means running "what you work on" again.
+`app/DomainCatalog.tsx` replaces the old cross-domain Discover screen; a row
+collapses to its title and an effort marker, expanding on tap to the
+catalogue's own `note` and nothing else (§7, §8) — no cadence, importance or
+evidence line. Its "Write your own" form always carries the domain it was
+opened from, so a self-written habit is no longer domain-less by default,
+and offers three importance choices (Important/Medium/Not important, storing
+5/3/1) instead of a free number, a cadence, and an optional filing emoji in
+place of a colour picker. `MainScreen` reuses the same form to edit a
+self-written habit from its own row menu (Edit + Remove); a catalogue
+habit's menu offers Remove only, since its title, weight, cadence and domain
+are the catalogue's to own (§9).
 
 **Onboarding asks nothing it cannot act on.** A persona step and a four
 paragraph "How this works" screen were both built and both removed again:
@@ -282,13 +317,17 @@ table. Scoped to keep what it can: opt-in, off by default, and it hides the
 check-in list while active so the idealised scene never sits next to a checkbox
 you could tick.
 
-**Onboarding asks nothing at all now** (§7). The twelve appearance questions
-went with the parametric figure — the artwork is a drawing of one specific
-person, so there was nothing left for them to drive. The age went when the
-headline stopped naming a number: it drove one line of copy and nothing else,
-and §3's horizon is fixed at +15 regardless. `Profile` is gone from
-`AppState` entirely. What remains is a single explanation screen, kept
-because the rules are unusual enough that meeting them cold would confuse.
+**Onboarding asked nothing at all, briefly** (§7). The twelve appearance
+questions went with the parametric figure — the artwork is a drawing of one
+specific person, so there was nothing left for them to drive — and what
+remained for a while was a single explanation screen, `Profile` dropped from
+`AppState` entirely. The age went when the headline stopped naming a number:
+it drove one line of copy and nothing else, and §3's horizon is fixed at +15
+regardless, which is still true. Phase 4 brought a real onboarding tree back
+once there was appearance (gender, hair) and domains worth asking about
+again, and the "Onboarding" section above describes what asks what today —
+this entry stays as the record of why it was ever silent, not as a
+description of the current app.
 
 **User-added tasks move no panel** (`core/customTasks.ts`). The artwork is
 three fixed panels; a task the user invents has nothing to drive, so ticking
@@ -486,29 +525,37 @@ src/core/      the model — no DOM, no clock, no storage
   atRisk.ts      the lapse warning + the digest sent to the server
   projection.ts  AppState + a date -> what the screen needs
   scoring.ts     Full Day + log bookkeeping (§5)
-  onboarding.ts  the decision tree (§4.3 of docs/plan/phase-4.md): steps(),
-                 profileFrom(), buildInitialState()
+  onboarding.ts  the tree (docs/onboarding/), read from src/content/
+                 onboarding-tree.json + landings.json: step()/choose()/
+                 chooseDrawing() walk it, resolveSeeds() (via buildInitialState,
+                 seededCatalogItems, offeredCatalogItems) turns a finished
+                 run into catalogue ids once the whole profile is known
   personas.ts    the persona catalogue (id/name/blurb), from content/personas.json
 src/store/     Store interface, IndexedDB/in-memory impls, migrate.ts (v1 -> v2)
 src/visual/    scene.ts (the slot table + fallback-chain resolver) and the compositing Avatar
-src/ui/        the base components (Button, Chip, Checkbox, Card, Field,
-               Select, SectionHeading, Note, FullDayStrip) and tokens.ts,
+src/ui/        the base components (Button, Chip, Checkbox, Card,
+               SectionHeading, Note, FullDayStrip) and tokens.ts,
                the parser tokens.test.ts and chrome.test.ts read against
 src/styles/    tokens.css (the only file with a colour literal), base.css,
                components.css, screens.css — src/styles.css just @imports them
 src/app/       the shell: useLifeOS is the one place touching Store and clock;
-               every screen takes state as props. Onboarding renders the
-               decision tree; DiscoverScreen is the full-screen catalogue
-               browser pushed from Settings; ProfileFields and HabitPicker
-               are shared by two consumers each (onboarding + Settings,
-               onboarding's starters step + Discover)
+               every screen takes state as props. Onboarding is a plain
+               (nodeId, Answers) renderer over the tree, run three ways —
+               the full S0-to-LAND path, and Settings' two redos between a
+               different (start, terminal) node pair each; DomainCatalog is
+               a single domain's own catalogue, opened from that domain's
+               group on Home, sharing its WriteHabitForm with MainScreen's
+               own habit-row edit
 src/i18n/      every fixed user-facing string, flat key map, English only —
-               habit titles are data now, not i18n
-src/content/   catalog.json, generated by scripts/import-catalog.mjs;
-               personas.json, hand-written
+               habit titles are data now, not i18n, and so is the tree's own copy
+src/content/   catalog.json (137 items, docs/onboarding/02-catalog-changes.md);
+               onboarding-tree.json + landings.json (docs/onboarding/, adapted
+               per 04-revisions.md); personas.json, hand-written
 api/           the only server-side code: push subscription + the daily send
 scripts/       catalogue import, icon generation, artwork slicing, placeholder sheets
 docs/plan/     the v2 roadmap and per-phase plans
+docs/onboarding/  the onboarding rebuild's own design docs — 00-brief.md
+               through 04-revisions.md, the last of which wins
 ```
 
 ## The contract

@@ -5,7 +5,7 @@ Binary daily checks in, a scene at age +15 out.
 
 ## Read these first, in this order
 
-1. **`README.md`** — how the app actually works now, plus five deliberate
+1. **`README.md`** — how the app actually works now, plus its deliberate
    reversals of the spec and the reasoning behind each. Read it first: the
    spec no longer describes the built system.
 2. **`life-os-spec.md`** — the original design. Still worth reading for the
@@ -41,29 +41,59 @@ new phase.
 editorial design system. `src/styles/tokens.css` is now the only file with a
 colour literal — `src/ui/tokens.ts` parses it and measures contrast,
 `tokens.test.ts` pins every value against it — and `src/ui/` holds the base
-components (`Button`, `Chip`/`ChipRow`, `Checkbox`, `Card`, `Field`,
-`Select`, `SectionHeading`, `Note`, `FullDayStrip`) every screen now goes
+components (`Button`, `Chip`/`ChipRow`, `Checkbox`, `Card`, `SectionHeading`,
+`Note`, `FullDayStrip`) every screen now goes
 through. README's "The look" section explains the palette, the self-hosted
 serif and the grain. Onboarding, Home and the gamification layer are still
 ahead — `docs/plan/PLAN.md` tracks what phase comes next.
 
-**Phase 4 has since shipped too** (`docs/plan/phase-4.md`): a real
-onboarding decision tree replaces the single explainer screen —
-`core/onboarding.ts`'s `steps()`/`profileFrom()`/`buildInitialState()`,
-rendered by `app/Onboarding.tsx`. `Profile.domainOrder` is the domains the
-user turned on during onboarding, in the order they chose; `core/domains.ts`'s
-`orderedDomains()` reads it to order Home's groups (`MainScreen.groupHabits`)
-and feeds Settings' own domain-order control (`app/ProfileFields.tsx`'s
-`DomainOrderField`) — nothing is ever hidden by it, a habit added later from
-an off domain still shows, only its group's position on screen changes.
-`app/DiscoverScreen.tsx` replaces the inline catalogue `<select>` with a
-full-screen, searchable browser opened from Settings, sharing
-`app/HabitPicker.tsx` with onboarding's starter step. `monthly` now drives a
-panel like any other cadence (`core/habits.drivesPanel`), reversing phase 1's
-rule — see README's "Departures from the spec" for why. `core/personas.ts`
-reads `src/content/personas.json`, but nothing writes `Profile.personaId`:
-the persona is phase 6's to ask for, once it has quotes behind it, and it
-must never steer which habits get picked. Home itself (§4.8's one-line
+**Phase 4 shipped a real onboarding decision tree** (`docs/plan/phase-4.md`)
+in place of the single explainer screen: a domain picker (ten domains, pick
+some, order them), one starters step per domain turned on, `app/DiscoverScreen.tsx`
+and `app/ProfileFields.tsx`. `monthly` started driving a panel like any other
+cadence (`core/habits.drivesPanel`), reversing phase 1's rule — see README's
+"Departures from the spec" for why, unaffected by anything below.
+`core/personas.ts` reads `src/content/personas.json`, but nothing writes
+`Profile.personaId`: the persona is phase 6's to ask for, once it has quotes
+behind it, and it must never steer which habits get picked.
+
+**The onboarding rebuild has since replaced that tree entirely**
+(`docs/onboarding/`, `04-revisions.md` the final word). The domain picker
+asked which of ten *domains* to work on — a means, not something anyone
+arrives wanting — where the new tree points at the picture's own five panels
+and asks what's in the way of each. `src/content/onboarding-tree.json` and
+`landings.json` hold it as data, character-for-character pinned by
+`core/onboarding.test.ts`; `core/onboarding.ts`'s `step()`/`choose()`/
+`chooseDrawing()` walk it and `buildInitialState()`/`seededCatalogItems()`/
+`offeredCatalogItems()` resolve a finished run into catalogue ids, deferred
+until the whole profile is known so a requirement like H033's `hair` still
+gates correctly even though hair is asked last. `app/Onboarding.tsx` is now a
+plain `(nodeId, Answers)` renderer with no back/next chrome — every option
+both answers and advances in one tap — run three ways: the full S0-to-LAND
+path (`App.tsx`, before the store holds any state) and Settings' two
+independent redos, "Redo the figure" and "Redo what you work on"
+(`docs/onboarding/04-revisions.md` §5), each between a different
+`(start, terminal)` node pair, merging into the live state instead of
+replacing it.
+
+`Profile.domainOrder` is no longer written by a domain-picker step or read
+back by a Settings reorder control — both are gone. It now comes from
+`core/onboarding.domainOrderFromSeeds()`: the order a "what you work on" run's
+seeded habits' domains first appear, repeats dropped. `core/domains.ts`'s
+`orderedDomains()` still reads it the same way to order Home's groups
+(`MainScreen.groupHabits`); changing the order means running "what you work
+on" again, which is the only reorder control there is now.
+
+`app/DiscoverScreen.tsx`, `app/ProfileFields.tsx`, `app/HabitPicker.tsx` and
+`src/ui/Field.tsx`/`Select.tsx` are gone — each had zero remaining callers
+once the rebuild landed. `app/DomainCatalog.tsx` replaces Discover: opened
+from a domain's own group on Home, the only route into the catalogue now (a
+domain never chosen has no group and so no way in), a row collapsed to its
+title and an effort marker, its own "Write your own" form shared with
+`MainScreen`'s habit-row Edit. Settings holds exactly four things now — the
+two redo buttons, the daily reminder, data — the old habit editor and
+catalogue button gone with it, since a habit is edited from its own row on
+Home and profile fields are onboarding's alone. Home itself (§4.8's one-line
 `groupHabits` edit aside) and the gamification layer are still ahead.
 
 Live on the user's Vercel deployment, which builds from `main` on GitHub.
@@ -120,7 +150,7 @@ npm run manifest        # regenerate src/content/artwork.json from public/avatar
 ```
 index.html, src/main.tsx   entry
 src/core/       the model — pure: no DOM, no clock, no storage
-  catalog.ts      the habit catalogue (123 items), read from src/content/catalog.json
+  catalog.ts      the habit catalogue (137 items), read from src/content/catalog.json
   domains.ts      the 10 domains as data: colour, which panel(s) they feed
   habits.ts       UserHabit helpers: cadence/streak arithmetic, colour, CRUD
   steps.ts        the weighted panel engine: 0–4 per panel, recomputed from the log
@@ -129,28 +159,32 @@ src/core/       the model — pure: no DOM, no clock, no storage
   atRisk.ts       the lapse warning + the id-only digest sent to the server
   projection.ts   what the screen shows now; scoring.ts: Full Day, log trimming
   types.ts        AppState, DayLog, UserHabit, Profile, Projection
-  onboarding.ts   the decision tree: steps()/profileFrom()/buildInitialState()
+  onboarding.ts   the tree (docs/onboarding/): step()/choose()/chooseDrawing()
+                  walk it, buildInitialState()/seededCatalogItems()/
+                  offeredCatalogItems() resolve a finished run
   personas.ts     the persona catalogue (id/name/blurb), from content/personas.json
 src/store/      Store interface (types.ts), indexeddb.ts, memory.ts, serialize.ts,
                 migrate.ts (v1 -> v2, run on first load of an old record)
 src/visual/     scene.ts (the slot table + the fallback-chain resolver, the
                 only file naming PNGs), Avatar.tsx (paints a resolved Scene)
-src/app/        App (onboarding gate), Onboarding (the decision tree renderer),
-                Shell (tabs), Main/History/Settings screens, DiscoverScreen
-                (full-screen catalogue browser, from Settings), ProfileFields
-                (Gender/Hair/Partner/Children/DomainOrder fields, shared by
-                Onboarding and Settings), HabitPicker (shared by Onboarding's
-                starters step and Discover), useLifeOS (the only bridge to
-                Store + clock — habit CRUD lives here as thin wiring around
-                core/habits.ts), push.ts, warmArtwork.ts, Celebration
-src/ui/         Button, Chip/ChipRow, Checkbox, Card, Field, Select,
-                SectionHeading, Note, FullDayStrip — thin components over
-                components.css; tokens.ts (parser + contrast helper),
-                tokens.test.ts, chrome.test.ts
-src/content/    catalog.json (scripts/import-catalog.mjs), scene.json
-                (hand-written scene geometry), artwork.json (scripts/build-
-                artwork-manifest.mjs, the file inventory scene.ts resolves against),
-                personas.json (hand-written, id/name/blurb)
+src/app/        App (onboarding gate), Onboarding (a plain (nodeId, Answers)
+                renderer over the tree, run for the full first pass and for
+                Settings' two redos), Shell (tabs), Main/History/Settings
+                screens, DomainCatalog (one domain's own catalogue, opened
+                from its group on Home — the only route in — sharing its
+                WriteHabitForm with MainScreen's habit-row edit), useLifeOS
+                (the only bridge to Store + clock — habit CRUD lives here as
+                thin wiring around core/habits.ts), push.ts, warmArtwork.ts,
+                Celebration
+src/ui/         Button, Chip/ChipRow, Checkbox, Card, SectionHeading, Note,
+                FullDayStrip — thin components over components.css; tokens.ts
+                (parser + contrast helper), tokens.test.ts, chrome.test.ts
+src/content/    catalog.json (137 items, docs/onboarding/02-catalog-changes.md),
+                onboarding-tree.json + landings.json (docs/onboarding/,
+                04-revisions.md the final word), scene.json (hand-written
+                scene geometry), artwork.json (scripts/build-artwork-manifest.mjs,
+                the file inventory scene.ts resolves against), personas.json
+                (hand-written, id/name/blurb)
 src/i18n/en.ts  every fixed user-facing string; habit titles are data, not i18n
 src/styles/     tokens.css (the only file with a colour literal), base.css,
                 components.css, screens.css; src/styles.css just @imports them
@@ -175,7 +209,8 @@ Tests sit next to the code they cover (`*.test.ts`).
 | Backups | Settings → Export writes `life-os-export-<date>.json` (envelope with `schemaVersion`, currently 2, in `src/store/types.ts`); Import validates it in `src/store/serialize.ts`, migrating a v1 export on the way in. The only defence against a cleared browser. |
 | **Push subscription** + digest (ids, each habit's own period anchor, last hit, period length — no titles, no log) | Vercel Blob, **private** store, `push/subscription.json` (`SUBSCRIPTION_PATH`, `api/subscribe.ts`). |
 | Secrets and keys | Vercel env vars: `VITE_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET`, `BLOB_READ_WRITE_TOKEN`. Locally only `VITE_VAPID_PUBLIC_KEY` in `.env.local` (gitignored via `*.local`). The private key never goes in the repo. |
-| Catalogue content | `docs/habits.csv` (source) → `src/content/catalog.json` (what ships), via `scripts/import-catalog.mjs` |
+| Catalogue content | `docs/habits.csv` (source) → `src/content/catalog.json` (what ships), via `scripts/import-catalog.mjs`; the onboarding rebuild replaced that JSON wholesale (137 items, `docs/onboarding/02-catalog-changes.md`) and the 14 items added since aren't in the CSV |
+| Onboarding tree + landings | `src/content/onboarding-tree.json` + `landings.json`, adapted from `docs/onboarding/` per `04-revisions.md`, read only by `src/core/onboarding.ts` |
 | Persona content | `src/content/personas.json`, hand-written, read by `src/core/personas.ts` |
 | Domain/panel definitions | `src/core/domains.ts` |
 | Scene geometry (slots, rects, variants) | `src/content/scene.json`, typed and resolved by `src/visual/scene.ts` |
@@ -215,7 +250,17 @@ panel, and (eventually) five drawings.
 
 A habit may carry its own colour, which is filing only: nothing maps a
 colour back to a domain, and a coloured domain-less habit still gets no
-panel. Keep it that way — a colour must never become a link.
+panel. Keep it that way — a colour must never become a link. `UserHabit.emoji`
+(docs/onboarding/04-revisions.md §9, the write-a-habit form's filing mark
+instead of a colour picker) is the same promise: nothing may ever map it
+back to a domain or a panel either.
+
+`CatalogItem.starter` is unused metadata since the onboarding rebuild — the
+tree in `docs/onboarding/` seeds by landing, not by this flag. It survives
+in `catalog.json` only because that file is taken as a full replacement and
+re-deriving the flag for 137 items would be churn; `catalog.test.ts`'s only
+remaining check on it is that a `starter: true` item is a real catalogue
+entry. Do not build new logic on it without checking who else reads it first.
 
 ## House style
 
@@ -233,3 +278,9 @@ Colour literals live in `src/styles/tokens.css` and nowhere else —
 `components.css` or `screens.css`. A component earns a file under
 `src/ui/` only once two different screens use it; everything else stays as
 markup where it is.
+
+A domain's catalogue is reachable only from that domain's own group on
+Home (docs/onboarding/04-revisions.md §6) — a domain the user isn't
+currently working on has no group and so no way in, on purpose. Do not add
+a second, cross-domain way to browse the catalogue; the way back to an
+off domain is running "what you work on" again from Settings.
