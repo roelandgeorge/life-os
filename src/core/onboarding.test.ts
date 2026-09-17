@@ -1,130 +1,344 @@
+/**
+ * Pins the onboarding tree against docs/onboarding/01-onboarding-spec.md §9
+ * and 03-decisions.md's validation table — written before any screen exists
+ * (docs/onboarding/00-brief.md's step 4, "write the validation test before
+ * the screens").
+ */
 import { describe, expect, it } from 'vitest';
-import { CATALOG } from './catalog';
-import { catalogFilterFor } from './habits';
-import { buildInitialState, profileFrom, steps, type Answers } from './onboarding';
+import { CATALOG, catalogById } from './catalog';
+import {
+  GENDER_VALUES,
+  HAIR_VALUES,
+  LANDINGS,
+  addOffer,
+  advanceScreen,
+  buildInitialState,
+  chooseDrawing,
+  chooseOption,
+  countLine,
+  currentNode,
+  initialAnswers,
+  landHeadline,
+  profileFrom,
+  visibleOptions,
+  type Answers,
+} from './onboarding';
+import { en } from '../i18n/en';
+import onboardingTreeJson from '../content/onboarding-tree.json';
 
 const TODAY = '2026-09-17';
 
-describe('steps', () => {
-  it('holds the fixed order with no partner and no domains chosen', () => {
-    expect(steps({}).map((s) => s.kind)).toEqual(['gender', 'hair', 'partner', 'children', 'domains']);
+// ---------------------------------------------------------------------------
+// A full walk of every path the tree allows, from S0 to LAND. Small enough
+// to run in a single test (03-decisions.md ran the equivalent walk over
+// 4623 paths) and reused by several of the checks below.
+// ---------------------------------------------------------------------------
+
+type Walk = { answersAtLand: Answers; taps: number };
+
+function walkAll(answers: Answers, taps: number, depth: number, out: Walk[]): void {
+  if (depth > 40) throw new Error('onboarding tree walk exceeded its depth bound — a cycle?');
+  const current = currentNode(answers);
+
+  if (current.id === 'LAND') {
+    out.push({ answersAtLand: answers, taps });
+    return;
+  }
+
+  if (current.node.kind === 'screen') {
+    walkAll(advanceScreen(answers, current), taps, depth + 1, out);
+    return;
+  }
+
+  if (current.node.kind === 'profile' && current.node.optionsFrom === 'drawings') {
+    const values = current.node.field === 'gender' ? GENDER_VALUES : HAIR_VALUES;
+    for (const value of values) walkAll(chooseDrawing(answers, current, value), taps + 1, depth + 1, out);
+    return;
+  }
+
+  const field = current.node.kind === 'profile' ? current.node.field : undefined;
+  if (field === 'partner' || field === 'children') {
+    expect((answers as unknown as Record<string, unknown>)[field]).toBeUndefined();
+  }
+
+  for (const option of visibleOptions(current, answers)) {
+    walkAll(chooseOption(answers, current, option), taps + 1, depth + 1, out);
+  }
+}
+
+function allWalks(): Walk[] {
+  const out: Walk[] = [];
+  walkAll(initialAnswers(), 0, 0, out);
+  return out;
+}
+
+describe('the tree, walked end to end', () => {
+  const walks = allWalks();
+
+  it('reaches every landing in landings.json from Q1', () => {
+    const reached = new Set(walks.flatMap((w) => w.answersAtLand.landings));
+    expect(reached).toEqual(new Set(Object.keys(LANDINGS)));
   });
 
-  it('partnerLooks appears only once a partner is wanted', () => {
-    expect(steps({ partnerWanted: false }).map((s) => s.kind)).not.toContain('partnerLooks');
-    expect(steps({ partnerWanted: true }).map((s) => s.kind)).toContain('partnerLooks');
+  it('the shortest path is 5 question taps and the longest is 11', () => {
+    const taps = walks.map((w) => w.taps);
+    expect(Math.min(...taps)).toBe(5);
+    expect(Math.max(...taps)).toBe(11);
   });
 
-  it('one starters step per enabled domain, in the stored order', () => {
-    const answers: Answers = { domains: ['finance', 'sleep', 'mindset'] };
-    const starterSteps = steps(answers).filter((s) => s.kind === 'starters');
-    expect(starterSteps.map((s) => s.domain)).toEqual(['finance', 'sleep', 'mindset']);
+  it('never seeds more than two landings on any path', () => {
+    for (const w of walks) expect(w.answersAtLand.landings.length).toBeLessThanOrEqual(2);
   });
 
-  it('no domains on yields a valid sequence with no starters steps', () => {
-    const withNone = steps({ domains: [] });
-    expect(withNone.some((s) => s.kind === 'starters')).toBe(false);
-    expect(withNone[0]).toEqual({ kind: 'gender' });
-    expect(withNone[withNone.length - 1]).toEqual({ kind: 'domains' });
+  it('every walk ends with both partner and children answered', () => {
+    for (const w of walks) {
+      expect(w.answersAtLand.partner).not.toBeUndefined();
+      expect(w.answersAtLand.children).not.toBeUndefined();
+    }
+  });
+});
+
+describe('Q1 on a second visit', () => {
+  it('hides the panel already chosen and the "None of them" row', () => {
+    let answers = initialAnswers();
+    answers = advanceScreen(answers, currentNode(answers)); // S0 -> Q1
+
+    let current = currentNode(answers);
+    const body = visibleOptions(current, answers).find((o) => o.id === 'body');
+    if (!body) throw new Error('expected a body option on the first Q1 visit');
+    answers = chooseOption(answers, current, body); // Q1 -> Q2B
+
+    current = currentNode(answers);
+    expect(current.id).toBe('Q2B');
+    const tired = visibleOptions(current, answers).find(
+      (o) => o.label === en['onboarding.tree.tiredAllTheTime.label'],
+    );
+    if (!tired) throw new Error('expected "Tired all the time." on Q2B');
+    answers = chooseOption(answers, current, tired); // Q2B -> B4 -> QMORE
+
+    current = currentNode(answers);
+    expect(current.id).toBe('QMORE');
+    const oneMore = visibleOptions(current, answers).find((o) => o.label === en['onboarding.tree.oneMore.label']);
+    if (!oneMore) throw new Error('expected "One more." on QMORE');
+    answers = chooseOption(answers, current, oneMore); // QMORE -> Q1
+
+    current = currentNode(answers);
+    expect(current.id).toBe('Q1');
+    const ids = visibleOptions(current, answers).map((o) => o.id);
+    expect(ids).not.toContain('body');
+    expect(ids).not.toContain('none');
+    expect(ids).toEqual(['head', 'people', 'partner', 'money']);
+  });
+});
+
+describe('the situation block', () => {
+  it('is skipped entirely when the Partner branch already answered both', () => {
+    let answers = initialAnswers();
+    answers = advanceScreen(answers, currentNode(answers)); // S0 -> Q1
+
+    let current = currentNode(answers);
+    const partnerOpt = visibleOptions(current, answers).find((o) => o.id === 'partner');
+    if (!partnerOpt) throw new Error('expected a partner option on Q1');
+    answers = chooseOption(answers, current, partnerOpt); // Q1 -> Q2N
+
+    current = currentNode(answers);
+    expect(current.id).toBe('Q2N');
+    const yes = visibleOptions(current, answers).find((o) => o.label === en['onboarding.tree.yes.label']);
+    if (!yes) throw new Error('expected "Yes." on Q2N');
+    answers = chooseOption(answers, current, yes); // partner = true
+
+    current = currentNode(answers);
+    expect(current.id).toBe('Q3Ny');
+    const childYes = visibleOptions(current, answers).find((o) => o.label === en['onboarding.tree.yes.label']);
+    if (!childYes) throw new Error('expected "Yes." on Q3Ny');
+    answers = chooseOption(answers, current, childYes); // children = true
+
+    current = currentNode(answers);
+    expect(current.id).toBe('Q4Ny');
+    const first = visibleOptions(current, answers)[0];
+    if (!first) throw new Error('expected at least one Q4Ny option');
+    answers = chooseOption(answers, current, first); // -> a landing -> QMORE (first landing, same as any branch)
+
+    current = currentNode(answers);
+    expect(current.id).toBe('QMORE');
+    const thatsIt = visibleOptions(current, answers).find((o) => o.label === en['onboarding.tree.thatsIt.label']);
+    if (!thatsIt) throw new Error('expected "That\'s it." on QMORE');
+    answers = chooseOption(answers, current, thatsIt); // QMORE -> SIT, which must skip straight past to FIG_gender
+
+    current = currentNode(answers);
+    expect(current.id).toBe('FIG_gender');
+    expect(current.header).toBeUndefined();
+  });
+});
+
+describe('currentNode', () => {
+  it('folds SIT in as a header on top of SIT_partner when neither is answered', () => {
+    const answers: Answers = { ...initialAnswers(), current: 'SIT' };
+    const current = currentNode(answers);
+    expect(current.id).toBe('SIT_partner');
+    expect(current.header).toBe(en['onboarding.tree.sit.text']);
   });
 
-  // The tree ends where the answers end, which is what lets the component
-  // wire its last Next to "finish" without knowing which step that is.
-  it('ends on the last domain turned on', () => {
-    const withDomains = steps({ domains: ['sleep', 'finance'] });
-    expect(withDomains[withDomains.length - 1]).toEqual({ kind: 'starters', domain: 'finance' });
+  it('skips SIT_partner once partner is already set, keeping the header for SIT_children', () => {
+    const answers: Answers = { ...initialAnswers(), partner: true, current: 'SIT' };
+    const current = currentNode(answers);
+    expect(current.id).toBe('SIT_children');
+    expect(current.header).toBe(en['onboarding.tree.sit.text']);
+  });
+
+  it('skips SIT entirely once both are set', () => {
+    const answers: Answers = { ...initialAnswers(), partner: true, children: false, current: 'SIT' };
+    const current = currentNode(answers);
+    expect(current.id).toBe('FIG_gender');
+    expect(current.header).toBeUndefined();
+  });
+});
+
+describe('landing data', () => {
+  it('every seed and offer id exists in the catalogue', () => {
+    for (const landing of Object.values(LANDINGS)) {
+      for (const id of [...landing.seeds, ...landing.offers]) expect(catalogById(id)).toBeDefined();
+    }
+  });
+
+  it('no seeded item has cadence situational', () => {
+    for (const landing of Object.values(LANDINGS)) {
+      for (const id of landing.seeds) expect(catalogById(id)?.cadence).not.toBe('situational');
+    }
+  });
+
+  it('seeded once items are exactly H077, H078, H127, H129, H136', () => {
+    const onceSeeded = new Set<string>();
+    for (const landing of Object.values(LANDINGS)) {
+      for (const id of landing.seeds) if (catalogById(id)?.cadence === 'once') onceSeeded.add(id);
+    }
+    expect(onceSeeded).toEqual(new Set(['H077', 'H078', 'H127', 'H129', 'H136']));
+  });
+});
+
+describe('every requires value used by the catalogue', () => {
+  it('is known vocabulary or an existing catalogue id', () => {
+    const KNOWN = new Set(['partner', 'children', 'hair', 'gym', 'employed', 'self-employed', 'single']);
+    const ids = new Set(CATALOG.map((i) => i.id));
+    for (const item of CATALOG) {
+      for (const r of item.requires) expect(KNOWN.has(r) || ids.has(r)).toBe(true);
+    }
   });
 });
 
 describe('profileFrom', () => {
   it('omits keys rather than writing undefined', () => {
-    const profile = profileFrom({});
-    expect(Object.keys(profile)).toEqual([]);
+    expect(Object.keys(profileFrom(initialAnswers()))).toEqual([]);
   });
 
-  it('carries only what was answered', () => {
-    expect(profileFrom({ gender: 'male' })).toEqual({ gender: 'male' });
-    expect(profileFrom({ children: true })).toEqual({ children: true });
-    expect(profileFrom({ domains: ['sleep', 'finance'] })).toEqual({ domainOrder: ['sleep', 'finance'] });
+  it('carries partner as { wanted }, with no gender or hair of its own', () => {
+    expect(profileFrom({ ...initialAnswers(), partner: true })).toEqual({ partner: { wanted: true } });
+    expect(profileFrom({ ...initialAnswers(), partner: false })).toEqual({ partner: { wanted: false } });
   });
 
-  it('partner carries gender and hair only when wanted', () => {
-    expect(profileFrom({ partnerWanted: false, partnerGender: 'female', partnerHair: 'dark' })).toEqual({
-      partner: { wanted: false },
-    });
-    expect(profileFrom({ partnerWanted: true, partnerGender: 'female', partnerHair: 'dark' })).toEqual({
-      partner: { wanted: true, gender: 'female', hair: 'dark' },
-    });
-    expect(profileFrom({ partnerWanted: true })).toEqual({ partner: { wanted: true } });
+  it('carries gym/employed/selfEmployed only when answered', () => {
+    const profile = profileFrom({ ...initialAnswers(), gym: true, employed: false, selfEmployed: true });
+    expect(profile).toEqual({ gym: true, employed: false, selfEmployed: true });
   });
 });
 
 describe('buildInitialState', () => {
-  it('seeds one habit per picked id, anchored today, carrying the catalogue importance and catalogId', () => {
-    const first = CATALOG.find((i) => i.kind === 'habit');
-    if (!first) throw new Error('expected at least one habit in the catalogue');
-    const answers: Answers = { picked: { [first.domain]: [first.id] } };
-
+  it('seeds both landings and de-duplicates a repeated id', () => {
+    const answers: Answers = { ...initialAnswers(), landings: ['Z', 'B4'], current: 'LAND' };
     let n = 0;
     const state = buildInitialState(answers, () => `id-${n++}`, TODAY);
-
-    expect(state.habits).toHaveLength(1);
-    const habit = state.habits[0];
-    if (!habit) throw new Error('expected a habit');
-    expect(habit.catalogId).toBe(first.id);
-    expect(habit.title).toBe(first.title);
-    expect(habit.domain).toBe(first.domain);
-    expect(habit.cadence).toEqual(first.cadence);
-    expect(habit.importance).toBe(first.importance);
-    expect(habit.startDate).toBe(TODAY);
+    // Z seeds H001, H020; B4 seeds H001 — H001 appears once.
+    expect(state.habits.map((h) => h.catalogId).sort()).toEqual(['H001', 'H020']);
   });
 
-  it('drops an unknown catalogue id rather than throwing', () => {
-    const answers: Answers = { picked: { sleep: ['NOT-AN-ID'] } };
+  it('adds a tapped offer on top of the seeds', () => {
+    const answers: Answers = addOffer({ ...initialAnswers(), landings: ['B1'], current: 'LAND' }, 'H020');
+    const state = buildInitialState(answers, () => 'id', TODAY);
+    expect(state.habits.map((h) => h.catalogId).sort()).toEqual(['H014', 'H020']);
+  });
+
+  it('drops H033 when hair is none, keeps it otherwise (B5)', () => {
+    const withoutHair: Answers = { ...initialAnswers(), landings: ['B5'], hair: 'none', current: 'LAND' };
+    const stateNone = buildInitialState(withoutHair, () => 'id', TODAY);
+    expect(stateNone.habits.map((h) => h.catalogId)).toEqual(['H036']);
+
+    const withHair: Answers = { ...initialAnswers(), landings: ['B5'], hair: 'blond', current: 'LAND' };
+    const stateBlond = buildInitialState(withHair, () => 'id', TODAY);
+    expect(stateBlond.habits.map((h) => h.catalogId).sort()).toEqual(['H033', 'H036']);
+  });
+
+  it('seeds a habit-id-gated item alongside its own gate, seeded in the same batch (P2n, M4)', () => {
+    const p2n: Answers = { ...initialAnswers(), landings: ['P2n'], current: 'LAND' };
+    const p2nState = buildInitialState(p2n, () => 'id', TODAY);
+    expect(p2nState.habits.map((h) => h.catalogId).sort()).toEqual(['H129', 'H130']);
+
+    const m4: Answers = { ...initialAnswers(), landings: ['M4'], current: 'LAND' };
+    const m4State = buildInitialState(m4, () => 'id', TODAY);
+    expect(m4State.habits.map((h) => h.catalogId).sort()).toEqual(['H136', 'H137']);
+  });
+
+  it('drops an employed-only item for someone who answered self-employed (M3s)', () => {
+    const answers: Answers = { ...initialAnswers(), landings: ['M3e'], employed: false, current: 'LAND' };
     const state = buildInitialState(answers, () => 'id', TODAY);
     expect(state.habits).toEqual([]);
   });
 
   it('nothing picked and nothing answered yields a state identical in shape to the pre-onboarding literal', () => {
-    const state = buildInitialState({}, () => 'id', TODAY);
+    const state = buildInitialState(initialAnswers(), () => 'id', TODAY);
     expect(state).toEqual({ schemaVersion: 2, logs: [], habits: [], notificationTime: null });
-  });
-
-  it('multiple picks across domains all seed, each with a fresh id', () => {
-    const habits = CATALOG.filter((i) => i.kind === 'habit');
-    const a = habits.find((i) => i.domain === 'sleep');
-    const b = habits.find((i) => i.domain === 'finance');
-    if (!a || !b) throw new Error('expected at least one sleep and one finance habit in the catalogue');
-    const answers: Answers = { picked: { [a.domain]: [a.id], [b.domain]: [b.id] } };
-
-    let n = 0;
-    const state = buildInitialState(answers, () => `id-${n++}`, TODAY);
-    expect(state.habits).toHaveLength(2);
-    expect(new Set(state.habits.map((h) => h.id)).size).toBe(2);
   });
 });
 
-describe('catalogFilterFor', () => {
-  it('leaves audience and has both unset for a profile that has answered nothing', () => {
-    expect(catalogFilterFor(undefined)).toEqual({});
+describe('LAND copy', () => {
+  it('the headline has the {countLine} placeholder stripped', () => {
+    expect(landHeadline()).toBe(en['onboarding.tree.land.text']);
   });
 
-  it('sets audience from gender', () => {
-    expect(catalogFilterFor({ gender: 'female' })).toMatchObject({ audience: 'female' });
+  it('the count line matches the seeded-daily-habit count, 0 through 4', () => {
+    expect(countLine(0)).toBe(en['onboarding.tree.land.count.0']);
+    expect(countLine(1)).toBe(en['onboarding.tree.land.count.1']);
+    expect(countLine(4)).toBe(en['onboarding.tree.land.count.4']);
   });
+});
 
-  it('a yes answer becomes a has entry', () => {
-    expect(catalogFilterFor({ partner: { wanted: true }, children: true }).has).toEqual(
-      expect.arrayContaining(['partner', 'children']),
-    );
-  });
+// ---------------------------------------------------------------------------
+// "Pin the copy with a test, not with care" (03-decisions.md): every string
+// the tree carries must appear, verbatim, somewhere in en.ts.
+// ---------------------------------------------------------------------------
 
-  it('a no answer to one question still sets has, just without that entry — except partner, whose no is single', () => {
-    expect(catalogFilterFor({ partner: { wanted: false } }).has).toEqual(['single']);
-  });
+describe('copy parity with src/i18n/en.ts', () => {
+  it('every on-screen string in onboarding-tree.json appears verbatim in en.ts', () => {
+    const tree = onboardingTreeJson as {
+      nodes: Record<
+        string,
+        {
+          text?: string;
+          button?: string;
+          countLine?: Record<string, string>;
+          options?: { label: string; sub?: string }[];
+        }
+      >;
+    };
 
-  it('leaves has undefined only when neither question has been answered', () => {
-    expect(catalogFilterFor({ gender: 'male' }).has).toBeUndefined();
-    expect(catalogFilterFor({ children: false }).has).toEqual([]);
+    const known = new Set<string>(Object.values(en));
+    const missing: string[] = [];
+
+    function check(label: string, value: string | undefined) {
+      if (value === undefined) return;
+      if (!known.has(value)) missing.push(`${label}: ${JSON.stringify(value)}`);
+    }
+
+    for (const [id, node] of Object.entries(tree.nodes)) {
+      const text = node.text?.includes('{countLine}') ? node.text.split('\n{countLine}')[0] : node.text;
+      check(`${id}.text`, text);
+      check(`${id}.button`, node.button);
+      for (const [key, line] of Object.entries(node.countLine ?? {})) check(`${id}.countLine.${key}`, line);
+      for (const [i, opt] of (node.options ?? []).entries()) {
+        check(`${id}.options[${i}].label`, opt.label);
+        check(`${id}.options[${i}].sub`, opt.sub);
+      }
+    }
+
+    expect(missing).toEqual([]);
   });
 });

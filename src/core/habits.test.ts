@@ -6,6 +6,8 @@ import {
   byColor,
   cadencePeriodDays,
   canAddCustomHabit,
+  catalogFilterFor,
+  doneCatalogIds,
   drivesPanel,
   effectiveColor,
   habitDoneThisPeriod,
@@ -18,8 +20,8 @@ import {
   toggleHabitTick,
   updateHabit,
 } from './habits';
-import { catalogById } from './catalog';
-import type { DayLog, UserHabit } from './types';
+import { CATALOG, catalogById } from './catalog';
+import type { DayLog, Profile, UserHabit } from './types';
 
 const START = '2026-01-01';
 
@@ -226,5 +228,78 @@ describe('removeHabit', () => {
     const removed = removeHabit(habits, 'h1', '2026-01-05');
     expect(removed).toHaveLength(1);
     expect(removed[0]?.removedDate).toBe('2026-01-05');
+  });
+});
+
+describe('catalogFilterFor', () => {
+  it('leaves audience and has both unset for a profile that has answered nothing', () => {
+    expect(catalogFilterFor(undefined)).toEqual({});
+  });
+
+  it('sets audience from gender', () => {
+    expect(catalogFilterFor({ gender: 'female' })).toMatchObject({ audience: 'female' });
+  });
+
+  it('a yes answer becomes a has entry', () => {
+    expect(catalogFilterFor({ partner: { wanted: true }, children: true }).has).toEqual(
+      expect.arrayContaining(['partner', 'children']),
+    );
+  });
+
+  it('a no partner answer becomes single, not an absence', () => {
+    expect(catalogFilterFor({ partner: { wanted: false } }).has).toEqual(['single']);
+  });
+
+  it('a no answer to children just leaves that entry out', () => {
+    expect(catalogFilterFor({ children: false }).has).toEqual([]);
+  });
+
+  it('leaves has undefined only when nothing at all has been answered', () => {
+    expect(catalogFilterFor({ gender: 'male' }).has).toBeUndefined();
+  });
+
+  it('hair only counts once it is set and not none', () => {
+    expect(catalogFilterFor({ hair: 'blond' }).has).toEqual(['hair']);
+    expect(catalogFilterFor({ hair: 'none' }).has).toEqual([]);
+  });
+
+  it('gym, employed and self-employed each become their own has entry', () => {
+    const profile: Profile = { gym: true, employed: true, selfEmployed: true };
+    expect(catalogFilterFor(profile).has).toEqual(
+      expect.arrayContaining(['gym', 'employed', 'self-employed']),
+    );
+  });
+
+  it('folds in doneCatalogIds so a habit-id requirement can be checked the same way', () => {
+    expect(catalogFilterFor(undefined, new Set(['H129'])).has).toEqual(['H129']);
+  });
+});
+
+describe('doneCatalogIds', () => {
+  it('is empty when nothing has been ticked', () => {
+    const habits = [habit({ id: 'h1', catalogId: 'H129' })];
+    expect(doneCatalogIds([], habits)).toEqual(new Set());
+  });
+
+  it('names a catalogue id once its seeded habit has at least one tick', () => {
+    const habits = [habit({ id: 'h1', catalogId: 'H129' }), habit({ id: 'h2', catalogId: 'H130' })];
+    const logs: DayLog[] = [{ date: START, opened: true, ticks: { h1: true } }];
+    expect(doneCatalogIds(logs, habits)).toEqual(new Set(['H129']));
+  });
+
+  it('ignores a habit the user wrote themselves, which has no catalogId', () => {
+    const habits = [habit({ id: 'h1' })];
+    const logs: DayLog[] = [{ date: START, opened: true, ticks: { h1: true } }];
+    expect(doneCatalogIds(logs, habits)).toEqual(new Set());
+  });
+});
+
+describe('requires enforcement stays in step with the catalogue', () => {
+  it('every requires value is either known vocabulary or an existing catalogue id', () => {
+    const KNOWN = new Set(['partner', 'children', 'hair', 'gym', 'employed', 'self-employed', 'single']);
+    const ids = new Set(CATALOG.map((i) => i.id));
+    for (const item of CATALOG) {
+      for (const r of item.requires) expect(KNOWN.has(r) || ids.has(r)).toBe(true);
+    }
   });
 });

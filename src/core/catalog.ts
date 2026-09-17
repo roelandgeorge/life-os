@@ -108,6 +108,16 @@ export type CatalogFilter = {
   has?: readonly Requirement[];
 };
 
+/**
+ * Whether every `requires` value on `item` is satisfied by `filter.has` —
+ * shared by `catalogFor` and, at seed time, `core/onboarding.ts`'s
+ * `buildInitialState`, which builds its own `CatalogFilter` from the
+ * catalogue ids being seeded together rather than the ones already ticked.
+ */
+export function requirementsMet(item: CatalogItem, filter: CatalogFilter): boolean {
+  return item.requires.every((r) => filter.has === undefined || filter.has.includes(r));
+}
+
 /** Everything in a domain, honouring `audience` and `requires` (§1.1). */
 export function catalogFor(domain: DomainKey, filter: CatalogFilter = {}): CatalogItem[] {
   return CATALOG.filter((item) => item.domain === domain)
@@ -115,5 +125,5 @@ export function catalogFor(domain: DomainKey, filter: CatalogFilter = {}): Catal
       (item) =>
         item.audience === 'all' || filter.audience === undefined || item.audience === filter.audience,
     )
-    .filter((item) => item.requires.every((r) => filter.has === undefined || filter.has.includes(r)));
+    .filter((item) => requirementsMet(item, filter));
 }

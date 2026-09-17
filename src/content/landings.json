@@ -1,0 +1,385 @@
+{
+  "_comment": "Landing points of the onboarding tree. seeds are switched on at landing. offers are shown switched off with a one-tap add. dailyAnchor names the seed that is tickable on day one, or null where the domain has none. Every id must exist in catalog.json.",
+  "Z": {
+    "seeds": [
+      "H001",
+      "H020"
+    ],
+    "offers": [
+      "H057"
+    ],
+    "dailyAnchor": "H001"
+  },
+  "B1": {
+    "seeds": [
+      "H014"
+    ],
+    "offers": [
+      "H020"
+    ],
+    "dailyAnchor": "H014"
+  },
+  "B2": {
+    "seeds": [
+      "H020"
+    ],
+    "offers": [
+      "H014"
+    ],
+    "dailyAnchor": "H020"
+  },
+  "B3": {
+    "seeds": [
+      "H019",
+      "H020"
+    ],
+    "offers": [
+      "H023"
+    ],
+    "dailyAnchor": "H020"
+  },
+  "B3n": {
+    "seeds": [
+      "H020",
+      "H124"
+    ],
+    "offers": [
+      "H019"
+    ],
+    "dailyAnchor": "H020"
+  },
+  "B4": {
+    "seeds": [
+      "H001"
+    ],
+    "offers": [
+      "H003"
+    ],
+    "dailyAnchor": "H001"
+  },
+  "B5": {
+    "seeds": [
+      "H036",
+      "H033"
+    ],
+    "offers": [
+      "H125"
+    ],
+    "dailyAnchor": "H036",
+    "_note": "H033 only if profile.hair is not none, per its requires"
+  },
+  "B6": {
+    "seeds": [
+      "H001",
+      "H020"
+    ],
+    "offers": [
+      "H014"
+    ],
+    "dailyAnchor": "H001"
+  },
+  "H1": {
+    "seeds": [
+      "H057",
+      "H066"
+    ],
+    "offers": [
+      "H065"
+    ],
+    "dailyAnchor": "H057"
+  },
+  "H2": {
+    "seeds": [
+      "H057"
+    ],
+    "offers": [
+      "H059"
+    ],
+    "dailyAnchor": "H057"
+  },
+  "H3": {
+    "seeds": [
+      "H003",
+      "H006"
+    ],
+    "offers": [
+      "H007"
+    ],
+    "dailyAnchor": "H003"
+  },
+  "H4": {
+    "seeds": [
+      "H126"
+    ],
+    "offers": [
+      "H056"
+    ],
+    "dailyAnchor": "H126"
+  },
+  "H5": {
+    "seeds": [
+      "H057"
+    ],
+    "offers": [
+      "H051"
+    ],
+    "dailyAnchor": "H057"
+  },
+  "H6": {
+    "seeds": [
+      "H048",
+      "H127"
+    ],
+    "offers": [
+      "H053"
+    ],
+    "dailyAnchor": "H048"
+  },
+  "H7a": {
+    "seeds": [
+      "H058"
+    ],
+    "offers": [
+      "H065"
+    ],
+    "dailyAnchor": "H058"
+  },
+  "H7b": {
+    "seeds": [
+      "H001"
+    ],
+    "offers": [
+      "H003"
+    ],
+    "dailyAnchor": "H001"
+  },
+  "H8": {
+    "seeds": [
+      "H057",
+      "H001"
+    ],
+    "offers": [
+      "H048"
+    ],
+    "dailyAnchor": "H057"
+  },
+  "P1": {
+    "seeds": [
+      "H128"
+    ],
+    "offers": [
+      "H079"
+    ],
+    "dailyAnchor": null
+  },
+  "P2y": {
+    "seeds": [
+      "H072"
+    ],
+    "offers": [
+      "H079"
+    ],
+    "dailyAnchor": null
+  },
+  "P2n": {
+    "seeds": [
+      "H129",
+      "H130"
+    ],
+    "offers": [
+      "H072"
+    ],
+    "dailyAnchor": null
+  },
+  "P3y": {
+    "seeds": [
+      "H079",
+      "H131"
+    ],
+    "offers": [
+      "H080"
+    ],
+    "dailyAnchor": null
+  },
+  "P3n": {
+    "seeds": [
+      "H131"
+    ],
+    "offers": [
+      "H079"
+    ],
+    "dailyAnchor": null
+  },
+  "P4": {
+    "seeds": [
+      "H052"
+    ],
+    "offers": [
+      "H068"
+    ],
+    "dailyAnchor": null
+  },
+  "P5": {
+    "seeds": [
+      "H073"
+    ],
+    "offers": [
+      "H128"
+    ],
+    "dailyAnchor": null
+  },
+  "N1": {
+    "seeds": [
+      "H132"
+    ],
+    "offers": [
+      "H129"
+    ],
+    "dailyAnchor": null
+  },
+  "N2": {
+    "seeds": [
+      "H052"
+    ],
+    "offers": [
+      "H069"
+    ],
+    "dailyAnchor": null
+  },
+  "N3": {
+    "seeds": [
+      "H001",
+      "H020"
+    ],
+    "offers": [],
+    "dailyAnchor": "H001",
+    "_note": "Partner panel deliberately left unfed"
+  },
+  "Y1": {
+    "seeds": [
+      "H075",
+      "H133"
+    ],
+    "offers": [
+      "H077"
+    ],
+    "dailyAnchor": null
+  },
+  "Y2": {
+    "seeds": [
+      "H133",
+      "H077"
+    ],
+    "offers": [
+      "H075"
+    ],
+    "dailyAnchor": null
+  },
+  "Y3": {
+    "seeds": [
+      "H133",
+      "H074"
+    ],
+    "offers": [
+      "H076"
+    ],
+    "dailyAnchor": "H074"
+  },
+  "Y3n": {
+    "seeds": [
+      "H133"
+    ],
+    "offers": [
+      "H075"
+    ],
+    "dailyAnchor": null
+  },
+  "Y4": {
+    "seeds": [
+      "H078",
+      "H075"
+    ],
+    "offers": [
+      "H133"
+    ],
+    "dailyAnchor": null
+  },
+  "Y5": {
+    "seeds": [
+      "H133"
+    ],
+    "offers": [
+      "H077"
+    ],
+    "dailyAnchor": null
+  },
+  "M1": {
+    "seeds": [
+      "H082",
+      "H134"
+    ],
+    "offers": [
+      "H083"
+    ],
+    "dailyAnchor": null
+  },
+  "M2": {
+    "seeds": [
+      "H083",
+      "H134"
+    ],
+    "offers": [
+      "H082"
+    ],
+    "dailyAnchor": null
+  },
+  "M3e": {
+    "seeds": [
+      "H135"
+    ],
+    "offers": [
+      "H071"
+    ],
+    "dailyAnchor": null
+  },
+  "M3s": {
+    "seeds": [
+      "H087",
+      "H085"
+    ],
+    "offers": [
+      "H086"
+    ],
+    "dailyAnchor": null
+  },
+  "M4": {
+    "seeds": [
+      "H136",
+      "H137"
+    ],
+    "offers": [
+      "H134"
+    ],
+    "dailyAnchor": null
+  },
+  "M5e": {
+    "seeds": [
+      "H082",
+      "H134"
+    ],
+    "offers": [
+      "H135"
+    ],
+    "dailyAnchor": null
+  },
+  "M5s": {
+    "seeds": [
+      "H087",
+      "H086"
+    ],
+    "offers": [
+      "H084"
+    ],
+    "dailyAnchor": null
+  }
+}
