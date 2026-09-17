@@ -13,16 +13,18 @@
 
 import { en } from '../i18n/en';
 import { Avatar } from '../visual/Avatar';
-import { LAYER_KEYS, type LayerSteps } from '../visual/layers';
+import { scene } from '../visual/scene';
+import { PANEL_KEYS, type PanelSteps } from '../core/domains';
 import { START_STEP } from '../core/steps';
 
-const START: LayerSteps = Object.fromEntries(LAYER_KEYS.map((k) => [k, START_STEP])) as LayerSteps;
+const START_STEPS: PanelSteps = Object.fromEntries(PANEL_KEYS.map((k) => [k, START_STEP])) as PanelSteps;
+const START_SCENE = scene(START_STEPS, undefined);
 
 export function Onboarding({ onComplete }: { onComplete: () => void }) {
   return (
     <div className="main-screen onboarding">
       <div className="portrait">
-        <Avatar steps={START} />
+        <Avatar scene={START_SCENE} />
       </div>
 
       <div className="below">

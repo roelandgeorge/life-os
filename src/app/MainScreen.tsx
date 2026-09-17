@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { DOMAINS, PANEL_KEYS, type DomainConfig } from '../core/domains';
+import { DOMAINS, PANEL_KEYS, type DomainConfig, type PanelSteps } from '../core/domains';
 import { dailyTasksDone, editableDays, isDueToday, isRestDay, lastHit } from '../core/due';
 import { fullDayStrip } from '../core/scoring';
 import { MAX_STEP } from '../core/steps';
@@ -19,15 +19,15 @@ import { en, t, type I18nKey } from '../i18n/en';
 import { effectiveColor, habitStreak, habitTitle, isActiveOn, isHabitTicked } from '../core/habits';
 import { atRiskItems, type RiskItem } from '../core/atRisk';
 import { Avatar } from '../visual/Avatar';
-import { LAYER_KEYS, layerSteps, type LayerSteps } from '../visual/layers';
+import { scene as buildScene } from '../visual/scene';
 import { Celebration } from './Celebration';
 import { FullDayStrip } from './FullDayStrip';
 
 /** How long the confetti stays up once every box for today is ticked. */
 const CELEBRATION_MS = 3000;
 
-/** Every layer at its ceiling — the same scene, maximally adherent. */
-const BEST: LayerSteps = Object.fromEntries(LAYER_KEYS.map((k) => [k, MAX_STEP])) as LayerSteps;
+/** Every panel at its ceiling — the same scene, maximally adherent. */
+const BEST_STEPS: PanelSteps = Object.fromEntries(PANEL_KEYS.map((k) => [k, MAX_STEP])) as PanelSteps;
 
 type Group = { domain: DomainConfig | null; habits: UserHabit[] };
 
@@ -60,7 +60,7 @@ export function MainScreen({
   // rewind the app to that day.
   const [editing, setEditing] = useState<DateKey>(today);
   const editingLog = state.logs.find((l) => l.date === editing) ?? null;
-  const steps = showBest ? BEST : layerSteps(projection.preview);
+  const avatarScene = buildScene(showBest ? BEST_STEPS : projection.preview, state.profile);
   const strip = fullDayStrip(state.logs, state.habits, today, 30);
   const groups = groupHabits(state.habits, today);
 
@@ -81,7 +81,7 @@ export function MainScreen({
       {celebrate && <Celebration />}
 
       <div className="portrait">
-        <Avatar steps={steps} />
+        <Avatar scene={avatarScene} />
       </div>
 
       <div className="below">
