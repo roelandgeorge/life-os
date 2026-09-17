@@ -119,8 +119,8 @@ describe('catalogFilterFor', () => {
     );
   });
 
-  it('a no answer to one question still sets has, just without that entry', () => {
-    expect(catalogFilterFor({ partner: { wanted: false } }).has).toEqual([]);
+  it('a no answer to one question still sets has, just without that entry — except partner, whose no is single', () => {
+    expect(catalogFilterFor({ partner: { wanted: false } }).has).toEqual(['single']);
   });
 
   it('leaves has undefined only when neither question has been answered', () => {

@@ -166,23 +166,54 @@ export function byColor(habits: readonly UserHabit[]): UserHabit[] {
 export const DEFAULT_IMPORTANCE = 3;
 
 /**
- * The profile-to-catalogue bridge (phase 4): `has` is set the moment either
- * question has an answer, so a "no" hides a requiring item just as a "yes"
- * reveals one — only a profile that has answered *neither* leaves `has`
- * undefined, which `catalogFor` reads as unknown and filters permissively.
- * That is the one case a record written before onboarding existed needs.
+ * The profile-to-catalogue bridge (phase 4, extended by the onboarding
+ * rebuild in docs/onboarding/): `has` is set the moment any profile question
+ * has an answer, so a "no" hides a requiring item just as a "yes" reveals
+ * one — only a profile that has answered *nothing* leaves `has` undefined,
+ * which `catalogFor` reads as unknown and filters permissively. That is the
+ * one case a record written before onboarding existed needs.
+ *
+ * `doneCatalogIds`, when given, satisfies a habit-id `requires` value —
+ * `requires: ['H129']` reads the same as `requires: ['partner']`, just
+ * against a different set.
  */
-export function catalogFilterFor(profile: Profile | undefined): CatalogFilter {
+export function catalogFilterFor(
+  profile: Profile | undefined,
+  doneCatalogIds?: ReadonlySet<string>,
+): CatalogFilter {
   const filter: CatalogFilter = {};
   if (profile?.gender !== undefined) filter.audience = profile.gender;
 
-  if (profile?.partner?.wanted !== undefined || profile?.children !== undefined) {
+  const answered =
+    profile?.partner?.wanted !== undefined ||
+    profile?.children !== undefined ||
+    profile?.hair !== undefined ||
+    profile?.gym !== undefined ||
+    profile?.employed !== undefined ||
+    profile?.selfEmployed !== undefined;
+
+  if (answered || doneCatalogIds !== undefined) {
     const has: Requirement[] = [];
     if (profile?.partner?.wanted === true) has.push('partner');
+    if (profile?.partner?.wanted === false) has.push('single');
     if (profile?.children === true) has.push('children');
+    if (profile?.hair !== undefined && profile.hair !== 'none') has.push('hair');
+    if (profile?.gym === true) has.push('gym');
+    if (profile?.employed === true) has.push('employed');
+    if (profile?.selfEmployed === true) has.push('self-employed');
+    if (doneCatalogIds !== undefined) has.push(...doneCatalogIds);
     filter.has = has;
   }
   return filter;
+}
+
+/** Catalogue ids whose seeded habit has been ticked at least once — what a habit-id `requires` value checks. */
+export function doneCatalogIds(logs: readonly DayLog[], habits: readonly UserHabit[]): Set<string> {
+  const out = new Set<string>();
+  for (const habit of habits) {
+    if (habit.catalogId !== undefined && habitHitDates(logs, habit.id).size > 0) out.add(habit.catalogId);
+  }
+  return out;
 }
 
 export function newHabitFromCatalog(item: CatalogItem, id: string, startDate: DateKey): UserHabit {

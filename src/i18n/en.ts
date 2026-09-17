@@ -109,6 +109,7 @@ export const en = {
   'profile.gender.female': 'Female',
   'profile.hair.blond': 'Blond',
   'profile.hair.dark': 'Dark',
+  'profile.hair.none': 'None',
   'profile.partner.wanted': 'I have a partner',
   'profile.children': 'I have children',
   'profile.domains.up': 'Move up',

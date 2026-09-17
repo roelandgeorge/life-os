@@ -48,18 +48,27 @@ export type DayLog = {
 
 export type Gender = 'male' | 'female';
 
-/** Closed so `scene.ts`'s filename axes and a stored profile can never disagree. */
-export type Hair = 'blond' | 'dark';
+/**
+ * Closed so `scene.ts`'s filename axes and a stored profile can never
+ * disagree. `'none'` has no drawing of its own — the resolver drops a rung
+ * to the bare `head` art, same as any other unknown variant.
+ */
+export type Hair = 'blond' | 'dark' | 'none';
 
 /**
  * Settable now from Settings' Appearance section (§2.5 of docs/plan/phase-2.md);
- * onboarding (phase 4) writes the same fields and replaces that section.
+ * onboarding (phase 4, rebuilt per docs/onboarding/) writes the same fields
+ * and replaces that section. `gym`/`employed`/`selfEmployed` are read only by
+ * `catalogFilterFor` — they gate catalogue items, they draw nothing.
  */
 export type Profile = {
   gender?: Gender;
   hair?: Hair;
   partner?: { wanted: boolean; gender?: Gender; hair?: Hair };
   children?: boolean;
+  gym?: boolean;
+  employed?: boolean;
+  selfEmployed?: boolean;
   domainOrder?: readonly DomainKey[];
   personaId?: string;
 };

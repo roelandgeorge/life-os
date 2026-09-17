@@ -30,6 +30,7 @@ export function HairField({ value, onChange }: { value: Hair | undefined; onChan
     <Select value={value ?? 'blond'} onChange={(e) => onChange(e.target.value as Hair)}>
       <option value="blond">{en['profile.hair.blond']}</option>
       <option value="dark">{en['profile.hair.dark']}</option>
+      <option value="none">{en['profile.hair.none']}</option>
     </Select>
   );
 }

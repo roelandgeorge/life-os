@@ -12,7 +12,7 @@
 import { useState } from 'react';
 import { catalogFor } from '../core/catalog';
 import { orderedDomains } from '../core/domains';
-import { catalogFilterFor } from '../core/habits';
+import { catalogFilterFor, doneCatalogIds } from '../core/habits';
 import type { AppState } from '../core/types';
 import { en, type I18nKey } from '../i18n/en';
 import { Button } from '../ui/Button';
@@ -37,7 +37,7 @@ export function DiscoverScreen({
   for (const h of state.habits) {
     if (h.removedDate === undefined && h.catalogId !== undefined) addedIds.add(h.catalogId);
   }
-  const filter = catalogFilterFor(state.profile);
+  const filter = catalogFilterFor(state.profile, doneCatalogIds(state.logs, state.habits));
   const q = query.trim().toLowerCase();
 
   const sections = orderedDomains(state.profile?.domainOrder)

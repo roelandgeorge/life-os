@@ -57,7 +57,15 @@ export type Cadence =
 export type Effort = 'low' | 'medium' | 'high';
 export type Evidence = 'strong' | 'moderate' | 'anecdotal';
 export type Audience = 'all' | 'male' | 'female';
-export type Requirement = 'partner' | 'children';
+
+/**
+ * A profile fact (`single` means `partner === false`), or a catalogue habit
+ * id — the item is available once that habit has been ticked at least once.
+ * Kept as `string` rather than a closed union so a habit id fits without a
+ * type assertion at every call site; `onboarding.test.ts` and the seed-time
+ * checks are what actually pin the vocabulary.
+ */
+export type Requirement = 'partner' | 'children' | 'hair' | 'gym' | 'employed' | 'self-employed' | 'single' | string;
 
 export type CatalogItem = {
   id: string;
@@ -72,7 +80,12 @@ export type CatalogItem = {
   note: string;
   audience: Audience;
   requires: readonly Requirement[];
-  /** Per domain, the 3 highest-importance items (ties broken by lowest effort). */
+  /**
+   * Unused since the onboarding rebuild (docs/onboarding/): the per-domain
+   * "3 pre-checked starters" step is gone. Kept because `catalog.json` is
+   * taken as a full replacement and re-deriving 43 flags on every import
+   * would be churn — a known dead field, not a trap.
+   */
   starter: boolean;
 };
 
@@ -103,9 +116,4 @@ export function catalogFor(domain: DomainKey, filter: CatalogFilter = {}): Catal
         item.audience === 'all' || filter.audience === undefined || item.audience === filter.audience,
     )
     .filter((item) => item.requires.every((r) => filter.has === undefined || filter.has.includes(r)));
-}
-
-/** The pre-selected starters for a domain — onboarding's "3 per domain". */
-export function startersFor(domain: DomainKey, filter: CatalogFilter = {}): CatalogItem[] {
-  return catalogFor(domain, filter).filter((item) => item.starter);
 }
