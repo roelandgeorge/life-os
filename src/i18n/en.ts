@@ -57,43 +57,14 @@ export const en = {
   'main.bestVersion.headline': 'This is future you, at your best.',
   'main.bestVersion.subhead': 'Every part at its top step. Two good days is all any one of them takes.',
 
-  // Onboarding — the decision tree (§4.6 of docs/plan/phase-4.md).
-  'onboarding.nav.back': 'Back',
-  'onboarding.nav.next': 'Next',
-  'onboarding.nav.start': 'Start',
-  'onboarding.nav.step': 'Step {current} of {total}',
-
-  'onboarding.gender.title': 'Which drawing is you?',
-  'onboarding.gender.note': 'Changeable later in Settings.',
-  'onboarding.hair.title': 'And your hair?',
-  'onboarding.hair.note': 'Changeable later in Settings.',
-
-  'onboarding.partner.title': 'Do you have a partner?',
-  'onboarding.partner.note': "One panel is theirs — this is only about whether it's drawn.",
-  'onboarding.partner.yes': 'Yes',
-  'onboarding.partner.no': 'No',
-
-  'onboarding.partnerLooks.title': 'Which drawing is your partner?',
-  'onboarding.partnerLooks.note': 'Changeable later in Settings.',
-
-  'onboarding.children.title': 'Do you have children?',
-  'onboarding.children.note': "Some habits only make sense once there's a child in the picture.",
-  'onboarding.children.yes': 'Yes',
-  'onboarding.children.no': 'No',
-
-  'onboarding.domains.title': "Which parts of life do you want to work on, and in what order?",
-  'onboarding.domains.note': "Turn on as many as you like. The order decides where each group sits on Home — nothing is ever hidden by this.",
-
-  'onboarding.starters.title': '{domain}: pick your habits',
-  'onboarding.starters.note': 'Three are checked already, picked for evidence and importance. Add or remove anything.',
-
-  // Onboarding tree (docs/onboarding/01-onboarding-spec.md) — the rebuild
-  // replacing everything above; copy pinned verbatim by
-  // core/onboarding.test.ts against src/content/onboarding-tree.json. The
-  // renderer reads text and labels straight off that tree data, the same way
-  // HabitPicker reads a catalogue item's own title — these keys exist as the
-  // audit trail "every fixed user-facing string lives here" asks for, not as
-  // lookups the renderer performs itself.
+  // Onboarding tree (docs/onboarding/01-onboarding-spec.md), replacing the
+  // fixed gender/hair/partner/children/domains/starters sequence phase 4
+  // built. Copy pinned verbatim by core/onboarding.test.ts against
+  // src/content/onboarding-tree.json. The renderer reads text and labels
+  // straight off that tree data, the same way HabitPicker reads a
+  // catalogue item's own title — these keys exist as the audit trail
+  // "every fixed user-facing string lives here" asks for, not as lookups
+  // the renderer performs itself.
   'onboarding.tree.s0.text':
     'This is you in fifteen years.\nEverything starts in the middle. It moves with what you do, both ways.',
   'onboarding.tree.s0.button': 'Go on',
