@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { DOMAINS, PANEL_KEYS, type DomainConfig, type PanelSteps } from '../core/domains';
+import { orderedDomains, PANEL_KEYS, type DomainConfig, type DomainKey, type PanelSteps } from '../core/domains';
 import { dailyTasksDone, editableDays, isDueToday, isRestDay, lastHit } from '../core/due';
 import { fullDayStrip } from '../core/scoring';
 import { MAX_STEP } from '../core/steps';
@@ -37,10 +37,14 @@ const BEST_STEPS: PanelSteps = Object.fromEntries(PANEL_KEYS.map((k) => [k, MAX_
 
 type Group = { domain: DomainConfig | null; habits: UserHabit[] };
 
-function groupHabits(habits: readonly UserHabit[], today: DateKey): Group[] {
+function groupHabits(
+  habits: readonly UserHabit[],
+  today: DateKey,
+  domainOrder: readonly DomainKey[] | undefined,
+): Group[] {
   const active = habits.filter((h) => isActiveOn(h, today));
   const groups: Group[] = [];
-  for (const domain of DOMAINS) {
+  for (const domain of orderedDomains(domainOrder)) {
     const inDomain = active.filter((h) => h.domain === domain.key);
     if (inDomain.length > 0) groups.push({ domain, habits: inDomain });
   }
@@ -68,7 +72,7 @@ export function MainScreen({
   const editingLog = state.logs.find((l) => l.date === editing) ?? null;
   const avatarScene = buildScene(showBest ? BEST_STEPS : projection.preview, state.profile);
   const strip = fullDayStrip(state.logs, state.habits, today, 30);
-  const groups = groupHabits(state.habits, today);
+  const groups = groupHabits(state.habits, today, state.profile?.domainOrder);
 
   const allDone = dailyTasksDone(state.logs, state.habits, today);
   const wasAllDone = useRef(allDone);

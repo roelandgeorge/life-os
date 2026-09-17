@@ -113,6 +113,8 @@ export const en = {
   'settings.appearance.hair.blond': 'Blond',
   'settings.appearance.hair.dark': 'Dark',
   'settings.appearance.partner.wanted': 'I have a partner',
+  'settings.domainOrder': 'Domain order',
+  'settings.domainOrder.note': 'Turn on as many as you like. The order decides where each group sits on Home — nothing is ever hidden by this.',
 
   // Profile fields (app/ProfileFields.tsx) — shared by onboarding and
   // Settings' Profile section, so a control met once reads the same the
@@ -158,7 +160,6 @@ export const en = {
 
   'settings.catalog': 'Add from the catalogue',
   'settings.catalog.note': 'Curated habits, tagged by domain and how well-evidenced they are.',
-  'settings.catalog.add': 'Add',
   'settings.catalog.added': 'Added',
   'settings.catalog.discover': 'Browse the catalogue',
 
