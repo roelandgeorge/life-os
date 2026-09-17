@@ -1,0 +1,63 @@
+/**
+ * The dark editorial palette (phase 3, docs/plan/phase-3.md). The only file
+ * in the project allowed to contain a raw colour literal — `tokens.test.ts`
+ * enforces that and re-measures every contrast ratio named here on every run.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* Ground and paper */
+  --ground: #0e0f12;
+  --surface: #16181c;
+  --well: #08090b;
+  --rule: #23262c;
+  --rule-strong: #343841;
+  --paper: #ece7df;
+  --paper-dim: #a7a29a;
+  --paper-faint: #858079;
+  --bronze: #c08a4a;
+  --bronze-dim: #8a6334;
+  --on-bronze: #14100a;
+  --danger: #d8756a;
+  --focus: #c08a4a;
+
+  /* Spacing */
+  --space-0: 2px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Type */
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-2xl: 28px;
+
+  --leading-tight: 1.2;
+  --leading-base: 1.5;
+  --leading-loose: 1.65;
+
+  --sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --tabular: 'tabular-nums';
+
+  /* Shape and motion */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --hairline: 1px;
+
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --ease: cubic-bezier(0.2, 0, 0.2, 1);
+
+  --tap: 44px;
+  --z-tabbar: 10;
+  --z-celebration: 50;
+}

@@ -1,0 +1,32 @@
+/* Reset, body and heading defaults. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--paper);
+  font: var(--text-base) / var(--leading-base) var(--sans);
+}
+
+h1 {
+  font-size: var(--text-lg);
+  margin: 0 0 var(--space-3);
+}
+
+h2 {
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--paper-dim);
+  margin: var(--space-5) 0 var(--space-2);
+  padding-bottom: var(--space-1);
+  border-bottom: var(--hairline) solid var(--rule);
+}
+
+section p {
+  line-height: var(--leading-loose);
+  margin: 0 0 var(--space-2);
+}

@@ -1,0 +1,74 @@
+/* The classes the src/ui components render (src/ui/*.tsx). */
+
+button {
+  background: var(--surface);
+  color: var(--paper);
+  border: var(--hairline) solid var(--rule);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  cursor: pointer;
+}
+
+button.on {
+  border-color: var(--bronze);
+  color: var(--bronze);
+}
+
+button.primary {
+  background: var(--bronze);
+  color: var(--on-bronze);
+  border-color: var(--bronze);
+  font-weight: 600;
+}
+
+button.danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+button.small {
+  padding: var(--space-1) var(--space-2);
+  line-height: 1;
+  flex: none;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.chips button {
+  padding: 3px var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.chips.cadence {
+  margin-top: 0;
+  padding-left: var(--space-0);
+}
+
+.chips.cadence button {
+  padding: 2px var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.num {
+  color: var(--paper-dim);
+  font-variant-numeric: var(--tabular);
+  font-size: var(--text-sm);
+}
+
+.note.error {
+  color: var(--danger);
+}
