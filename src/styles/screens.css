@@ -5,22 +5,30 @@
 .main-screen {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  /* A real height, not min-height: .portrait's 64% below needs a definite
+     height to resolve against, and min-height alone never gives a flex
+     container one when its content is shorter — the portrait silently
+     rendered at zero height on every standalone use (App's loading/failed
+     screens, Onboarding) until this was a real bug, not just a lint nit. */
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   max-width: 480px;
   margin: 0 auto;
 }
 
 /* Inside .shell-body the screen is a flex child, not the viewport root — let
-   it fill the space the tab bar leaves rather than adding its own 100vh.
+   it fill the space the tab bar leaves rather than sizing itself to the
+   viewport a second time.
 
    The screen is also the scroll container, so the portrait and the check-ins
    move together: the picture is what you meet first, and it slides up out of
    the way as you reach for the boxes. Scrolling only the lower part instead
    would pin the picture and leave the list reading through a letterbox. */
 .shell-body .main-screen {
+  height: auto;
   min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }
 
 .main-screen .loading {
