@@ -153,6 +153,26 @@ describe('the copy — pinned verbatim against docs/onboarding/04-revisions.md, 
     expect(partnerNodes.map(([id]) => id)).toEqual(['Q2N']);
     expect(childrenNodes.map(([id]) => id)).toEqual(['Q3Ny']);
   });
+
+  it('every node docs/onboarding/04-revisions.md leaves untouched still matches docs/onboarding/onboarding-tree.json verbatim', async () => {
+    // A real diff against the original source doc, not just spot checks —
+    // "copy is final" for every branch (Body, Head, People, Money, the N/Y
+    // sub-trees) this suite does not otherwise assert string-for-string.
+    const original = (await import('../../docs/onboarding/onboarding-tree.json')) as unknown as {
+      default: { nodes: Record<string, TreeNodeJson> };
+    };
+    const revisedOrRemoved = new Set(['Q1', 'Q2N', 'Q3Ny', 'QMORE', 'SIT', 'SIT_partner', 'SIT_children']);
+    for (const [id, sourceNode] of Object.entries(original.default.nodes)) {
+      if (revisedOrRemoved.has(id)) continue;
+      const shipped = NODES[id];
+      expect(shipped, `${id} missing from the shipped tree`).toBeDefined();
+      expect(shipped!.text, id).toBe(sourceNode.text);
+      for (const [i, option] of (sourceNode.options ?? []).entries()) {
+        const shippedOption = shipped!.options?.[i];
+        expect(shippedOption?.label, `${id} option ${i}`).toBe(option.label);
+      }
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
