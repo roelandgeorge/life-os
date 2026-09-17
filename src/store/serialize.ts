@@ -108,7 +108,7 @@ function parseDayLogV2(v: unknown, i: number, knownHabitIds: ReadonlySet<string>
 }
 
 function isHair(v: unknown): v is NonNullable<Profile['hair']> {
-  return v === 'blond' || v === 'dark';
+  return v === 'blond' || v === 'dark' || v === 'none';
 }
 
 function parseProfile(v: unknown): Profile | undefined {
@@ -123,6 +123,9 @@ function parseProfile(v: unknown): Profile | undefined {
     profile.partner = partner;
   }
   if (typeof v.children === 'boolean') profile.children = v.children;
+  if (typeof v.gym === 'boolean') profile.gym = v.gym;
+  if (typeof v.employed === 'boolean') profile.employed = v.employed;
+  if (typeof v.selfEmployed === 'boolean') profile.selfEmployed = v.selfEmployed;
   if (Array.isArray(v.domainOrder)) {
     const order = v.domainOrder.filter(
       (d): d is DomainKey => typeof d === 'string' && (DOMAIN_KEYS as readonly string[]).includes(d),

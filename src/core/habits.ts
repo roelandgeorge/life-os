@@ -61,6 +61,15 @@ export function habitHitDates(logs: readonly DayLog[], habitId: string): Set<Dat
   return out;
 }
 
+/** Catalogue ids ticked at least once — gates a habit-id `requires` entry on the discovery screens. */
+export function completedCatalogIds(habits: readonly UserHabit[], logs: readonly DayLog[]): Set<string> {
+  const out = new Set<string>();
+  for (const habit of habits) {
+    if (habit.catalogId !== undefined && habitHitDates(logs, habit.id).size > 0) out.add(habit.catalogId);
+  }
+  return out;
+}
+
 /** Blank falls back to a placeholder rather than rendering a nameless row. */
 export function habitTitle(habit: UserHabit, fallback: string): string {
   const trimmed = habit.title.trim();
@@ -166,20 +175,34 @@ export function byColor(habits: readonly UserHabit[]): UserHabit[] {
 export const DEFAULT_IMPORTANCE = 3;
 
 /**
- * The profile-to-catalogue bridge (phase 4): `has` is set the moment either
- * question has an answer, so a "no" hides a requiring item just as a "yes"
- * reveals one — only a profile that has answered *neither* leaves `has`
- * undefined, which `catalogFor` reads as unknown and filters permissively.
- * That is the one case a record written before onboarding existed needs.
+ * The profile-to-catalogue bridge: `has` is set the moment any of the
+ * questions it can answer has an answer, so a "no" hides a requiring item
+ * just as a "yes" reveals one — only a profile that has answered *none of
+ * them* leaves `has` undefined, which `catalogFor` reads as unknown and
+ * filters permissively. That is the one case a record written before
+ * onboarding existed needs.
  */
 export function catalogFilterFor(profile: Profile | undefined): CatalogFilter {
   const filter: CatalogFilter = {};
   if (profile?.gender !== undefined) filter.audience = profile.gender;
 
-  if (profile?.partner?.wanted !== undefined || profile?.children !== undefined) {
+  const answered =
+    profile?.partner?.wanted !== undefined ||
+    profile?.children !== undefined ||
+    profile?.hair !== undefined ||
+    profile?.gym !== undefined ||
+    profile?.employed !== undefined ||
+    profile?.selfEmployed !== undefined;
+
+  if (answered) {
     const has: Requirement[] = [];
     if (profile?.partner?.wanted === true) has.push('partner');
+    if (profile?.partner?.wanted === false) has.push('single');
     if (profile?.children === true) has.push('children');
+    if (profile?.hair !== undefined && profile.hair !== 'none') has.push('hair');
+    if (profile?.gym === true) has.push('gym');
+    if (profile?.employed === true) has.push('employed');
+    if (profile?.selfEmployed === true) has.push('self-employed');
     filter.has = has;
   }
   return filter;

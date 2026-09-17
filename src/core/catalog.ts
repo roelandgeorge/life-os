@@ -2,9 +2,11 @@
  * The habit catalogue: curated, English, tagged content the user can add as
  * their own habits (§1.1 of docs/plan/phase-1.md).
  *
- * `docs/habits.csv` (123 Dutch items) is the source; `scripts/import-catalog.mjs`
- * translated and tagged it once into `src/content/catalog.json`, which is what
- * this module reads. The CSV stays as archive, not a build input.
+ * `docs/habits.csv` (123 Dutch items) was the original source, translated and
+ * tagged once by `scripts/import-catalog.mjs` into `src/content/catalog.json`.
+ * The onboarding rebuild (docs/onboarding/02-catalog-changes.md) replaced that
+ * file wholesale with 137 items; the CSV and the import script stay as
+ * archive, not a build input for the 14 items added since.
  */
 
 import catalogJson from '../content/catalog.json';
@@ -57,7 +59,27 @@ export type Cadence =
 export type Effort = 'low' | 'medium' | 'high';
 export type Evidence = 'strong' | 'moderate' | 'anecdotal';
 export type Audience = 'all' | 'male' | 'female';
-export type Requirement = 'partner' | 'children';
+
+/**
+ * The known, non-habit vocabulary a `requires` entry can hold (docs/onboarding/
+ * 01-onboarding-spec.md §4.3). A `requires` entry outside this set is a
+ * catalogue habit id instead — the item is available once that habit has
+ * been completed. `single` means `partner == false`.
+ */
+export type KnownRequirement = 'partner' | 'children' | 'hair' | 'gym' | 'employed' | 'self-employed' | 'single';
+
+export const KNOWN_REQUIREMENTS: ReadonlySet<string> = new Set<KnownRequirement>([
+  'partner',
+  'children',
+  'hair',
+  'gym',
+  'employed',
+  'self-employed',
+  'single',
+]);
+
+/** Either a known requirement keyword or a habit id — see `KNOWN_REQUIREMENTS`. */
+export type Requirement = KnownRequirement | string;
 
 export type CatalogItem = {
   id: string;
@@ -72,7 +94,7 @@ export type CatalogItem = {
   note: string;
   audience: Audience;
   requires: readonly Requirement[];
-  /** Per domain, the 3 highest-importance items (ties broken by lowest effort). */
+  /** Onboarding seed data — see docs/onboarding/03-decisions.md. Unused metadata elsewhere. */
   starter: boolean;
 };
 
@@ -85,27 +107,30 @@ export function catalogById(id: string): CatalogItem | undefined {
 }
 
 /**
- * What the onboarding profile (§1.3, filled in phase 4) is known so far —
- * enough to filter the catalogue without depending on `Profile` existing yet.
- * Omitted fields mean "unknown", which filters permissively rather than
- * hiding content nobody has said doesn't apply.
+ * What the onboarding profile is known so far — enough to filter the
+ * catalogue without depending on `Profile` existing yet. Omitted fields mean
+ * "unknown", which filters permissively rather than hiding content nobody
+ * has said doesn't apply.
  */
 export type CatalogFilter = {
   audience?: 'male' | 'female';
-  has?: readonly Requirement[];
+  /** Which known requirement keywords the profile currently satisfies. */
+  has?: readonly string[];
+  /** Catalogue habit ids the user has completed at least once — gates a habit-id `requires` entry. */
+  completed?: ReadonlySet<string>;
 };
 
-/** Everything in a domain, honouring `audience` and `requires` (§1.1). */
+function requirementMet(requirement: Requirement, filter: CatalogFilter): boolean {
+  if (KNOWN_REQUIREMENTS.has(requirement)) return filter.has === undefined || filter.has.includes(requirement);
+  return filter.completed === undefined || filter.completed.has(requirement);
+}
+
+/** Everything in a domain, honouring `audience` and `requires`. */
 export function catalogFor(domain: DomainKey, filter: CatalogFilter = {}): CatalogItem[] {
   return CATALOG.filter((item) => item.domain === domain)
     .filter(
       (item) =>
         item.audience === 'all' || filter.audience === undefined || item.audience === filter.audience,
     )
-    .filter((item) => item.requires.every((r) => filter.has === undefined || filter.has.includes(r)));
-}
-
-/** The pre-selected starters for a domain — onboarding's "3 per domain". */
-export function startersFor(domain: DomainKey, filter: CatalogFilter = {}): CatalogItem[] {
-  return catalogFor(domain, filter).filter((item) => item.starter);
+    .filter((item) => item.requires.every((r) => requirementMet(r, filter)));
 }
