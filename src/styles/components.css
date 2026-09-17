@@ -1,0 +1,101 @@
+/* The classes the src/ui components render (src/ui/*.tsx). */
+
+/* `--tap` is a floor, not padding: `.day-picker button` computed to about
+   29px tall and `button.small` to about 24px, both under the 44px a thumb
+   needs. min-height holds every button and select to it without inflating
+   the ones that are meant to stay visually compact. */
+button {
+  background: var(--surface);
+  color: var(--paper);
+  border: var(--hairline) solid var(--rule);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  min-height: var(--tap);
+  font: inherit;
+  cursor: pointer;
+}
+
+button.on {
+  border-color: var(--bronze);
+  color: var(--bronze);
+}
+
+button.primary {
+  background: var(--bronze);
+  color: var(--on-bronze);
+  border-color: var(--bronze);
+  font-weight: 600;
+}
+
+button.danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+button.small {
+  padding: var(--space-1) var(--space-2);
+  line-height: 1;
+  flex: none;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.chips button {
+  padding: 3px var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.chips.cadence {
+  margin-top: 0;
+  padding-left: var(--space-0);
+}
+
+.chips.cadence button {
+  padding: 2px var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.num {
+  color: var(--paper-dim);
+  font-variant-numeric: var(--tabular);
+  font-size: var(--text-sm);
+}
+
+.note {
+  color: var(--paper-dim);
+  font-size: var(--text-sm);
+  margin: var(--space-2) 0 0;
+}
+
+.note.error {
+  color: var(--danger);
+}
+
+/* The four bare `<select>` elements had exactly one scoped rule between
+   them (`.habit-row-controls select`) before this — the catalogue picker
+   and both Appearance dropdowns rendered as unstyled browser controls. One
+   generic rule covers all four now that every select goes through
+   `src/ui/Select.tsx`. */
+select {
+  background: var(--surface);
+  color: var(--paper);
+  border: var(--hairline) solid var(--rule);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  min-height: var(--tap);
+  font: inherit;
+  font-size: var(--text-sm);
+}

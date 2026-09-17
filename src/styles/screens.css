@@ -1,0 +1,595 @@
+/* What is genuinely screen-specific, and nothing more. */
+
+/* ---- main screen (§6.1) ------------------------------------------------ */
+
+.main-screen {
+  display: flex;
+  flex-direction: column;
+  /* A real height, not min-height: .portrait's 64% below needs a definite
+     height to resolve against, and min-height alone never gives a flex
+     container one when its content is shorter — the portrait silently
+     rendered at zero height on every standalone use (App's loading/failed
+     screens, Onboarding) until this was a real bug, not just a lint nit. */
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* Inside .shell-body the screen is a flex child, not the viewport root — let
+   it fill the space the tab bar leaves rather than sizing itself to the
+   viewport a second time.
+
+   The screen is also the scroll container, so the portrait and the check-ins
+   move together: the picture is what you meet first, and it slides up out of
+   the way as you reach for the boxes. Scrolling only the lower part instead
+   would pin the picture and leave the list reading through a letterbox. */
+.shell-body .main-screen {
+  height: auto;
+  min-height: 0;
+}
+
+.main-screen .loading {
+  margin: auto;
+  color: var(--paper-dim);
+}
+
+.portrait {
+  /* A share of the *viewport*, not of the content: percentages resolve
+     against the scroll container's own height, so the portrait keeps this
+     much of the screen however long the list below it grows. Over half, so
+     the picture still reads as the point of the app rather than a header. */
+  flex: none;
+  height: 64%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--well);
+  overflow: hidden;
+}
+
+.portrait svg {
+  width: 100%;
+  height: 100%;
+  background: var(--well);
+  display: block;
+}
+
+.below {
+  flex: none;
+  padding: var(--space-4) var(--space-5) var(--space-6);
+  /* A full screen's worth, whatever the list holds. Without it the scroll
+     range is whatever the check-ins happen to add up to, so the portrait
+     slides half out of view with five boxes and fully out with eight — the
+     same gesture landing somewhere different each time. */
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.headline {
+  font-family: var(--serif);
+  font-size: var(--text-2xl);
+  margin: 0;
+}
+
+.subhead {
+  color: var(--paper-dim);
+  margin: var(--space-0) 0 0;
+  font-size: var(--text-sm);
+}
+
+.fullday {
+  color: var(--bronze);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  margin: var(--space-3) 0 0;
+}
+
+.strip {
+  display: flex;
+  gap: var(--space-0);
+  margin: var(--space-4) 0 0;
+}
+
+.strip .cell {
+  flex: 1;
+  height: 10px;
+  border-radius: var(--radius-sm);
+  background: var(--rule);
+}
+
+.strip .cell.filled {
+  background: var(--bronze);
+}
+
+.checkins {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.checkin {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--surface);
+  background-image: var(--grain);
+  background-size: var(--grain-size) var(--grain-size);
+  border: var(--hairline) solid var(--rule);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.checkin input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--bronze);
+  flex: none;
+}
+
+.checkin .label {
+  font-weight: 600;
+  flex: 1;
+}
+
+.checkin.collapsed {
+  padding: var(--space-2) var(--space-4);
+  opacity: 0.6;
+}
+
+.checkin.collapsed .label {
+  font-weight: 400;
+  font-size: var(--text-sm);
+}
+
+.checkin .lastHit {
+  font-size: var(--text-xs);
+  color: var(--paper-dim);
+  white-space: nowrap;
+}
+
+.best-version-toggle {
+  display: block;
+  margin: var(--space-4) 0 0;
+  padding: var(--space-3) var(--space-4);
+  width: 100%;
+  border-color: var(--bronze);
+  color: var(--bronze);
+  font-weight: 600;
+}
+
+/* ---- onboarding (§7) --------------------------------------------------- */
+
+.onboarding h2 {
+  font-family: var(--serif);
+  font-size: var(--text-lg);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--paper);
+  border: none;
+  padding: 0;
+  margin: 0 0 var(--space-2);
+}
+
+.onboarding .note {
+  color: var(--paper-dim);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-4);
+}
+
+.onboarding-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.onboarding-nav button.primary {
+  margin-left: auto;
+}
+
+.onboarding .closing p {
+  color: var(--paper);
+}
+
+/* ---- shell / nav -------------------------------------------------------- */
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  /* 100vh is taller than the visible viewport on iOS Safari; the fallback
+     keeps this working on the handful of engines without dvh. */
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.shell-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+.shell-body > * {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.tabbar {
+  display: flex;
+  border-top: var(--hairline) solid var(--rule);
+  background: var(--surface);
+  flex: none;
+  /* viewport-fit=cover (index.html) puts the tab bar under the home
+     indicator on iOS otherwise. */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tabbar button {
+  flex: 1;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: var(--space-3) 0;
+  color: var(--paper-dim);
+  font-weight: 600;
+}
+
+.tabbar button.on {
+  color: var(--bronze);
+}
+
+/* ---- history (§6.2) ------------------------------------------------------ */
+
+.history-screen {
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+  padding: var(--space-5) var(--space-5) var(--space-6);
+  overflow-y: auto;
+}
+
+.sparklines {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sparkline-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-1);
+}
+
+.sparkline-header .label {
+  font-weight: 600;
+}
+
+.sparkline-header .num {
+  color: var(--paper-dim);
+  font-variant-numeric: var(--tabular);
+}
+
+.sparkline {
+  width: 100%;
+  height: 36px;
+  display: block;
+  background: var(--surface);
+  border: var(--hairline) solid var(--rule);
+  border-radius: var(--radius-sm);
+}
+
+.history-screen h2 {
+  margin-top: var(--space-5);
+}
+
+/* ---- settings (§6.3) ------------------------------------------------------ */
+
+.settings-screen {
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+  padding: var(--space-5) var(--space-5) var(--space-6);
+  overflow-y: auto;
+}
+
+.settings-screen section {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: var(--hairline) solid var(--rule);
+}
+
+.settings-screen section:first-of-type {
+  margin-top: var(--space-4);
+}
+
+.settings-screen h2 {
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--paper-dim);
+  margin: 0 0 var(--space-3);
+}
+
+.notification-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ---- layered artwork ---------------------------------------------------- */
+
+.avatar {
+  /* Height-driven: the frame is portrait and so is the space it sits in, so
+     matching the height and letting `aspect-ratio` set the width keeps the
+     collage undistorted. `.portrait` clips rather than squashes if it ever
+     comes out wider than the column.
+
+     No --grain here or on .portrait: the drawings are already grainy
+     editorial illustration, and a second layer over them reads as
+     compression noise rather than texture. */
+  position: relative;
+  height: 100%;
+  width: auto;
+  background: var(--well);
+}
+
+/* Each panel is placed by `layers.ts` in the artwork's own proportions and
+   fills its cell exactly, so the three tile with no seam and no overlap. */
+.avatar-layer {
+  position: absolute;
+  object-fit: fill;
+  user-select: none;
+}
+
+.next-move {
+  margin-top: var(--space-3);
+}
+
+.day-picker {
+  display: flex;
+  gap: var(--space-1);
+  margin-top: var(--space-4);
+}
+
+.day-picker button {
+  flex: 1;
+  padding: var(--space-2) var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--paper-dim);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.day-picker button.on {
+  color: var(--bronze);
+  border-color: var(--bronze);
+}
+
+.editing-past {
+  color: var(--bronze);
+  margin-top: var(--space-3);
+}
+
+.storage-error {
+  margin: auto;
+  padding: var(--space-5);
+  max-width: 360px;
+  text-align: center;
+}
+
+.task-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.task-label input {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  color: var(--paper);
+  border: var(--hairline) solid var(--rule);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+}
+
+.task-label input::placeholder {
+  color: var(--paper-dim);
+}
+
+/* ---- user-added tasks --------------------------------------------------- */
+
+.custom-heading {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--paper-dim);
+  border: none;
+  padding: 0;
+  margin: 0 0 var(--space-2);
+}
+
+/* ---- habit editor (§1.6/§1.7) ------------------------------------------- */
+
+.habit-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.habit-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-3);
+  border-bottom: var(--hairline) solid var(--rule);
+}
+
+.habit-row-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding-left: var(--space-0);
+}
+
+.habit-weight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--paper-dim);
+}
+
+.habit-weight input {
+  width: 44px;
+  background: var(--surface);
+  color: var(--paper);
+  border: var(--hairline) solid var(--rule);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  font: inherit;
+}
+
+.add-custom-row {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.add-custom-row input {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  color: var(--paper);
+  border: var(--hairline) solid var(--rule);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+}
+
+.domain-heading {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--paper-dim);
+  border: none;
+  padding: 0;
+  margin: var(--space-4) 0 var(--space-2);
+}
+
+.checkins:first-of-type .domain-heading {
+  margin-top: 0;
+}
+
+/* The rest day is the plan working, so it says so in the same quiet voice as
+   a last-hit date rather than shouting about it. */
+.checkin .lastHit.rest {
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.risk-warning {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border: var(--hairline) solid var(--bronze);
+  border-radius: var(--radius-md);
+  color: var(--bronze);
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+}
+
+/* Full-screen, not scoped to .main-screen's own scroll box — the payoff
+   should cover the whole view, however far down the check-ins were scrolled. */
+.celebration {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-celebration);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti {
+  position: absolute;
+  top: -16px;
+  width: 8px;
+  height: 14px;
+  opacity: 0.9;
+  animation-name: confetti-fall;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+
+.confetti:nth-child(odd) {
+  border-radius: 50%;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(105vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.celebration-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--ground) 85%, transparent);
+  border: var(--hairline) solid var(--bronze);
+  animation: celebration-pop 0.4s ease-out;
+}
+
+.celebration-medal {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.celebration-text {
+  color: var(--bronze);
+  font-weight: 700;
+  font-size: var(--text-lg);
+}
+
+@keyframes celebration-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* The motion is decoration; the badge is the message. So drop the falling
+   pieces and the pop rather than the payoff itself. */
+@media (prefers-reduced-motion: reduce) {
+  .confetti {
+    display: none;
+  }
+
+  .celebration-badge {
+    animation: none;
+  }
+}

@@ -136,6 +136,40 @@ cuts a wide sheet into its five states, `npm run manifest` regenerates the
 inventory `scene()` reads against, and `artwork.test.ts` fails loudly if the
 two drift apart.
 
+## The look
+
+Phase 3 (`docs/plan/phase-3.md`) replaced the flat, six-variable
+`src/styles.css` with a small token system. `src/styles.css` is now four
+`@import` lines; the palette, the spacing/type scales and the grain live in
+`src/styles/tokens.css`, the only file allowed a raw colour literal.
+`src/ui/tokens.ts` parses that file and measures WCAG contrast;
+`tokens.test.ts` pins every value against it, so a retuned colour that fails
+4.5:1 against the surface it is painted on fails the suite, not a review.
+
+**Dark editorial, and dark only, permanently.** Near-black ground (`--ground`),
+a warmed off-white for text (`--paper`), a bronze accent (`--bronze`). No
+light mode: the artwork is drawn on a dark ground, so a light theme would be
+sixty more drawings, not a token swap.
+
+**Instrument Serif, self-hosted, headings only.** One woff2, Latin subset,
+in `public/fonts/` (SIL OFL 1.1, `OFL.txt` beside it) and in the precache —
+not Google Fonts by URL, which would be a third-party request on every cold
+load in an app whose premise is that it works offline. Applied by role
+through `--serif` on `.headline` and `.onboarding h2`; the section eyebrows
+(`h2`, `.domain-heading`, `.custom-heading`) stay sans on purpose, so a
+serif small-caps eyebrow never sits under a serif headline.
+
+**Grain, one `feTurbulence` SVG, tiled as a background image.** On `body`
+and on the `.checkin` card, never on `.portrait` or `.avatar` — the drawings
+are already grainy editorial illustration, and a second layer over them
+reads as compression noise, not texture.
+
+`src/ui/` holds the base components (`Button`, `Chip`/`ChipRow`, `Checkbox`,
+`Card`, `Field`, `Select`, `SectionHeading`, `Note`, `FullDayStrip`) that
+`src/styles/components.css` styles. Thin presentational wrappers over
+props, no context, no variants object; a component earns a file only once
+two different screens use it.
+
 ## Departures from the spec
 
 This section documents what v1 changed from `life-os-spec.md`. Where a
@@ -388,7 +422,12 @@ src/core/      the model — no DOM, no clock, no storage
   projection.ts  AppState + a date -> what the screen needs
   scoring.ts     Full Day + log bookkeeping (§5)
 src/store/     Store interface, IndexedDB/in-memory impls, migrate.ts (v1 -> v2)
-src/visual/    layers.ts (the temporary panel -> artwork adapter) and the compositing Avatar
+src/visual/    scene.ts (the slot table + fallback-chain resolver) and the compositing Avatar
+src/ui/        the base components (Button, Chip, Checkbox, Card, Field,
+               Select, SectionHeading, Note, FullDayStrip) and tokens.ts,
+               the parser tokens.test.ts and chrome.test.ts read against
+src/styles/    tokens.css (the only file with a colour literal), base.css,
+               components.css, screens.css — src/styles.css just @imports them
 src/app/       the shell: useLifeOS is the one place touching Store and clock;
                every screen takes state as props
 src/i18n/      every fixed user-facing string, flat key map, English only —

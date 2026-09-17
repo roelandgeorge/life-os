@@ -16,6 +16,9 @@ import { Avatar } from '../visual/Avatar';
 import { scene } from '../visual/scene';
 import { PANEL_KEYS, type PanelSteps } from '../core/domains';
 import { START_STEP } from '../core/steps';
+import { Button } from '../ui/Button';
+import { Note } from '../ui/Note';
+import { SectionHeading } from '../ui/SectionHeading';
 
 const START_STEPS: PanelSteps = Object.fromEntries(PANEL_KEYS.map((k) => [k, START_STEP])) as PanelSteps;
 const START_SCENE = scene(START_STEPS, undefined);
@@ -29,15 +32,15 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
 
       <div className="below">
         <section>
-          <h2>{en['onboarding.closing.title']}</h2>
+          <SectionHeading>{en['onboarding.closing.title']}</SectionHeading>
           <p>{en['onboarding.closing.line1']}</p>
           <p>{en['onboarding.closing.line2']}</p>
           <p>{en['onboarding.closing.line3']}</p>
-          <p className="note">{en['onboarding.closing.iosNote']}</p>
+          <Note>{en['onboarding.closing.iosNote']}</Note>
           <div className="onboarding-nav">
-            <button type="button" className="primary" onClick={onComplete}>
+            <Button variant="primary" onClick={onComplete}>
               {en['onboarding.closing.start']}
-            </button>
+            </Button>
           </div>
         </section>
       </div>

@@ -21,7 +21,13 @@ import { atRiskItems, type RiskItem } from '../core/atRisk';
 import { Avatar } from '../visual/Avatar';
 import { scene as buildScene } from '../visual/scene';
 import { Celebration } from './Celebration';
-import { FullDayStrip } from './FullDayStrip';
+import { Button } from '../ui/Button';
+import { Card } from '../ui/Card';
+import { Checkbox } from '../ui/Checkbox';
+import { Chip, ChipRow } from '../ui/Chip';
+import { FullDayStrip } from '../ui/FullDayStrip';
+import { Note } from '../ui/Note';
+import { SectionHeading } from '../ui/SectionHeading';
 
 /** How long the confetti stays up once every box for today is ticked. */
 const CELEBRATION_MS = 3000;
@@ -88,19 +94,19 @@ export function MainScreen({
         {showBest ? (
           <>
             <h1 className="headline">{en['main.bestVersion.headline']}</h1>
-            <p className="subhead">{en['main.bestVersion.subhead']}</p>
+            <Note variant="subhead">{en['main.bestVersion.subhead']}</Note>
           </>
         ) : (
           <>
             <h1 className="headline">{en['main.headline']}</h1>
-            <p className="subhead">{en['main.subhead']}</p>
+            <Note variant="subhead">{en['main.subhead']}</Note>
             {projection.fullDay && <p className="fullday">{en['main.fullDay']}</p>}
           </>
         )}
 
-        <button type="button" className="best-version-toggle" onClick={() => setShowBest((v) => !v)}>
+        <Button className="best-version-toggle" onClick={() => setShowBest((v) => !v)}>
           {showBest ? en['main.bestVersion.hide'] : en['main.bestVersion.show']}
-        </button>
+        </Button>
 
         {!showBest && (
           <>
@@ -110,13 +116,13 @@ export function MainScreen({
 
             <DayPicker today={today} editing={editing} onPick={setEditing} />
 
-            {groups.length === 0 && <p className="note">{en['settings.habits.empty']}</p>}
+            {groups.length === 0 && <Note>{en['settings.habits.empty']}</Note>}
 
             {groups.map(({ domain, habits }) => (
               <div className="checkins" key={domain?.key ?? 'own'}>
-                <h2 className={domain ? 'domain-heading' : 'custom-heading'}>
+                <SectionHeading className={domain ? 'domain-heading' : 'custom-heading'}>
                   {domain ? en[domain.label as I18nKey] : en['habits.own']}
-                </h2>
+                </SectionHeading>
                 {habits.map((habit) => (
                   <HabitRow
                     key={habit.id}
@@ -130,10 +136,8 @@ export function MainScreen({
               </div>
             ))}
 
-            {editing !== today && (
-              <p className="note editing-past">{t('main.editingPast', { day: dayLabel(editing, today) })}</p>
-            )}
-            <p className="note next-move">{nextMove(projection)}</p>
+            {editing !== today && <Note className="editing-past">{t('main.editingPast', { day: dayLabel(editing, today) })}</Note>}
+            <Note className="next-move">{nextMove(projection)}</Note>
           </>
         )}
       </div>
@@ -166,8 +170,8 @@ function HabitRow({
   const color = effectiveColor(habit);
 
   return (
-    <label className={due ? 'checkin' : 'checkin collapsed'}>
-      <input type="checkbox" checked={checked} onChange={onToggle} />
+    <Card interactive className={due ? 'checkin' : 'checkin collapsed'}>
+      <Checkbox checked={checked} onChange={onToggle} />
       <span className="label" style={color === undefined ? undefined : { color }}>
         {habitTitle(habit, en['settings.habits.title.placeholder'])}
       </span>
@@ -177,7 +181,7 @@ function HabitRow({
         </span>
       )}
       {due && streak > 1 && <span className="lastHit">{t('habits.streak', { count: streak })}</span>}
-    </label>
+    </Card>
   );
 }
 
@@ -213,20 +217,19 @@ function DayPicker({
   onPick: (d: DateKey) => void;
 }) {
   return (
-    <div className="day-picker">
+    <ChipRow className="day-picker">
       {editableDays(today).map((day) => (
-        <button
+        <Chip
           key={day}
-          type="button"
-          className={day === editing ? 'on' : ''}
+          on={day === editing}
           title={dayLabel(day, today)}
           aria-label={dayLabel(day, today)}
           onClick={() => onPick(day)}
         >
           {pickerLabel(day, today)}
-        </button>
+        </Chip>
       ))}
-    </div>
+    </ChipRow>
   );
 }
 
@@ -256,7 +259,7 @@ function RiskWarning({ state, today }: { state: AppState; today: DateKey }) {
       ? t('main.risk.one', { name: riskName(state, first), when: whenText(first.daysLeft) })
       : t('main.risk.many', { count: risks.length });
 
-  return <p className="risk-warning">{text}</p>;
+  return <Card className="risk-warning">{text}</Card>;
 }
 
 function riskName(state: AppState, risk: RiskItem): string {

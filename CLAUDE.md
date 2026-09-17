@@ -37,6 +37,16 @@ gender+hair for `head` and `partner`), reading the geometry from
 (the design system, onboarding, gamification). Read it before starting a
 new phase.
 
+**Phase 3 has since shipped too** (`docs/plan/phase-3.md`): the dark
+editorial design system. `src/styles/tokens.css` is now the only file with a
+colour literal — `src/ui/tokens.ts` parses it and measures contrast,
+`tokens.test.ts` pins every value against it — and `src/ui/` holds the base
+components (`Button`, `Chip`/`ChipRow`, `Checkbox`, `Card`, `Field`,
+`Select`, `SectionHeading`, `Note`, `FullDayStrip`) every screen now goes
+through. README's "The look" section explains the palette, the self-hosted
+serif and the grain. Onboarding, Home and the gamification layer are still
+ahead — `docs/plan/PLAN.md` tracks what phase comes next.
+
 Live on the user's Vercel deployment, which builds from `main` on GitHub.
 
 The fifteen real drawings from phase 1 are in as the fallback rung for
@@ -78,7 +88,7 @@ npm run manifest        # regenerate src/content/artwork.json from public/avatar
 |---|---|
 | **React 18 + TypeScript**, Vite 6 | Small single-page app; Vite gives the dev server, the build and the PWA plugin in one. |
 | TS `strict` + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes` | The model is date and index arithmetic; these catch the off-by-one and "absent vs undefined" bugs that matter in an append-only log. Helpers return concrete values rather than `T \| undefined` to satisfy them. |
-| **No UI library, no router, no state library** | Three screens switched by a tab bar (`app/Shell.tsx`); one hook (`useLifeOS`) owns state. Plain CSS in `src/styles.css`. |
+| **No UI library, no router, no state library** | Three screens switched by a tab bar (`app/Shell.tsx`); one hook (`useLifeOS`) owns state. Plain CSS under `src/styles/`, base components in `src/ui/`. |
 | **IndexedDB**, behind a `Store` interface | Local-first: no account, no server database, works offline. The interface keeps storage swappable and lets tests use `MemoryStore`. |
 | **PWA** via `vite-plugin-pwa` (generateSW) | Installable to the home screen, which iOS requires before it allows push. Push handlers are imported into the generated worker from `public/push-sw.js`. |
 | **Vercel** hosting + serverless functions in `api/` | Deploys from `main`. The only server code, and only for push. |
@@ -108,11 +118,16 @@ src/app/        App (onboarding gate), Shell (tabs), Main/History/Settings scree
                 useLifeOS (the only bridge to Store + clock — habit CRUD lives here
                 as thin wiring around core/habits.ts), push.ts, warmArtwork.ts,
                 Celebration
+src/ui/         Button, Chip/ChipRow, Checkbox, Card, Field, Select,
+                SectionHeading, Note, FullDayStrip — thin components over
+                components.css; tokens.ts (parser + contrast helper),
+                tokens.test.ts, chrome.test.ts
 src/content/    catalog.json (scripts/import-catalog.mjs), scene.json
                 (hand-written scene geometry), artwork.json (scripts/build-
                 artwork-manifest.mjs, the file inventory scene.ts resolves against)
 src/i18n/en.ts  every fixed user-facing string; habit titles are data, not i18n
-src/styles.css  all styling
+src/styles/     tokens.css (the only file with a colour literal), base.css,
+                components.css, screens.css; src/styles.css just @imports them
 api/            subscribe.ts, cron.ts, test-push.ts — push only
 public/         push-sw.js, icons/, avatar/ (variant-free art) + avatar/you/
                 (variant art)
@@ -185,3 +200,9 @@ Domains are data (`core/domains.ts`) and the scene is data
 Artwork is never referenced by filename outside `visual/scene.ts`'s resolver.
 Adding a state, a slot or a variant axis should mean editing `scene.json`,
 not chasing string literals.
+
+Colour literals live in `src/styles/tokens.css` and nowhere else —
+`tokens.test.ts` fails the build if one turns up in `base.css`,
+`components.css` or `screens.css`. A component earns a file under
+`src/ui/` only once two different screens use it; everything else stays as
+markup where it is.

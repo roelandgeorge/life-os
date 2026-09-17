@@ -1,0 +1,62 @@
+/* Reset, @font-face, body and heading defaults. */
+
+/* Self-hosted rather than loaded from Google Fonts by URL: a third-party
+   request on every cold load would contradict an app whose premise is that
+   it works offline. Latin subset only, already sized to ~15 KB by Google's
+   own per-script split. size-adjust and the two override descriptors are
+   tuned against the Georgia fallback's metrics so the swap in `--serif`
+   below does not shift the line when the real face loads. */
+@font-face {
+  font-family: 'Instrument Serif';
+  src: url('/fonts/instrument-serif.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 99%;
+  ascent-override: 92%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: var(--ground);
+  background-image: var(--grain);
+  background-size: var(--grain-size) var(--grain-size);
+  color: var(--paper);
+  font: var(--text-base) / var(--leading-base) var(--sans);
+}
+
+h1 {
+  font-size: var(--text-lg);
+  margin: 0 0 var(--space-3);
+}
+
+/* The section eyebrow. Sans on purpose — a serif small-caps eyebrow above a
+   serif headline is two display voices stacked. */
+h2 {
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--paper-dim);
+  margin: var(--space-5) 0 var(--space-2);
+  padding-bottom: var(--space-1);
+  border-bottom: var(--hairline) solid var(--rule);
+}
+
+section p {
+  line-height: var(--leading-loose);
+  margin: 0 0 var(--space-2);
+}
+
+/* Tab through the app and nothing indicated where you were — there was no
+   :focus-visible rule anywhere. :focus-visible only, so a pointer tap does
+   not leave a ring behind. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}

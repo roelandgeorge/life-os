@@ -38,16 +38,16 @@ export interface DomainConfig {
 }
 
 export const DOMAINS: readonly DomainConfig[] = [
-  { key: 'sleep', label: 'domain.sleep', color: '#6C8EBF', panels: ['body', 'head'] },
-  { key: 'nutrition', label: 'domain.nutrition', color: '#B85C38', panels: ['body', 'head'] },
-  { key: 'training', label: 'domain.training', color: '#C08A2E', panels: ['body'] },
-  { key: 'appearance', label: 'domain.appearance', color: '#8A7A66', panels: ['body', 'head'] },
-  { key: 'mindset', label: 'domain.mindset', color: '#7A6BA8', panels: ['head'] },
-  { key: 'productivity', label: 'domain.productivity', color: '#5C8A72', panels: ['head'] },
-  { key: 'social', label: 'domain.social', color: '#A8557F', panels: ['network'] },
-  { key: 'hospitality', label: 'domain.hospitality', color: '#C97B63', panels: ['network'] },
-  { key: 'family', label: 'domain.family', color: '#B5793F', panels: ['partner'] },
-  { key: 'finance', label: 'domain.finance', color: '#4F6F7A', panels: ['wealth'] },
+  { key: 'sleep', label: 'domain.sleep', color: '#7FA3D4', panels: ['body', 'head'] },
+  { key: 'nutrition', label: 'domain.nutrition', color: '#D4785A', panels: ['body', 'head'] },
+  { key: 'training', label: 'domain.training', color: '#D2A04A', panels: ['body'] },
+  { key: 'appearance', label: 'domain.appearance', color: '#A39280', panels: ['body', 'head'] },
+  { key: 'mindset', label: 'domain.mindset', color: '#9A8AC8', panels: ['head'] },
+  { key: 'productivity', label: 'domain.productivity', color: '#72A88C', panels: ['head'] },
+  { key: 'social', label: 'domain.social', color: '#C97AA2', panels: ['network'] },
+  { key: 'hospitality', label: 'domain.hospitality', color: '#DE9179', panels: ['network'] },
+  { key: 'family', label: 'domain.family', color: '#CF9257', panels: ['partner'] },
+  { key: 'finance', label: 'domain.finance', color: '#6F95A3', panels: ['wealth'] },
 ] as const;
 
 const BY_KEY = new Map<DomainKey, DomainConfig>(DOMAINS.map((d) => [d.key, d]));
