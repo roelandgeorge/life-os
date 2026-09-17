@@ -25,7 +25,6 @@ export type Answers = {
   domains?: readonly DomainKey[];
   /** Catalogue ids picked, per domain key. */
   picked?: Readonly<Record<string, readonly string[]>>;
-  personaId?: string;
 };
 
 export type Step =
@@ -35,23 +34,21 @@ export type Step =
   | { kind: 'partnerLooks' }
   | { kind: 'children' }
   | { kind: 'domains' }
-  | { kind: 'starters'; domain: DomainKey }
-  | { kind: 'persona' }
-  | { kind: 'closing' };
+  | { kind: 'starters'; domain: DomainKey };
 
 /**
  * The whole visible sequence, given the answers so far. `partnerLooks` only
  * appears once a partner is actually wanted, and one `starters` step is
  * appended per domain the `domains` step turned on, in the order it was
  * turned on — a `starters` step carries its domain rather than an index, so
- * nothing downstream has to branch on one.
+ * nothing downstream has to branch on one. The last of those is the end of
+ * the tree: turning no domain on at all leaves `domains` as the final step.
  */
 export function steps(answers: Answers): readonly Step[] {
   const out: Step[] = [{ kind: 'gender' }, { kind: 'hair' }, { kind: 'partner' }];
   if (answers.partnerWanted === true) out.push({ kind: 'partnerLooks' });
   out.push({ kind: 'children' }, { kind: 'domains' });
   for (const domain of answers.domains ?? []) out.push({ kind: 'starters', domain });
-  out.push({ kind: 'persona' }, { kind: 'closing' });
   return out;
 }
 
@@ -76,7 +73,6 @@ export function profileFrom(answers: Answers): Profile {
 
   if (answers.children !== undefined) profile.children = answers.children;
   if (answers.domains !== undefined) profile.domainOrder = answers.domains;
-  if (answers.personaId !== undefined) profile.personaId = answers.personaId;
   return profile;
 }
 

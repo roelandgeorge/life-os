@@ -61,8 +61,9 @@ full-screen, searchable browser opened from Settings, sharing
 `app/HabitPicker.tsx` with onboarding's starter step. `monthly` now drives a
 panel like any other cadence (`core/habits.drivesPanel`), reversing phase 1's
 rule — see README's "Departures from the spec" for why. `core/personas.ts`
-reads `src/content/personas.json`; the persona step files a choice with no
-effect yet, phase 6 gives it one. Home itself (§4.8's one-line
+reads `src/content/personas.json`, but nothing writes `Profile.personaId`:
+the persona is phase 6's to ask for, once it has quotes behind it, and it
+must never steer which habits get picked. Home itself (§4.8's one-line
 `groupHabits` edit aside) and the gamification layer are still ahead.
 
 Live on the user's Vercel deployment, which builds from `main` on GitHub.

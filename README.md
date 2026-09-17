@@ -178,11 +178,13 @@ real decision tree, run once, before the store holds any state.
 `core/onboarding.ts` holds it as data, the same way the catalogue and the
 scene are data: `steps(answers)` is the whole visible sequence — gender,
 hair, partner (and, only if wanted, the partner's own gender and hair),
-children, domains, one starters step per domain the domains step turned on
-(in the order it was turned on), a skippable persona pick, and a closing
-explainer. `app/Onboarding.tsx` holds `Answers` plus an index into that
-sequence and re-derives both on every render, so going back after turning a
-domain off shortens the tree under the current step rather than crashing.
+children, domains, and one starters step per domain the domains step turned
+on, in the order it was turned on. The last of those is the end of the tree,
+so the final Next finishes rather than advancing, and turning no domain on at
+all leaves `domains` as the last step. `app/Onboarding.tsx` holds `Answers`
+plus an index into that sequence and re-derives both on every render, so
+going back after turning a domain off shortens the tree under the current
+step rather than crashing.
 
 Turning a domain on seeds it with its three catalogue starters — filtered
 through `core/habits.catalogFilterFor`, so a "no" to partner or children
@@ -213,9 +215,15 @@ Home, with an already-added item shown checked and disabled rather than
 addable twice. Milestones, challenges and reminders stay out of both
 pickers — phase 6's content layer gives them their own screens.
 
-The persona step (`core/personas.ts`, `src/content/personas.json`) writes
-`Profile.personaId` and nothing else yet; its copy says so. Phase 6 adds the
-quotes, the sources and the daily wisdom the id will eventually unlock.
+**Onboarding asks nothing it cannot act on.** A persona step and a four
+paragraph "How this works" screen were both built and both removed again:
+nothing reads `Profile.personaId` until phase 6, and an explainer shown
+before the first tick is read by nobody. The persona catalogue survives as
+data (`core/personas.ts`, `src/content/personas.json`) and phase 6 asks for
+one once the app has been used for a while, where the choice has quotes
+behind it. Keeping it out of onboarding also keeps it honest: a persona must
+never influence which habits get picked, or two different things would be
+deciding the same thing.
 
 ## Departures from the spec
 

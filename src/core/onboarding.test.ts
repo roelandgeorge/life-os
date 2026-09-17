@@ -7,15 +7,7 @@ const TODAY = '2026-09-17';
 
 describe('steps', () => {
   it('holds the fixed order with no partner and no domains chosen', () => {
-    expect(steps({}).map((s) => s.kind)).toEqual([
-      'gender',
-      'hair',
-      'partner',
-      'children',
-      'domains',
-      'persona',
-      'closing',
-    ]);
+    expect(steps({}).map((s) => s.kind)).toEqual(['gender', 'hair', 'partner', 'children', 'domains']);
   });
 
   it('partnerLooks appears only once a partner is wanted', () => {
@@ -33,7 +25,14 @@ describe('steps', () => {
     const withNone = steps({ domains: [] });
     expect(withNone.some((s) => s.kind === 'starters')).toBe(false);
     expect(withNone[0]).toEqual({ kind: 'gender' });
-    expect(withNone[withNone.length - 1]).toEqual({ kind: 'closing' });
+    expect(withNone[withNone.length - 1]).toEqual({ kind: 'domains' });
+  });
+
+  // The tree ends where the answers end, which is what lets the component
+  // wire its last Next to "finish" without knowing which step that is.
+  it('ends on the last domain turned on', () => {
+    const withDomains = steps({ domains: ['sleep', 'finance'] });
+    expect(withDomains[withDomains.length - 1]).toEqual({ kind: 'starters', domain: 'finance' });
   });
 });
 
@@ -47,7 +46,6 @@ describe('profileFrom', () => {
     expect(profileFrom({ gender: 'male' })).toEqual({ gender: 'male' });
     expect(profileFrom({ children: true })).toEqual({ children: true });
     expect(profileFrom({ domains: ['sleep', 'finance'] })).toEqual({ domainOrder: ['sleep', 'finance'] });
-    expect(profileFrom({ personaId: 'p1' })).toEqual({ personaId: 'p1' });
   });
 
   it('partner carries gender and hair only when wanted', () => {

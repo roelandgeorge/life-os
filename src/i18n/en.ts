@@ -58,6 +58,7 @@ export const en = {
   // Onboarding — the decision tree (§4.6 of docs/plan/phase-4.md).
   'onboarding.nav.back': 'Back',
   'onboarding.nav.next': 'Next',
+  'onboarding.nav.start': 'Start',
   'onboarding.nav.step': 'Step {current} of {total}',
 
   'onboarding.gender.title': 'Which drawing is you?',
@@ -83,16 +84,6 @@ export const en = {
 
   'onboarding.starters.title': '{domain}: pick your habits',
   'onboarding.starters.note': 'Three are checked already, picked for evidence and importance. Add or remove anything.',
-
-  'onboarding.persona.title': 'Pick a persona (optional)',
-  'onboarding.persona.note': "Filed for later — this has no effect yet. You can change or clear it in Settings.",
-
-  'onboarding.closing.title': 'How this works',
-  'onboarding.closing.line1': 'Each day you check off the habits you picked — sleep, food, training, and whatever else you added. Some only need a tick once a week or once a month.',
-  'onboarding.closing.line2': "Nothing here scores your day. Each part of the picture moves one step at a time: enough of your habits closing out well takes it up, a stretch of them missing takes it down.",
-  'onboarding.closing.line3': 'The picture above is you in fifteen years. Everything starts halfway, so it can move either way from day one.',
-  'onboarding.closing.iosNote': "On iPhone: add this to your home screen from the share menu — that's what lets the evening reminder in Settings actually notify you.",
-  'onboarding.closing.start': 'Start',
 
   'nav.main': 'Home',
   'nav.history': 'History',

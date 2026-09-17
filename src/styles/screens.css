@@ -197,10 +197,6 @@
   align-self: center;
 }
 
-.onboarding .closing p {
-  color: var(--paper);
-}
-
 /* ---- shell / nav -------------------------------------------------------- */
 
 .shell {

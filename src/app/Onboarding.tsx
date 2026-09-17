@@ -15,7 +15,6 @@ import { catalogFor, startersFor } from '../core/catalog';
 import { getDomain, PANEL_KEYS, type DomainKey, type PanelSteps } from '../core/domains';
 import { catalogFilterFor } from '../core/habits';
 import { profileFrom, steps as onboardingSteps, type Answers, type Step } from '../core/onboarding';
-import { PERSONAS } from '../core/personas';
 import { START_STEP } from '../core/steps';
 import { en, t, type I18nKey } from '../i18n/en';
 import { Avatar } from '../visual/Avatar';
@@ -35,7 +34,11 @@ export function Onboarding({ onComplete }: { onComplete: (answers: Answers) => v
 
   const sequence = onboardingSteps(answers);
   const clampedIndex = Math.min(index, sequence.length - 1);
-  const current: Step = sequence[clampedIndex] ?? { kind: 'closing' };
+  const current: Step = sequence[clampedIndex] ?? { kind: 'gender' };
+  // Re-derived rather than remembered: answering the domains step grows the
+  // sequence underneath the user, so which step is the last one changes while
+  // they are standing on it.
+  const isLast = clampedIndex === sequence.length - 1;
 
   const avatarScene = scene(START_STEPS, profileFrom(answers));
 
@@ -141,40 +144,17 @@ export function Onboarding({ onComplete }: { onComplete: (answers: Answers) => v
           <StartersStep domain={current.domain} answers={answers} onToggle={togglePicked} />
         )}
 
-        {current.kind === 'persona' && (
-          <StepSection title={en['onboarding.persona.title']} note={en['onboarding.persona.note']}>
-            <PersonaPicker value={answers.personaId} onChange={(personaId) => setAnswers((prev) => withPersona(prev, personaId))} />
-          </StepSection>
-        )}
-
-        {current.kind === 'closing' && (
-          <section className="closing">
-            <SectionHeading>{en['onboarding.closing.title']}</SectionHeading>
-            <p>{en['onboarding.closing.line1']}</p>
-            <p>{en['onboarding.closing.line2']}</p>
-            <p>{en['onboarding.closing.line3']}</p>
-            <Note>{en['onboarding.closing.iosNote']}</Note>
-            <div className="onboarding-nav">
-              <Button variant="primary" onClick={() => onComplete(answers)}>
-                {en['onboarding.closing.start']}
-              </Button>
-            </div>
-          </section>
-        )}
-
-        {current.kind !== 'closing' && (
-          <div className="onboarding-nav">
-            <Button onClick={back} disabled={clampedIndex === 0}>
-              {en['onboarding.nav.back']}
-            </Button>
-            <Note className="onboarding-step">
-              {t('onboarding.nav.step', { current: clampedIndex + 1, total: sequence.length })}
-            </Note>
-            <Button variant="primary" onClick={next}>
-              {en['onboarding.nav.next']}
-            </Button>
-          </div>
-        )}
+        <div className="onboarding-nav">
+          <Button onClick={back} disabled={clampedIndex === 0}>
+            {en['onboarding.nav.back']}
+          </Button>
+          <Note className="onboarding-step">
+            {t('onboarding.nav.step', { current: clampedIndex + 1, total: sequence.length })}
+          </Note>
+          <Button variant="primary" onClick={isLast ? () => onComplete(answers) : next}>
+            {isLast ? en['onboarding.nav.start'] : en['onboarding.nav.next']}
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -235,30 +215,5 @@ function StartersStep({
     >
       <HabitPicker items={pickerItems} onToggle={(id) => onToggle(domain, id)} />
     </StepSection>
-  );
-}
-
-/** `exactOptionalPropertyTypes` means clearing a persona has to drop the key, not set it to `undefined`. */
-function withPersona(answers: Answers, personaId: string | undefined): Answers {
-  if (personaId === undefined) {
-    const { personaId: _dropped, ...rest } = answers;
-    return rest;
-  }
-  return { ...answers, personaId };
-}
-
-function PersonaPicker({ value, onChange }: { value: string | undefined; onChange: (id: string | undefined) => void }) {
-  const selected = PERSONAS.find((p) => p.id === value);
-  return (
-    <>
-      <ChipRow className="chips">
-        {PERSONAS.map((persona) => (
-          <Chip key={persona.id} on={value === persona.id} onClick={() => onChange(value === persona.id ? undefined : persona.id)}>
-            {persona.name}
-          </Chip>
-        ))}
-      </ChipRow>
-      {selected && <Note>{selected.blurb}</Note>}
-    </>
   );
 }
