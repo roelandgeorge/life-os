@@ -15,7 +15,13 @@
 import { useState } from 'react';
 import { catalogFor, type Cadence, type CatalogItem, type Effort } from '../core/catalog';
 import { getDomain, type DomainKey } from '../core/domains';
-import { catalogFilterFor, completedCatalogIds, CUSTOM_IMPORTANCE, MAX_HABIT_TITLE_LENGTH } from '../core/habits';
+import {
+  canAddCustomHabit,
+  catalogFilterFor,
+  completedCatalogIds,
+  CUSTOM_IMPORTANCE,
+  MAX_HABIT_TITLE_LENGTH,
+} from '../core/habits';
 import type { NewCustomHabitInput } from '../core/habits';
 import type { AppState } from '../core/types';
 import { en, t, type I18nKey } from '../i18n/en';
@@ -215,7 +221,11 @@ export function DomainCatalog({
           }}
         />
       ) : (
-        <Button className="write-habit-open" onClick={() => setWriting(true)}>
+        <Button
+          className="write-habit-open"
+          disabled={!canAddCustomHabit(state.habits)}
+          onClick={() => setWriting(true)}
+        >
           {en['domainCatalog.write.open']}
         </Button>
       )}

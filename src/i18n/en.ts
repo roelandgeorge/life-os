@@ -59,36 +59,6 @@ export const en = {
   'main.bestVersion.headline': 'This is future you, at your best.',
   'main.bestVersion.subhead': 'Every part at its top step. Two good days is all any one of them takes.',
 
-  // Onboarding — the decision tree (§4.6 of docs/plan/phase-4.md).
-  'onboarding.nav.back': 'Back',
-  'onboarding.nav.next': 'Next',
-  'onboarding.nav.start': 'Start',
-  'onboarding.nav.step': 'Step {current} of {total}',
-
-  'onboarding.gender.title': 'Which drawing is you?',
-  'onboarding.gender.note': 'Changeable later in Settings.',
-  'onboarding.hair.title': 'And your hair?',
-  'onboarding.hair.note': 'Changeable later in Settings.',
-
-  'onboarding.partner.title': 'Do you have a partner?',
-  'onboarding.partner.note': "One panel is theirs — this is only about whether it's drawn.",
-  'onboarding.partner.yes': 'Yes',
-  'onboarding.partner.no': 'No',
-
-  'onboarding.partnerLooks.title': 'Which drawing is your partner?',
-  'onboarding.partnerLooks.note': 'Changeable later in Settings.',
-
-  'onboarding.children.title': 'Do you have children?',
-  'onboarding.children.note': "Some habits only make sense once there's a child in the picture.",
-  'onboarding.children.yes': 'Yes',
-  'onboarding.children.no': 'No',
-
-  'onboarding.domains.title': "Which parts of life do you want to work on, and in what order?",
-  'onboarding.domains.note': "Turn on as many as you like. The order decides where each group sits on Home — nothing is ever hidden by this.",
-
-  'onboarding.starters.title': '{domain}: pick your habits',
-  'onboarding.starters.note': 'Three are checked already, picked for evidence and importance. Add or remove anything.',
-
   'nav.main': 'Home',
   'nav.history': 'History',
   'nav.settings': 'Settings',
@@ -101,65 +71,26 @@ export const en = {
 
   'settings.title': 'Settings',
 
-  'settings.appearance': 'Appearance',
-  'settings.appearance.note': 'Decides which drawing of you and your partner the picture uses.',
-  'settings.domainOrder': 'Domain order',
-  'settings.domainOrder.note': 'Turn on as many as you like. The order decides where each group sits on Home — nothing is ever hidden by this.',
-
-  // Profile fields (app/ProfileFields.tsx) — shared by onboarding and
-  // Settings' Profile section, so a control met once reads the same the
-  // second time.
+  // Profile fields — the figure's gender and hair, asked by onboarding
+  // (app/Onboarding.tsx's drawing pickers) and nowhere else, per
+  // docs/onboarding/04-revisions.md §4 and §10.
   'profile.gender.male': 'Male',
   'profile.gender.female': 'Female',
   'profile.hair.blond': 'Blond',
   'profile.hair.dark': 'Dark',
   'profile.hair.none': 'None',
-  'profile.partner.wanted': 'I have a partner',
-  'profile.children': 'I have children',
-  'profile.domains.up': 'Move up',
-  'profile.domains.down': 'Move down',
 
-  // Catalogue metadata line (app/HabitPicker.tsx) — onboarding's starter
-  // step and Discover both read it.
-  'catalog.cadence.daily': 'Daily',
-  'catalog.cadence.weekly': 'Weekly',
-  'catalog.cadence.monthly': 'Monthly',
-  'catalog.cadence.everyDays': 'Every {days} days',
-  'catalog.cadence.situational': 'As needed',
-  'catalog.cadence.once': 'One-time',
-  'catalog.importance': 'Importance {n}/5',
   'catalog.effort.low': 'Low effort',
   'catalog.effort.medium': 'Medium effort',
   'catalog.effort.high': 'High effort',
-  'catalog.evidence.strong': 'Strong evidence',
-  'catalog.evidence.moderate': 'Moderate evidence',
-  'catalog.evidence.anecdotal': 'Anecdotal evidence',
 
   'settings.habits': 'Your habits',
-  'settings.habits.note': 'Weight decides how much a habit counts towards the picture. A habit with no domain still counts for streaks but moves nothing.',
   'settings.habits.title.placeholder': 'Habit name',
-  'settings.habits.weight': 'Weight',
-  'settings.habits.domain.none': 'No domain (your own)',
   'settings.habits.cadence.daily': 'Daily',
   'settings.habits.cadence.weekly': 'Weekly',
   'settings.habits.cadence.monthly': 'Monthly',
-  'settings.habits.cadence.other': 'Other (catalogue default)',
   'settings.habits.remove': 'Remove',
-  'settings.habits.empty': 'No habits yet — add one below or from the catalogue.',
-  'settings.habits.add.placeholder': 'e.g. No alcohol',
-  'settings.habits.add.button': 'Add a habit of your own',
-
-  'settings.catalog': 'Add from the catalogue',
-  'settings.catalog.note': 'Curated habits, tagged by domain and how well-evidenced they are.',
-  'settings.catalog.added': 'Added',
-  'settings.catalog.discover': 'Browse the catalogue',
-
-  // Discover (app/DiscoverScreen.tsx) — a full-screen sub-view from Settings.
-  'discover.title': 'Discover',
-  'discover.back': 'Back',
-  'discover.search.label': 'Search',
-  'discover.search.placeholder': 'Search habits…',
-  'discover.empty': 'Nothing matches.',
+  'settings.habits.empty': 'No habits yet. Add one from a domain above, or redo what you work on in Settings.',
 
   'settings.notifications': 'Daily reminder',
   'settings.notifications.note': 'One notification a day, in the evening. The exact minute is not guaranteed — the free plan schedules it within the hour.',

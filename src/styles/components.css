@@ -83,19 +83,3 @@ button.small {
 .note.error {
   color: var(--danger);
 }
-
-/* The four bare `<select>` elements had exactly one scoped rule between
-   them (`.habit-row-controls select`) before this — the catalogue picker
-   and both Appearance dropdowns rendered as unstyled browser controls. One
-   generic rule covers all four now that every select goes through
-   `src/ui/Select.tsx`. */
-select {
-  background: var(--surface);
-  color: var(--paper);
-  border: var(--hairline) solid var(--rule);
-  border-radius: var(--radius-sm);
-  padding: var(--space-1) var(--space-2);
-  min-height: var(--tap);
-  font: inherit;
-  font-size: var(--text-sm);
-}
