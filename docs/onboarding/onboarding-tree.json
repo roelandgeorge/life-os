@@ -1,0 +1,521 @@
+{
+  "_comment": "Static onboarding tree. Copy is final and must appear on screen exactly as written. Node kinds: screen (no question, one button), question (one tap on an option), landing (terminal, see landings.json), profile (a question that writes a Profile field). next may be a node id, a landing id, or an object {if: <profile field>, then: <id>, else: <id>}. showIf hides an option when the profile condition is false. skipIf skips a node when the profile field is already set. optionsFrom: drawings means the options are the drawing set for that field, rendered as drawings, not words.",
+  "start": "S0",
+  "nodes": {
+    "S0": {
+      "kind": "screen",
+      "text": "This is you in fifteen years.\nEverything starts in the middle. It moves with what you do, both ways.",
+      "figure": "unpersonalised, all panels at step 2",
+      "button": "Go on",
+      "next": "Q1"
+    },
+    "Q1": {
+      "kind": "question",
+      "text": "Which one is furthest from where you want it?",
+      "options": [
+        {
+          "id": "body",
+          "label": "Body",
+          "sub": "How you look. How you feel in it.",
+          "render": "panel card",
+          "next": "Q2B"
+        },
+        {
+          "id": "head",
+          "label": "Head",
+          "sub": "Calm, focus, doing what you said you'd do.",
+          "render": "panel card",
+          "next": "Q2H"
+        },
+        {
+          "id": "people",
+          "label": "People",
+          "sub": "Friends. Who you call, who calls you.",
+          "render": "panel card",
+          "next": "Q2P"
+        },
+        {
+          "id": "partner",
+          "label": "Partner",
+          "sub": "Someone to come home to. Or the one already there.",
+          "render": "panel card",
+          "next": "Q2N"
+        },
+        {
+          "id": "money",
+          "label": "Money",
+          "sub": "What's in the account, and where it goes.",
+          "render": "panel card",
+          "next": "Q2M"
+        },
+        {
+          "id": "none",
+          "label": "None of them. I'm here to keep it that way.",
+          "render": "text row",
+          "next": "Z",
+          "skipMore": true
+        }
+      ],
+      "_note": "On the second visit (from QMORE) the card already chosen is removed and the 'none' row is not shown."
+    },
+    "Q2B": {
+      "kind": "question",
+      "text": "What's the main thing?",
+      "options": [
+        {
+          "label": "The weight.",
+          "next": "Q3Ba"
+        },
+        {
+          "label": "No strength. No shape.",
+          "next": "Q3Bb"
+        },
+        {
+          "label": "Tired all the time.",
+          "next": "B4"
+        },
+        {
+          "label": "I've let myself go. Hair, skin, clothes.",
+          "next": "B5"
+        },
+        {
+          "label": "All of it, a bit.",
+          "next": "B6"
+        }
+      ]
+    },
+    "Q3Ba": {
+      "kind": "question",
+      "text": "Which is more true?",
+      "options": [
+        {
+          "label": "I eat too much of the wrong things.",
+          "next": "B1"
+        },
+        {
+          "label": "I barely move.",
+          "next": "B2"
+        }
+      ]
+    },
+    "Q3Bb": {
+      "kind": "question",
+      "text": "Where would you train?",
+      "options": [
+        {
+          "label": "A gym.",
+          "next": "B3",
+          "sets": {
+            "gym": true
+          }
+        },
+        {
+          "label": "At home. Some kit.",
+          "next": "B3"
+        },
+        {
+          "label": "Nowhere yet.",
+          "next": "B3n"
+        }
+      ]
+    },
+    "Q2H": {
+      "kind": "question",
+      "text": "What's the main thing?",
+      "options": [
+        {
+          "label": "I put things off.",
+          "next": "Q3Ha"
+        },
+        {
+          "label": "My head won't settle.",
+          "next": "Q3Hb"
+        },
+        {
+          "label": "I say I'll do things and don't.",
+          "next": "H5"
+        },
+        {
+          "label": "I feel behind.",
+          "next": "H6"
+        },
+        {
+          "label": "Foggy. Can't hold a thought.",
+          "next": "Q3Hc"
+        },
+        {
+          "label": "All of it, a bit.",
+          "next": "H8"
+        }
+      ]
+    },
+    "Q3Ha": {
+      "kind": "question",
+      "text": "Where does the time go instead?",
+      "options": [
+        {
+          "label": "The phone.",
+          "next": "H1"
+        },
+        {
+          "label": "Anything but the thing.",
+          "next": "H2"
+        }
+      ]
+    },
+    "Q3Hb": {
+      "kind": "question",
+      "text": "When is it worst?",
+      "options": [
+        {
+          "label": "At night.",
+          "next": "H3"
+        },
+        {
+          "label": "All day.",
+          "next": "H4"
+        }
+      ]
+    },
+    "Q3Hc": {
+      "kind": "question",
+      "text": "Do you sleep enough?",
+      "options": [
+        {
+          "label": "Yes.",
+          "next": "H7a"
+        },
+        {
+          "label": "No.",
+          "next": "H7b"
+        },
+        {
+          "label": "No idea.",
+          "next": "H7b"
+        }
+      ]
+    },
+    "Q2P": {
+      "kind": "question",
+      "text": "What's the shape of it?",
+      "options": [
+        {
+          "label": "I've lost touch with people I like.",
+          "next": "P1"
+        },
+        {
+          "label": "There aren't many people to lose touch with.",
+          "next": "Q3Pa"
+        },
+        {
+          "label": "I have people. I never see them.",
+          "next": "Q3Pb"
+        },
+        {
+          "label": "I go quiet around people.",
+          "next": "P4"
+        },
+        {
+          "label": "It's family. I don't call.",
+          "next": "P5"
+        }
+      ]
+    },
+    "Q3Pa": {
+      "kind": "question",
+      "text": "Is there anything you go to every week? A club, a class, a game, a team.",
+      "options": [
+        {
+          "label": "Yes.",
+          "next": "P2y"
+        },
+        {
+          "label": "No.",
+          "next": "P2n"
+        }
+      ]
+    },
+    "Q3Pb": {
+      "kind": "question",
+      "text": "Could you have four people over next month, without cooking?",
+      "options": [
+        {
+          "label": "Yes.",
+          "next": "P3y"
+        },
+        {
+          "label": "No.",
+          "next": "P3n"
+        }
+      ]
+    },
+    "Q2N": {
+      "kind": "profile",
+      "field": "partner",
+      "text": "Is there someone?",
+      "options": [
+        {
+          "label": "Yes.",
+          "value": true,
+          "next": "Q3Ny"
+        },
+        {
+          "label": "No.",
+          "value": false,
+          "next": "Q3Nn"
+        }
+      ]
+    },
+    "Q3Ny": {
+      "kind": "profile",
+      "field": "children",
+      "text": "Children?",
+      "options": [
+        {
+          "label": "Yes.",
+          "value": true,
+          "next": "Q4Ny"
+        },
+        {
+          "label": "No.",
+          "value": false,
+          "next": "Q4Ny"
+        }
+      ]
+    },
+    "Q4Ny": {
+      "kind": "question",
+      "text": "What's true?",
+      "options": [
+        {
+          "label": "We're good. I want to keep it that way.",
+          "next": "Y1"
+        },
+        {
+          "label": "We don't talk about anything that matters.",
+          "next": "Y2"
+        },
+        {
+          "label": "It's all logistics now.",
+          "next": {
+            "if": "children",
+            "then": "Y3",
+            "else": "Y3n"
+          }
+        },
+        {
+          "label": "We're thinking about children.",
+          "next": "Y4",
+          "showIf": {
+            "children": false
+          }
+        },
+        {
+          "label": "I'm not sure about us.",
+          "next": "Y5"
+        }
+      ]
+    },
+    "Q3Nn": {
+      "kind": "question",
+      "text": "What's true?",
+      "options": [
+        {
+          "label": "I'm not meeting anyone.",
+          "next": "N1"
+        },
+        {
+          "label": "I meet people. It goes nowhere.",
+          "next": "N2"
+        },
+        {
+          "label": "I'm not ready. I'd sort myself out first.",
+          "next": "N3"
+        }
+      ]
+    },
+    "Q2M": {
+      "kind": "question",
+      "text": "What's the main thing?",
+      "options": [
+        {
+          "label": "Nothing gets saved.",
+          "next": "M1"
+        },
+        {
+          "label": "I don't know where it goes.",
+          "next": "M2"
+        },
+        {
+          "label": "I don't earn enough.",
+          "next": "Q3M_low"
+        },
+        {
+          "label": "Debt.",
+          "next": "M4"
+        },
+        {
+          "label": "It's fine. I want it to grow.",
+          "next": "Q3M_grow"
+        }
+      ]
+    },
+    "Q3M_low": {
+      "kind": "question",
+      "text": "Employed, or your own thing?",
+      "options": [
+        {
+          "label": "Employed.",
+          "next": "M3e",
+          "sets": {
+            "employed": true
+          }
+        },
+        {
+          "label": "My own thing.",
+          "next": "M3s",
+          "sets": {
+            "self-employed": true
+          }
+        },
+        {
+          "label": "Both.",
+          "next": "M3s",
+          "sets": {
+            "employed": true,
+            "self-employed": true
+          }
+        }
+      ]
+    },
+    "Q3M_grow": {
+      "kind": "question",
+      "text": "Employed, or your own thing?",
+      "options": [
+        {
+          "label": "Employed.",
+          "next": "M5e",
+          "sets": {
+            "employed": true
+          }
+        },
+        {
+          "label": "My own thing.",
+          "next": "M5s",
+          "sets": {
+            "self-employed": true
+          }
+        },
+        {
+          "label": "Both.",
+          "next": "M5s",
+          "sets": {
+            "employed": true,
+            "self-employed": true
+          }
+        }
+      ]
+    },
+    "QMORE": {
+      "kind": "question",
+      "text": "One more, or is that it?",
+      "options": [
+        {
+          "label": "One more.",
+          "next": "Q1"
+        },
+        {
+          "label": "That's it.",
+          "next": "SIT"
+        }
+      ],
+      "_note": "Shown once, after the first landing. Not shown after a second landing, and not shown when Q1 was answered 'none'. After the second landing go straight to SIT."
+    },
+    "SIT": {
+      "kind": "screen",
+      "text": "Two things the drawing needs.",
+      "next": "SIT_partner",
+      "skipIf": {
+        "partner": "set",
+        "children": "set"
+      },
+      "_note": "Screen and both questions are skipped when the Partner branch already answered them. This screen has no button of its own, it is a header shown above SIT_partner."
+    },
+    "SIT_partner": {
+      "kind": "profile",
+      "field": "partner",
+      "text": "Is there someone?",
+      "skipIf": {
+        "partner": "set"
+      },
+      "options": [
+        {
+          "label": "Yes.",
+          "value": true,
+          "next": "SIT_children"
+        },
+        {
+          "label": "No.",
+          "value": false,
+          "next": "SIT_children"
+        }
+      ]
+    },
+    "SIT_children": {
+      "kind": "profile",
+      "field": "children",
+      "text": "Children?",
+      "skipIf": {
+        "children": "set"
+      },
+      "options": [
+        {
+          "label": "Yes.",
+          "value": true,
+          "next": "FIG_gender"
+        },
+        {
+          "label": "No.",
+          "value": false,
+          "next": "FIG_gender"
+        }
+      ],
+      "_note": "Answering yes seeds nothing. Off-panel seeds are forbidden."
+    },
+    "FIG_gender": {
+      "kind": "profile",
+      "field": "gender",
+      "text": "Now the figure. Which one?",
+      "optionsFrom": "drawings",
+      "next": "FIG_hair"
+    },
+    "FIG_hair": {
+      "kind": "profile",
+      "field": "hair",
+      "text": "Hair?",
+      "optionsFrom": "drawings",
+      "next": "LAND",
+      "_note": "The drawing set must include a 'none' option because H033 requires hair."
+    },
+    "LAND": {
+      "kind": "screen",
+      "figure": "personalised from profile, all panels at step 2",
+      "text": "Fifteen years out. Everything in the middle.\n{countLine}",
+      "countLine": {
+        "0": "Nothing due today.",
+        "1": "One box today.",
+        "2": "Two boxes today.",
+        "3": "Three boxes today.",
+        "4": "Four boxes today."
+      },
+      "shows": "seeded habits switched on, offers switched off with a one-tap add, nothing else. No tour, no tips.",
+      "_note": "{n} counts the seeded habits across both landings that are tickable today (daily cadence). If none are daily, the line is 'Nothing due today.' and the weekly seeds are listed under it."
+    }
+  },
+  "afterLanding": {
+    "first": "QMORE",
+    "second": "SIT",
+    "fromNone": "SIT",
+    "_note": "Where the flow goes after a landing is reached. Landings themselves are terminal for habit selection but the flow continues to the profile block."
+  }
+}
