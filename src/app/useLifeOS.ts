@@ -23,7 +23,7 @@ import {
 } from '../core/habits';
 import { buildProjection } from '../core/projection';
 import { trimLogs } from '../core/scoring';
-import type { AppState, DayLog, Projection, UserHabit } from '../core/types';
+import type { AppState, DayLog, Profile, Projection, UserHabit } from '../core/types';
 import type { Store } from '../store/types';
 
 /** Either a catalogue item to copy in, or a title for a habit the user writes themselves. */
@@ -40,6 +40,8 @@ export type LifeOS = {
   /** A soft delete — see `core/habits.ts`. */
   removeHabit: (id: string) => void;
   updateNotificationTime: (value: string | null) => void;
+  /** Shallow-merged onto the existing profile — Settings' Appearance section builds the whole `partner` object each time it changes. */
+  updateProfile: (patch: Partial<Profile>) => void;
 };
 
 export function useLifeOS(store: Store): LifeOS {
@@ -132,6 +134,15 @@ export function useLifeOS(store: Store): LifeOS {
     });
   }
 
+  function updateProfile(patch: Partial<Profile>) {
+    setState((prev) => {
+      if (!prev) return prev;
+      const next: AppState = { ...prev, profile: { ...prev.profile, ...patch } };
+      void store.save(next);
+      return next;
+    });
+  }
+
   const projection = useMemo(() => (state ? buildProjection(state, today) : null), [state, today]);
   return {
     state,
@@ -142,5 +153,6 @@ export function useLifeOS(store: Store): LifeOS {
     updateHabit,
     removeHabit,
     updateNotificationTime,
+    updateProfile,
   };
 }

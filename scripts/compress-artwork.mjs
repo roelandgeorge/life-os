@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Recompresses the artwork PNGs in public/avatar/ without touching a pixel.
+ * Recompresses the artwork PNGs in public/avatar/ and public/avatar/you/
+ * without touching a pixel.
  *
  *   npm run compress
  *
@@ -26,14 +27,31 @@
  *
  * Idempotent: running it twice finds nothing left to win and leaves the files
  * alone.
+ *
+ * Overlay slots (head, partner — kind "overlay" in scene.json) never have
+ * their alpha channel dropped, even when a particular state happens to come
+ * out fully opaque: they exist to be composited over whatever box sits behind
+ * them, and a future edit to that same state could reintroduce the soft edge
+ * the opaque-alpha check would otherwise have thrown away.
  */
 
-import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { deflateSync, inflateSync } from 'node:zlib';
 
-const AVATAR_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'avatar');
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const AVATAR_DIR = join(ROOT, 'public', 'avatar');
+const YOU_DIR = join(AVATAR_DIR, 'you');
+const SCENE = JSON.parse(readFileSync(join(ROOT, 'src', 'content', 'scene.json'), 'utf8'));
+const OVERLAY_SLOTS = new Set(SCENE.slots.filter((s) => s.kind === 'overlay').map((s) => s.slot));
+
+/** Whichever slot this file belongs to, from its basename minus the trailing state digit. */
+function isOverlayFile(file) {
+  const stem = basename(file, '.png').replace(/\d+$/, '');
+  return [...OVERLAY_SLOTS].some((slot) => stem === slot || stem.startsWith(`${slot}-`));
+}
+
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 /** CRC-32, as PNG specifies it. */
@@ -178,12 +196,22 @@ function refilter(raw, width, height, bpp) {
   return out;
 }
 
-const files = readdirSync(AVATAR_DIR).filter((f) => f.endsWith('.png'));
+function pngsIn(dir) {
+  try {
+    return readdirSync(dir).filter((f) => f.endsWith('.png'));
+  } catch {
+    return [];
+  }
+}
+
+const files = [
+  ...pngsIn(AVATAR_DIR).map((f) => ({ path: join(AVATAR_DIR, f), label: f })),
+  ...pngsIn(YOU_DIR).map((f) => ({ path: join(YOU_DIR, f), label: `you/${f}` })),
+];
 let before = 0;
 let after = 0;
 
-for (const file of files) {
-  const path = join(AVATAR_DIR, file);
+for (const { path, label } of files) {
   const original = readFileSync(path);
   const chunks = readChunks(original);
 
@@ -212,7 +240,7 @@ for (const file of files) {
     // quarter of its bytes for nothing. Dropping that channel cannot change
     // what anyone sees — opaque stays opaque — and it is the single largest
     // win available here.
-    if (colorType === 6 && isFullyOpaque(raw)) {
+    if (colorType === 6 && isFullyOpaque(raw) && !isOverlayFile(label)) {
       raw = dropAlpha(raw);
       bpp = 3;
       outColorType = 2;
@@ -223,7 +251,7 @@ for (const file of files) {
     if (unfilter(candidate, width, height, bpp).equals(raw)) {
       filtered = candidate;
     } else {
-      console.warn(`${file}: refilter round trip failed, falling back to deflate only`);
+      console.warn(`${label}: refilter round trip failed, falling back to deflate only`);
       outColorType = colorType;
     }
   }
@@ -251,10 +279,10 @@ for (const file of files) {
     writeFileSync(path, rebuilt);
     after += rebuilt.length;
     const pct = (100 * (1 - rebuilt.length / originalSize)).toFixed(0);
-    console.log(`${file.padEnd(18)} ${(originalSize / 1024).toFixed(0)} KB -> ${(rebuilt.length / 1024).toFixed(0)} KB (-${pct}%)`);
+    console.log(`${label.padEnd(24)} ${(originalSize / 1024).toFixed(0)} KB -> ${(rebuilt.length / 1024).toFixed(0)} KB (-${pct}%)`);
   } else {
     after += originalSize;
-    console.log(`${file.padEnd(18)} ${(originalSize / 1024).toFixed(0)} KB (already tight, left alone)`);
+    console.log(`${label.padEnd(24)} ${(originalSize / 1024).toFixed(0)} KB (already tight, left alone)`);
   }
 }
 

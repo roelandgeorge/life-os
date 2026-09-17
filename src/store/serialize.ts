@@ -107,15 +107,19 @@ function parseDayLogV2(v: unknown, i: number, knownHabitIds: ReadonlySet<string>
   return { date: v.date, opened: v.opened !== false, ticks };
 }
 
+function isHair(v: unknown): v is NonNullable<Profile['hair']> {
+  return v === 'blond' || v === 'dark';
+}
+
 function parseProfile(v: unknown): Profile | undefined {
   if (!isRecord(v)) return undefined;
   const profile: Profile = {};
   if (v.gender === 'male' || v.gender === 'female') profile.gender = v.gender;
-  if (typeof v.hair === 'string') profile.hair = v.hair;
+  if (isHair(v.hair)) profile.hair = v.hair;
   if (isRecord(v.partner) && typeof v.partner.wanted === 'boolean') {
     const partner: NonNullable<Profile['partner']> = { wanted: v.partner.wanted };
     if (v.partner.gender === 'male' || v.partner.gender === 'female') partner.gender = v.partner.gender;
-    if (typeof v.partner.hair === 'string') partner.hair = v.partner.hair;
+    if (isHair(v.partner.hair)) partner.hair = v.partner.hair;
     profile.partner = partner;
   }
   if (typeof v.children === 'boolean') profile.children = v.children;

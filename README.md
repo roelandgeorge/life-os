@@ -15,8 +15,9 @@ npm run typecheck
 npm run import-catalog  # regenerate src/content/catalog.json from docs/habits.csv
 npm run icons           # regenerate public/icons/*.png
 npm run placeholders    # throwaway placeholder artwork sheets
-npm run slice           # cut public/avatar/<layer>.png into <layer>1..5.png
+npm run slice           # cut any contact sheet into its five numbered states
 npm run compress        # losslessly shrink the artwork PNGs
+npm run manifest        # regenerate src/content/artwork.json from public/avatar/
 ```
 
 ## The model
@@ -70,11 +71,10 @@ set. `DayLog.ticks` is keyed by habit id, not a fixed set of domain keys.
 **Ten domains, five panels, not seven domains and three layers.** `body`,
 `head`, `network`, `partner`, `wealth` (`core/domains.ts`) replace the old
 one-domain-one-layer wiring; a domain can feed more than one panel (sleep
-and nutrition both feed `body` and `head`). `visual/layers.ts` is a
-*temporary* adapter onto the 3 PNG sets phase 1 inherited —
-body/head → `user`, network+partner → `lief`, wealth → `achtergrond`, each
-taking the minimum of the panels standing in for it. Phase 2 gives each
-panel its own artwork and this adapter collapses to the identity map.
+and nutrition both feed `body` and `head`). Phase 1 shipped this behind a
+temporary adapter onto the 3 PNG sets it inherited from v1. Phase 2
+(`docs/plan/phase-2.md`) replaced that adapter with `scene()`, giving each
+panel its own drawing directly, see "The artwork" below.
 
 **A weighted panel, not one tick equals one step.** `core/steps.ts`'s
 `panelSteps` replaces the old one-domain-one-step engine. On the day a
@@ -100,33 +100,41 @@ decisions this phase locked in.
 
 ## The artwork
 
-Three panels, five states each — 15 images in `public/avatar/`, named
-`<layer><1..5>.png`. Each panel shows the **lowest** step among the domains
-feeding it; you cannot out-train a bad diet, and averaging would let a strong
-domain hide a neglected one.
+Five slots, resolved by `scene()` (`src/visual/scene.ts`) from
+`src/content/scene.json`, replacing phase 1's collage of three shared PNG
+sets. See `docs/plan/phase-2.md` for the full design.
 
-| Panel | Driven by |
-|---|---|
-| `achtergrond` | INCOME |
-| `user` | SLEEP + SPORT + FOOD |
-| `lief` | RELATIONSHIP |
+| Slot | Kind | Panel | Variants |
+|---|---|---|---|
+| `wealth` | box | wealth | none |
+| `body` | box | body | gender |
+| `network` | box | network | none |
+| `head` | overlay on `body` | head | gender, hair |
+| `partner` | overlay on `network` | partner | gender, hair |
 
-The scene is a **collage of abutting panels**, not a stack of cut-outs: the
-background is a band across the top, the two figures sit side by side beneath
-it. Each panel is a complete picture in its own right, so there is no alpha to
-get right, no perspective to match between panels, and no seam to hide.
-`layers.ts` holds the tiling in the artwork's own pixel dimensions.
+`wealth` sits as a band across the top, `body` and `network` side by side
+beneath it, same layout as phase 1. `head` and `partner` are drawn on
+transparency and composited over their box at a fixed rect rather than baked
+into the same drawing, so a strong body and a tired face (or the reverse)
+can sit on screen at once, instead of one panel's step hiding the other's.
 
-**A domain with no panel is not in the app at all** — no artwork, no checkbox.
-ORDER and MIND are currently in that state (`visible: false` in `domains.ts`).
-A tick that changed nothing on screen would break the causal link the whole app
-rests on. `layers.test.ts` asserts the two tables agree.
+Filenames carry whichever variant axes the profile knows: `head-male-blond3`
+falls back to `head-male3`, then to `head3`, then the overlay is simply not
+drawn. A profile with nothing set at all gets the shared, variant-free
+drawings for every slot. `public/avatar/` holds the variant-free art,
+`public/avatar/you/` the variant art, fetched on first use and cached after
+rather than installed upfront, see "Decisions the spec left open" below.
 
-To replace the art, drop the files in named as above. If a generator hands you
-all five states in one wide sheet, save it as `<layer>.png` and run
-`npm run slice` — generating five states in one image keeps them far more
-consistent than five separate prompts. Every state of a panel must share its
-dimensions, or the panels stop tiling.
+**A domain with no panel is not in the app at all**, no artwork, no
+checkbox. A tick that changed nothing on screen would break the causal link
+the whole app rests on.
+
+To add or replace art, follow `docs/artwork-guide.md`: the exact rects, the
+twelve contact sheets to produce, the style preamble to keep byte-identical
+across prompts, and the checklist of all sixty filenames. `npm run slice`
+cuts a wide sheet into its five states, `npm run manifest` regenerates the
+inventory `scene()` reads against, and `artwork.test.ts` fails loudly if the
+two drift apart.
 
 ## Departures from the spec
 
@@ -283,9 +291,14 @@ the reason with a retry. The app also asks for `navigator.storage.persist()` on
 boot: without it IndexedDB is best-effort and a browser short on disk may clear
 400 days of history with no warning.
 
-**The avatar layers are precached explicitly** (`vite.config.ts`). Workbox's
-default glob leaves them out, and a cached shell with an empty frame is worse
-offline than no cache at all.
+**The avatar art is split between precache and runtime cache**
+(`vite.config.ts`). Workbox's default glob leaves it out entirely, and a
+cached shell with an empty frame is worse offline than no cache at all, so
+the variant-free slots (`avatar/*.png`) are precached explicitly. The ~60
+variant drawings under `avatar/you/` would triple the install for
+appearances most devices will never show, so those are fetched on first use
+through a CacheFirst runtime rule instead, warmed in the background right
+after first render by `app/warmArtwork.ts`.
 
 ## Push notifications
 
@@ -388,10 +401,8 @@ docs/plan/     the v2 roadmap and per-phase plans
 
 ## The contract
 
-`habits -> panelSteps() -> layerSteps() -> <Avatar>`. The renderer sees layer
-steps and nothing else — not scores, not weights, not a profile, not why a
-layer sits where it does. That is what keeps the model and the artwork
-independently replaceable: swap the PNGs and no code changes; change the
-panel rules and no artwork changes. `layerSteps()` is itself a temporary
-stand-in (see "v2 model" above) — phase 2 removes it and panels render
-directly.
+`habits -> panelSteps() -> scene() -> <Avatar>`. The renderer paints a
+resolved `Scene` and nothing else, not scores, not weights, not a profile,
+not why a slot resolved to the file it did. That is what keeps the model and
+the artwork independently replaceable: swap the PNGs and no code changes,
+change the panel rules and no artwork changes.

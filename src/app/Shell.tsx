@@ -14,12 +14,23 @@ import { store } from './store';
 import { useLifeOS } from './useLifeOS';
 import { weeklyDigest } from '../core/atRisk';
 import { syncDigest } from './push';
+import { scene } from '../visual/scene';
+import { warmArtwork } from './warmArtwork';
 
 type Tab = 'main' | 'history' | 'settings';
 
 export function Shell() {
-  const { state, projection, today, toggleHabit, addHabit, updateHabit, removeHabit, updateNotificationTime } =
-    useLifeOS(store);
+  const {
+    state,
+    projection,
+    today,
+    toggleHabit,
+    addHabit,
+    updateHabit,
+    removeHabit,
+    updateNotificationTime,
+    updateProfile,
+  } = useLifeOS(store);
   const [tab, setTab] = useState<Tab>('main');
 
   // Refresh what the server knows about the weekly-or-longer commitments,
@@ -29,6 +40,21 @@ export function Shell() {
   useEffect(() => {
     if (digestKey) void syncDigest({ entries: JSON.parse(digestKey) });
   }, [digestKey]);
+
+  // Off the main path, once per distinct profile rather than once per render
+  // (`projection.preview` moves every tick): the second launch should be
+  // offline-capable without the first one paying for it.
+  const profileKey = state ? JSON.stringify(state.profile ?? null) : null;
+  useEffect(() => {
+    if (!state || !projection) return;
+    const run = () => void warmArtwork(scene(projection.preview, state.profile));
+    if (typeof window.requestIdleCallback === 'function') {
+      const handle = window.requestIdleCallback(run);
+      return () => window.cancelIdleCallback(handle);
+    }
+    const timer = setTimeout(run, 0);
+    return () => clearTimeout(timer);
+  }, [profileKey]);
 
   if (!state || !projection) {
     return (
@@ -54,6 +80,7 @@ export function Shell() {
             onAddHabit={addHabit}
             onUpdateHabit={updateHabit}
             onRemoveHabit={removeHabit}
+            onUpdateProfile={updateProfile}
           />
         )}
       </div>

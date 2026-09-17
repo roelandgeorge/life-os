@@ -12,9 +12,10 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p api",
     "import-catalog": "node scripts/import-catalog.mjs",
     "icons": "node scripts/generate-icons.mjs",
-    "slice": "node scripts/slice-sheets.mjs",
-    "placeholders": "node scripts/make-placeholder-sheets.mjs",
-    "compress": "node scripts/compress-artwork.mjs"
+    "slice": "node scripts/slice-sheets.mjs && node scripts/build-artwork-manifest.mjs",
+    "placeholders": "node scripts/make-placeholder-sheets.mjs && node scripts/build-artwork-manifest.mjs",
+    "compress": "node scripts/compress-artwork.mjs",
+    "manifest": "node scripts/build-artwork-manifest.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.8.0",

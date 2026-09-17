@@ -1,0 +1,68 @@
+{
+  "frame": { "w": 682, "h": 1033 },
+  "defaultAppearance": { "gender": "male", "hair": "blond" },
+  "slots": [
+    {
+      "slot": "wealth",
+      "kind": "box",
+      "panel": "wealth",
+      "appearance": "none",
+      "rect": { "x": 0, "y": 0, "w": 682, "h": 401 },
+      "order": 0,
+      "variants": []
+    },
+    {
+      "slot": "body",
+      "kind": "box",
+      "panel": "body",
+      "appearance": "user",
+      "rect": { "x": 0, "y": 401, "w": 409, "h": 632 },
+      "order": 1,
+      "variants": ["gender"]
+    },
+    {
+      "slot": "network",
+      "kind": "box",
+      "panel": "network",
+      "appearance": "none",
+      "rect": { "x": 409, "y": 401, "w": 273, "h": 632 },
+      "order": 2,
+      "variants": []
+    },
+    {
+      "slot": "head",
+      "kind": "overlay",
+      "panel": "head",
+      "appearance": "user",
+      "rect": { "x": 123, "y": 439, "w": 164, "h": 164 },
+      "order": 3,
+      "variants": ["gender", "hair"]
+    },
+    {
+      "slot": "partner",
+      "kind": "overlay",
+      "panel": "partner",
+      "appearance": "partner",
+      "rect": { "x": 491, "y": 515, "w": 169, "h": 518 },
+      "order": 4,
+      "requires": ["partner"],
+      "variants": ["gender", "hair"]
+    },
+    {
+      "slot": "accessory-body",
+      "kind": "overlay",
+      "appearance": "none",
+      "rect": { "x": 0, "y": 401, "w": 409, "h": 632 },
+      "order": 5,
+      "variants": []
+    },
+    {
+      "slot": "accessory-wealth",
+      "kind": "overlay",
+      "appearance": "none",
+      "rect": { "x": 0, "y": 0, "w": 682, "h": 401 },
+      "order": 6,
+      "variants": []
+    }
+  ]
+}

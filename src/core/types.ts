@@ -48,15 +48,17 @@ export type DayLog = {
 
 export type Gender = 'male' | 'female';
 
+/** Closed so `scene.ts`'s filename axes and a stored profile can never disagree. */
+export type Hair = 'blond' | 'dark';
+
 /**
- * Filled in by onboarding (phase 4). Optional throughout phase 1 — nothing
- * here is read yet, but the shape is fixed now so the catalogue filters
- * (`core/catalog.ts`) and the migration have somewhere to write.
+ * Settable now from Settings' Appearance section (§2.5 of docs/plan/phase-2.md);
+ * onboarding (phase 4) writes the same fields and replaces that section.
  */
 export type Profile = {
   gender?: Gender;
-  hair?: string;
-  partner?: { wanted: boolean; gender?: Gender; hair?: string };
+  hair?: Hair;
+  partner?: { wanted: boolean; gender?: Gender; hair?: Hair };
   children?: boolean;
   domainOrder?: readonly DomainKey[];
   personaId?: string;

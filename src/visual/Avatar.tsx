@@ -1,40 +1,29 @@
 /**
- * The projection: one scene, assembled from three abutting panels (§3 — still
- * one figure on screen, just drawn in pieces).
+ * The renderer. Paints a resolved `Scene` and nothing else — no steps, no
+ * panels, no weights, no profile. That ignorance is the contract: swap the
+ * PNGs or change the panel rules and this file does not change, only
+ * `scene()` does.
  *
- * Takes layer steps and nothing else — no scores, no profile. The renderer
- * cannot know why a layer is at state 2, only that it is, which is what keeps
- * the step model and the artwork independently replaceable: swap the PNGs and
- * this file does not change.
- *
- * Panels are swapped outright rather than cross-faded. Blending two states
+ * Slots are swapped outright rather than cross-faded. Blending two states
  * would show two faces at once, and a picture the user has to squint past is
  * worse than an honest jump.
  */
 
-import { FRAME, LAYERS, type LayerSteps } from './layers';
-
-/**
- * Artwork lives in public/avatar/ as `<layer><1..5>.png` — user1.png through
- * user5.png, and so on. The only place in the app that knows a filename.
- */
-function src(layer: string, step: number): string {
-  return `${import.meta.env.BASE_URL}avatar/${layer}${step + 1}.png`;
-}
+import { FRAME, type Scene } from './scene';
 
 const pct = (n: number, of: number) => `${(100 * n) / of}%`;
 
-export function Avatar({ steps, className }: { steps: LayerSteps; className?: string }) {
+export function Avatar({ scene, className }: { scene: Scene; className?: string }) {
   return (
     <div
       className={className ? `avatar ${className}` : 'avatar'}
       style={{ aspectRatio: `${FRAME.w} / ${FRAME.h}` }}
     >
-      {LAYERS.map(({ key, rect }) => (
+      {scene.map(({ slot, src, rect }) => (
         <img
-          key={key}
-          className={`avatar-layer avatar-${key}`}
-          src={src(key, steps[key])}
+          key={slot}
+          className={`avatar-layer avatar-${slot}`}
+          src={src}
           alt=""
           draggable={false}
           style={{
