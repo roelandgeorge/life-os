@@ -75,6 +75,14 @@ export const en = {
 
   'settings.title': 'Settings',
 
+  'settings.appearance': 'Appearance',
+  'settings.appearance.note': 'Decides which drawing of you and your partner the picture uses.',
+  'settings.appearance.gender.male': 'Male',
+  'settings.appearance.gender.female': 'Female',
+  'settings.appearance.hair.blond': 'Blond',
+  'settings.appearance.hair.dark': 'Dark',
+  'settings.appearance.partner.wanted': 'I have a partner',
+
   'settings.habits': 'Your habits',
   'settings.habits.note': 'Weight decides how much a habit counts towards the picture. A habit with no domain still counts for streaks but moves nothing.',
   'settings.habits.title.placeholder': 'Habit name',

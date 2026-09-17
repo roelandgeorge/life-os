@@ -13,7 +13,7 @@ import { DOMAINS, type DomainKey } from '../core/domains';
 import type { HabitPatch } from '../core/habits';
 import { MAX_HABIT_TITLE_LENGTH, canAddCustomHabit } from '../core/habits';
 import type { DateKey } from '../core/dates';
-import type { AppState, Cadence } from '../core/types';
+import type { AppState, Cadence, Gender, Hair, Profile } from '../core/types';
 import { en, type I18nKey } from '../i18n/en';
 import { ImportError } from '../store/serialize';
 import type { Store } from '../store/types';
@@ -36,6 +36,7 @@ export function SettingsScreen({
   onAddHabit,
   onUpdateHabit,
   onRemoveHabit,
+  onUpdateProfile,
 }: {
   state: AppState;
   today: DateKey;
@@ -44,6 +45,7 @@ export function SettingsScreen({
   onAddHabit: (source: NewHabitSource) => void;
   onUpdateHabit: (id: string, patch: HabitPatch) => void;
   onRemoveHabit: (id: string) => void;
+  onUpdateProfile: (patch: Partial<Profile>) => void;
 }) {
   const [message, setMessage] = useState<string | null>(null);
   const [pushError, setPushError] = useState<string | null>(null);
@@ -128,6 +130,8 @@ export function SettingsScreen({
   return (
     <div className="settings-screen">
       <h1 className="headline">{en['settings.title']}</h1>
+
+      <AppearanceSection profile={state.profile} onUpdateProfile={onUpdateProfile} />
 
       <section>
         <h2>{en['settings.habits']}</h2>
@@ -314,6 +318,92 @@ export function SettingsScreen({
         </button>
       </section>
     </div>
+  );
+}
+
+/**
+ * A bare Appearance section (§2.5 of docs/plan/phase-2.md) — gender, hair and
+ * partner, settable now rather than waiting for phase 4's onboarding, which
+ * writes the same `Profile` fields and replaces this.
+ */
+/**
+ * `exactOptionalPropertyTypes` means a partner patch can never carry
+ * `gender: undefined` to mean "leave it be" — an absent key is the only way
+ * to say that. This keeps whichever half the caller didn't just change.
+ */
+function withPartner(
+  current: Profile['partner'],
+  patch: { wanted: boolean; gender?: Gender; hair?: Hair },
+): NonNullable<Profile['partner']> {
+  const gender = patch.gender ?? current?.gender;
+  const hair = patch.hair ?? current?.hair;
+  return {
+    wanted: patch.wanted,
+    ...(gender !== undefined ? { gender } : {}),
+    ...(hair !== undefined ? { hair } : {}),
+  };
+}
+
+function AppearanceSection({
+  profile,
+  onUpdateProfile,
+}: {
+  profile: Profile | undefined;
+  onUpdateProfile: (patch: Partial<Profile>) => void;
+}) {
+  const partner = profile?.partner;
+  const partnerWanted = partner?.wanted === true;
+
+  return (
+    <section>
+      <h2>{en['settings.appearance']}</h2>
+      <p className="note">{en['settings.appearance.note']}</p>
+
+      <div className="row">
+        <GenderSelect value={profile?.gender ?? 'male'} onChange={(gender) => onUpdateProfile({ gender })} />
+        <HairSelect value={profile?.hair ?? 'blond'} onChange={(hair) => onUpdateProfile({ hair })} />
+      </div>
+
+      <label className="notification-row">
+        <input
+          type="checkbox"
+          checked={partnerWanted}
+          onChange={(e) => onUpdateProfile({ partner: withPartner(partner, { wanted: e.target.checked }) })}
+        />
+        <span>{en['settings.appearance.partner.wanted']}</span>
+      </label>
+
+      {partnerWanted && (
+        <div className="row">
+          <GenderSelect
+            value={partner?.gender ?? 'male'}
+            onChange={(gender) => onUpdateProfile({ partner: withPartner(partner, { wanted: true, gender }) })}
+          />
+          <HairSelect
+            value={partner?.hair ?? 'blond'}
+            onChange={(hair) => onUpdateProfile({ partner: withPartner(partner, { wanted: true, hair }) })}
+          />
+        </div>
+      )}
+    </section>
+  );
+}
+
+function GenderSelect({ value, onChange }: { value: Gender; onChange: (v: Gender) => void }) {
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value as Gender)}>
+      <option value="male">{en['settings.appearance.gender.male']}</option>
+      <option value="female">{en['settings.appearance.gender.female']}</option>
+    </select>
+  );
+}
+
+function HairSelect({ value, onChange }: { value: Hair; onChange: (v: Hair) => void }) {
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value as Hair)}>
+      <option value="blond">{en['settings.appearance.hair.blond']}</option>
+      <option value="dark">{en['settings.appearance.hair.dark']}</option>
+    </select>
   );
 }
 

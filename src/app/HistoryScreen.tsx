@@ -26,6 +26,9 @@ export function HistoryScreen({ state, today }: { state: AppState; today: DateKe
   const days = rangeDates(addDays(today, -(HISTORY_DAYS - 1)), today);
   const strip = fullDayStrip(state.logs, state.habits, today, 30);
   const perDay = days.map((day) => panelSteps(state.logs, state.habits, day));
+  // Matches scene.ts's own requires filter: hidden once the profile says no,
+  // shown while it hasn't said — the picture and the history should never disagree.
+  const panels = PANEL_KEYS.filter((p) => p !== 'partner' || state.profile?.partner?.wanted !== false);
 
   const tracked = state.habits.filter(
     (h) => h.removedDate === undefined && isActiveOn(h, today) && cadencePeriodDays(h.cadence) !== null,
@@ -39,7 +42,7 @@ export function HistoryScreen({ state, today }: { state: AppState; today: DateKe
       <p className="subhead">{t('history.subhead', { days: HISTORY_DAYS })}</p>
 
       <div className="sparklines">
-        {PANEL_KEYS.map((panel) => {
+        {panels.map((panel) => {
           const values = perDay.map((s) => s[panel]);
           const current = values[values.length - 1] ?? 0;
           return (

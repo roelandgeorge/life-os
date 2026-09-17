@@ -18,8 +18,17 @@ import { syncDigest } from './push';
 type Tab = 'main' | 'history' | 'settings';
 
 export function Shell() {
-  const { state, projection, today, toggleHabit, addHabit, updateHabit, removeHabit, updateNotificationTime } =
-    useLifeOS(store);
+  const {
+    state,
+    projection,
+    today,
+    toggleHabit,
+    addHabit,
+    updateHabit,
+    removeHabit,
+    updateNotificationTime,
+    updateProfile,
+  } = useLifeOS(store);
   const [tab, setTab] = useState<Tab>('main');
 
   // Refresh what the server knows about the weekly-or-longer commitments,
@@ -54,6 +63,7 @@ export function Shell() {
             onAddHabit={addHabit}
             onUpdateHabit={updateHabit}
             onRemoveHabit={removeHabit}
+            onUpdateProfile={updateProfile}
           />
         )}
       </div>

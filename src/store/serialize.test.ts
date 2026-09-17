@@ -129,13 +129,32 @@ describe('export/import', () => {
 
   it('carries a profile through a round trip when present', () => {
     const state = sampleState();
-    state.profile = { gender: 'male', partner: { wanted: true, gender: 'female' } };
+    state.profile = {
+      gender: 'male',
+      hair: 'blond',
+      partner: { wanted: true, gender: 'female', hair: 'dark' },
+    };
     const restored = deserialize(serialize(state));
-    expect(restored.profile).toEqual({ gender: 'male', partner: { wanted: true, gender: 'female' } });
+    expect(restored.profile).toEqual({
+      gender: 'male',
+      hair: 'blond',
+      partner: { wanted: true, gender: 'female', hair: 'dark' },
+    });
   });
 
   it('omits profile entirely rather than storing an empty object', () => {
     const restored = deserialize(serialize(sampleState()));
     expect(restored.profile).toBeUndefined();
+  });
+
+  it('drops a hair value outside the closed union rather than storing it', () => {
+    const json = JSON.stringify({
+      schemaVersion: 2,
+      exportedAt: '',
+      state: { ...sampleState(), profile: { hair: 'ginger', partner: { wanted: true, hair: 'also-not-real' } } },
+    });
+    const restored = deserialize(json);
+    expect(restored.profile?.hair).toBeUndefined();
+    expect(restored.profile?.partner).toEqual({ wanted: true });
   });
 });
