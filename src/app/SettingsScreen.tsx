@@ -8,12 +8,11 @@
 import { useRef, useState } from 'react';
 import { disablePush, enablePush, testPush, type PushResult } from './push';
 import { weeklyDigest } from '../core/atRisk';
-import { CATALOG, catalogById } from '../core/catalog';
 import { DOMAINS, type DomainKey } from '../core/domains';
 import type { HabitPatch } from '../core/habits';
 import { MAX_HABIT_TITLE_LENGTH, canAddCustomHabit } from '../core/habits';
 import type { DateKey } from '../core/dates';
-import type { AppState, Cadence, Gender, Hair, Profile } from '../core/types';
+import type { AppState, Cadence, Profile } from '../core/types';
 import { en, type I18nKey } from '../i18n/en';
 import { ImportError } from '../store/serialize';
 import type { Store } from '../store/types';
@@ -24,6 +23,8 @@ import { Field } from '../ui/Field';
 import { Note } from '../ui/Note';
 import { SectionHeading } from '../ui/SectionHeading';
 import { Select } from '../ui/Select';
+import { DiscoverScreen } from './DiscoverScreen';
+import { ChildrenField, DomainOrderField, GenderField, HairField, PartnerFields } from './ProfileFields';
 import type { NewHabitSource } from './useLifeOS';
 
 const NAMED_CADENCES: readonly Cadence[] = ['daily', 'weekly', 'monthly'];
@@ -60,7 +61,7 @@ export function SettingsScreen({
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; detail: string } | null>(null);
   const [newTitle, setNewTitle] = useState('');
-  const [catalogChoice, setCatalogChoice] = useState(CATALOG[0]?.id ?? '');
+  const [discoverOpen, setDiscoverOpen] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const habits = state.habits.filter((h) => h.removedDate === undefined);
@@ -129,16 +130,15 @@ export function SettingsScreen({
     setNewTitle('');
   }
 
-  function handleAddFromCatalog() {
-    if (!catalogChoice) return;
-    onAddHabit({ catalogId: catalogChoice });
+  if (discoverOpen) {
+    return <DiscoverScreen state={state} onAddHabit={onAddHabit} onClose={() => setDiscoverOpen(false)} />;
   }
 
   return (
     <div className="settings-screen">
       <h1 className="headline">{en['settings.title']}</h1>
 
-      <AppearanceSection profile={state.profile} onUpdateProfile={onUpdateProfile} />
+      <ProfileSection profile={state.profile} onUpdateProfile={onUpdateProfile} />
 
       <section>
         <SectionHeading>{en['settings.habits']}</SectionHeading>
@@ -233,21 +233,7 @@ export function SettingsScreen({
       <section>
         <SectionHeading>{en['settings.catalog']}</SectionHeading>
         <Note>{en['settings.catalog.note']}</Note>
-        <div className="row">
-          <Select value={catalogChoice} onChange={(e) => setCatalogChoice(e.target.value)}>
-            {DOMAINS.map((d) => (
-              <optgroup key={d.key} label={en[d.label as I18nKey]}>
-                {CATALOG.filter((item) => item.domain === d.key).map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.title}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </Select>
-          <Button onClick={handleAddFromCatalog}>{en['settings.catalog.add']}</Button>
-        </div>
-        {catalogChoice && catalogById(catalogChoice) && <Note>{catalogById(catalogChoice)?.note}</Note>}
+        <Button onClick={() => setDiscoverOpen(true)}>{en['settings.catalog.discover']}</Button>
       </section>
 
       <section>
@@ -308,87 +294,35 @@ export function SettingsScreen({
 }
 
 /**
- * A bare Appearance section (§2.5 of docs/plan/phase-2.md) — gender, hair and
- * partner, settable now rather than waiting for phase 4's onboarding, which
- * writes the same `Profile` fields and replaces this.
+ * The Profile section (§4.8 of docs/plan/phase-4.md) — gender, hair, partner,
+ * children and domain order, replacing the old bare Appearance section.
+ * Built from the same ProfileFields onboarding uses, so a control changed
+ * here is literally the same control met during onboarding.
  */
-/**
- * `exactOptionalPropertyTypes` means a partner patch can never carry
- * `gender: undefined` to mean "leave it be" — an absent key is the only way
- * to say that. This keeps whichever half the caller didn't just change.
- */
-function withPartner(
-  current: Profile['partner'],
-  patch: { wanted: boolean; gender?: Gender; hair?: Hair },
-): NonNullable<Profile['partner']> {
-  const gender = patch.gender ?? current?.gender;
-  const hair = patch.hair ?? current?.hair;
-  return {
-    wanted: patch.wanted,
-    ...(gender !== undefined ? { gender } : {}),
-    ...(hair !== undefined ? { hair } : {}),
-  };
-}
-
-function AppearanceSection({
+function ProfileSection({
   profile,
   onUpdateProfile,
 }: {
   profile: Profile | undefined;
   onUpdateProfile: (patch: Partial<Profile>) => void;
 }) {
-  const partner = profile?.partner;
-  const partnerWanted = partner?.wanted === true;
-
   return (
     <section>
       <SectionHeading>{en['settings.appearance']}</SectionHeading>
       <Note>{en['settings.appearance.note']}</Note>
 
       <div className="row">
-        <GenderSelect value={profile?.gender ?? 'male'} onChange={(gender) => onUpdateProfile({ gender })} />
-        <HairSelect value={profile?.hair ?? 'blond'} onChange={(hair) => onUpdateProfile({ hair })} />
+        <GenderField value={profile?.gender} onChange={(gender) => onUpdateProfile({ gender })} />
+        <HairField value={profile?.hair} onChange={(hair) => onUpdateProfile({ hair })} />
       </div>
 
-      <label className="notification-row">
-        <Checkbox
-          checked={partnerWanted}
-          onChange={(e) => onUpdateProfile({ partner: withPartner(partner, { wanted: e.target.checked }) })}
-        />
-        <span>{en['settings.appearance.partner.wanted']}</span>
-      </label>
+      <PartnerFields value={profile?.partner} onChange={(partner) => onUpdateProfile({ partner })} />
+      <ChildrenField value={profile?.children} onChange={(children) => onUpdateProfile({ children })} />
 
-      {partnerWanted && (
-        <div className="row">
-          <GenderSelect
-            value={partner?.gender ?? 'male'}
-            onChange={(gender) => onUpdateProfile({ partner: withPartner(partner, { wanted: true, gender }) })}
-          />
-          <HairSelect
-            value={partner?.hair ?? 'blond'}
-            onChange={(hair) => onUpdateProfile({ partner: withPartner(partner, { wanted: true, hair }) })}
-          />
-        </div>
-      )}
+      <SectionHeading>{en['settings.domainOrder']}</SectionHeading>
+      <Note>{en['settings.domainOrder.note']}</Note>
+      <DomainOrderField order={profile?.domainOrder} onChange={(domainOrder) => onUpdateProfile({ domainOrder })} />
     </section>
-  );
-}
-
-function GenderSelect({ value, onChange }: { value: Gender; onChange: (v: Gender) => void }) {
-  return (
-    <Select value={value} onChange={(e) => onChange(e.target.value as Gender)}>
-      <option value="male">{en['settings.appearance.gender.male']}</option>
-      <option value="female">{en['settings.appearance.gender.female']}</option>
-    </Select>
-  );
-}
-
-function HairSelect({ value, onChange }: { value: Hair; onChange: (v: Hair) => void }) {
-  return (
-    <Select value={value} onChange={(e) => onChange(e.target.value as Hair)}>
-      <option value="blond">{en['settings.appearance.hair.blond']}</option>
-      <option value="dark">{en['settings.appearance.hair.dark']}</option>
-    </Select>
   );
 }
 

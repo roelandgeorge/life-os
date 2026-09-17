@@ -8,10 +8,10 @@
  */
 
 import { diffDays, type DateKey } from './dates';
-import type { Cadence, CatalogItem } from './catalog';
+import type { CatalogFilter, CatalogItem, Cadence, Requirement } from './catalog';
 import { DOMAINS, getDomain, type DomainKey } from './domains';
 import { completedPeriods, currentPeriod, hitInRange, periodAt } from './periods';
-import type { DayLog, UserHabit } from './types';
+import type { DayLog, Profile, UserHabit } from './types';
 
 export const MAX_HABIT_TITLE_LENGTH = 60;
 /** A cap on self-written (domain-less) habits — catalogue habits are not capped. */
@@ -28,8 +28,8 @@ export const WEEKLY_PERIOD_DAYS = 7;
 /**
  * The recurring period a cadence implies, in days — or `null` for a cadence
  * with no periodic notion at all (`situational`, `once`). `monthly` has a
- * period (30 days) for due-ness and streaks; it does not drive a panel
- * (`drivesPanel` below) — those are deliberately different questions.
+ * period (30 days) for due-ness and streaks, and — since phase 4 — for
+ * `drivesPanel` below too: they are no longer different questions.
  */
 export function cadencePeriodDays(cadence: Cadence): number | null {
   if (cadence === 'daily') return 1;
@@ -40,13 +40,14 @@ export function cadencePeriodDays(cadence: Cadence): number | null {
 }
 
 /**
- * Whether a habit on this cadence can move a panel (§1.5 of docs/plan/phase-1.md):
- * daily, weekly and every-N-days all count towards the picture; `monthly`
- * exists only for streaks and XP, and `situational`/`once` are reminders and
- * milestones, not a recurring commitment.
+ * Whether a habit on this cadence can move a panel (§1.5 of docs/plan/phase-1.md,
+ * reversed by phase 4 — see README's "Departures from the spec"): daily,
+ * weekly, monthly and every-N-days all count towards the picture;
+ * `situational`/`once` are reminders and milestones, not a recurring
+ * commitment, and stay excluded.
  */
 export function drivesPanel(cadence: Cadence): boolean {
-  return cadence === 'daily' || cadence === 'weekly' || typeof cadence === 'object';
+  return cadence !== 'situational' && cadence !== 'once';
 }
 
 /** A habit still asks something of the user on `date` — before removal, on or after it started. */
@@ -163,6 +164,26 @@ export function byColor(habits: readonly UserHabit[]): UserHabit[] {
 
 /** Own habits default to weight 3 — the middle of the scale, same reasoning as the v1 migration. */
 export const DEFAULT_IMPORTANCE = 3;
+
+/**
+ * The profile-to-catalogue bridge (phase 4): `has` is set the moment either
+ * question has an answer, so a "no" hides a requiring item just as a "yes"
+ * reveals one — only a profile that has answered *neither* leaves `has`
+ * undefined, which `catalogFor` reads as unknown and filters permissively.
+ * That is the one case a record written before onboarding existed needs.
+ */
+export function catalogFilterFor(profile: Profile | undefined): CatalogFilter {
+  const filter: CatalogFilter = {};
+  if (profile?.gender !== undefined) filter.audience = profile.gender;
+
+  if (profile?.partner?.wanted !== undefined || profile?.children !== undefined) {
+    const has: Requirement[] = [];
+    if (profile?.partner?.wanted === true) has.push('partner');
+    if (profile?.children === true) has.push('children');
+    filter.has = has;
+  }
+  return filter;
+}
 
 export function newHabitFromCatalog(item: CatalogItem, id: string, startDate: DateKey): UserHabit {
   return {

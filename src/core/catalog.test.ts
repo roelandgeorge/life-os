@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CATALOG, DOMAIN_KEYS, catalogById, catalogFor, startersFor } from './catalog';
 import type { Audience, CatalogKind, Cadence, Effort, Evidence } from './catalog';
+import { drivesPanel } from './habits';
 
 const KINDS: readonly CatalogKind[] = ['habit', 'milestone', 'challenge', 'reminder'];
 const EFFORTS: readonly Effort[] = ['low', 'medium', 'high'];
@@ -39,14 +40,24 @@ describe('the catalogue', () => {
     }
   });
 
-  it('marks at most 3 starters per domain, and never a lower importance than a non-starter', () => {
+  it('marks starters only among items that can move the picture', () => {
+    for (const item of CATALOG) {
+      if (!item.starter) continue;
+      expect(item.kind).toBe('habit');
+      expect(drivesPanel(item.cadence)).toBe(true);
+    }
+  });
+
+  it('marks at most 3 starters per domain — the top eligible ones by importance, ties by lowest effort', () => {
     for (const domain of DOMAIN_KEYS) {
       const items = catalogFor(domain);
       const starters = startersFor(domain);
-      expect(starters.length).toBeLessThanOrEqual(3);
-      expect(starters.length).toBe(Math.min(3, items.length));
+      const eligible = items.filter((i) => i.kind === 'habit' && drivesPanel(i.cadence));
 
-      const nonStarters = items.filter((i) => !i.starter);
+      expect(starters.length).toBeLessThanOrEqual(3);
+      expect(starters.length).toBe(Math.min(3, eligible.length));
+
+      const nonStarters = eligible.filter((i) => !i.starter);
       if (nonStarters.length === 0 || starters.length === 0) continue;
       const starterMin = Math.min(...starters.map((i) => i.importance));
       const nonStarterMax = Math.max(...nonStarters.map((i) => i.importance));

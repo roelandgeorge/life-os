@@ -80,10 +80,18 @@ describe('panelSteps — cadence and anchoring', () => {
     expect(panelSteps(l, [family], addDays(START, 21)).partner).toBe(MAX_STEP);
   });
 
-  it('monthly never drives a panel, however it is ticked', () => {
+  it('a monthly habit steps its panel on the closing day, hit anywhere inside the month', () => {
     const finance: UserHabit = { id: 'fin', title: 'Finance', domain: 'finance', cadence: 'monthly', importance: 5, startDate: START };
-    const l = logsFor(60, 'fin', () => true);
-    expect(panelSteps(l, [finance], addDays(START, 60)).wealth).toBe(START_STEP);
+    const l = logsFor(30, 'fin', (i) => i === 3); // one hit, early in the month
+    expect(panelSteps(l, [finance], addDays(START, 30)).wealth).toBe(START_STEP + 1);
+  });
+
+  it("a monthly habit's mid-period hit shows in the preview before the period closes", () => {
+    const finance: UserHabit = { id: 'fin', title: 'Finance', domain: 'finance', cadence: 'monthly', importance: 5, startDate: START };
+    const l = logsFor(4, 'fin', (i) => i === 3);
+    const today = addDays(START, 3);
+    expect(panelSteps(l, [finance], today).wealth).toBe(START_STEP);
+    expect(panelSteps(l, [finance], today, { includeCurrentPeriod: true }).wealth).toBe(START_STEP + 1);
   });
 
   it('each habit is anchored at its own startDate', () => {

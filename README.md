@@ -82,10 +82,11 @@ habit's own period closes (anchored at its own `startDate`, not a shared
 `logs[0].date`), it contributes `importance` to the panel's weighted score;
 the panel steps up at ≥70%, down otherwise, and a day nothing closes on
 leaves it untouched. A panel fed by no habits never moves — the old "empty
-domain stays put" rule, generalised. Only `daily`, `weekly` and
-`{everyDays}` cadences drive a panel; `monthly` exists for streaks only,
-and `situational`/`once` are reminders and milestones, not a recurring
-commitment.
+domain stays put" rule, generalised. `daily`, `weekly`, `monthly` and
+`{everyDays}` cadences all drive a panel; `situational`/`once` are
+reminders and milestones, not a recurring commitment, and stay excluded.
+Phase 1 kept `monthly` out too, for streaks and XP only — phase 4 reversed
+that, see "Departures from the spec" below.
 
 **Migration, not a fresh start.** `store/migrate.ts` turns an existing v1
 record into v2 on first load: each of the five domains v1 ever showed
@@ -169,6 +170,60 @@ reads as compression noise, not texture.
 `src/styles/components.css` styles. Thin presentational wrappers over
 props, no context, no variants object; a component earns a file only once
 two different screens use it.
+
+## Onboarding
+
+Phase 4 (`docs/plan/phase-4.md`) replaced the single explainer screen with a
+real decision tree, run once, before the store holds any state.
+`core/onboarding.ts` holds it as data, the same way the catalogue and the
+scene are data: `steps(answers)` is the whole visible sequence — gender,
+hair, partner (and, only if wanted, the partner's own gender and hair),
+children, domains, and one starters step per domain the domains step turned
+on, in the order it was turned on. The last of those is the end of the tree,
+so the final Next finishes rather than advancing, and turning no domain on at
+all leaves `domains` as the last step. `app/Onboarding.tsx` holds `Answers`
+plus an index into that sequence and re-derives both on every render, so
+going back after turning a domain off shortens the tree under the current
+step rather than crashing.
+
+Turning a domain on seeds it with its three catalogue starters — filtered
+through `core/habits.catalogFilterFor`, so a "no" to partner or children
+already hides what it should — and the whole domain's list stays editable
+through `app/HabitPicker.tsx`, the same component `DiscoverScreen` uses.
+`profileFrom(answers)` builds the `Profile` the avatar answers to live, and
+`buildInitialState(answers, newId, today)` is what `App.tsx` saves once the
+user hits Start: every picked catalogue id becomes a `UserHabit` anchored at
+today, and an answer never given is a key never written, not a key holding
+`undefined`.
+
+`Profile.domainOrder` is the one field carrying both halves of "which
+domains, and in what order" — anything absent from it is simply unordered,
+never hidden. `core/domains.orderedDomains()` reads it to put those domains
+first, in the order chosen, then every other domain in the catalogue's own
+order; `MainScreen`'s check-in groups and Settings' own domain-order control
+(`app/ProfileFields.tsx`'s `DomainOrderField`, a checkbox plus small up/down
+buttons, no drag library) both go through it. A habit added later from a
+domain that was left off, or from Discover, still shows on Home — ordering
+is the only effect this has.
+
+Settings' Profile section replaced the old bare Appearance section with the
+same fields onboarding uses (`app/ProfileFields.tsx`), plus a control for
+`children`, which had none before. Its catalogue `<select>` is gone too,
+replaced by a button into `app/DiscoverScreen.tsx`: a full-screen, searchable
+browser of the catalogue's `kind: 'habit'` items, grouped the same way as
+Home, with an already-added item shown checked and disabled rather than
+addable twice. Milestones, challenges and reminders stay out of both
+pickers — phase 6's content layer gives them their own screens.
+
+**Onboarding asks nothing it cannot act on.** A persona step and a four
+paragraph "How this works" screen were both built and both removed again:
+nothing reads `Profile.personaId` until phase 6, and an explainer shown
+before the first tick is read by nobody. The persona catalogue survives as
+data (`core/personas.ts`, `src/content/personas.json`) and phase 6 asks for
+one once the app has been used for a while, where the choice has quotes
+behind it. Keeping it out of onboarding also keeps it honest: a persona must
+never influence which habits get picked, or two different things would be
+deciding the same thing.
 
 ## Departures from the spec
 
@@ -257,6 +312,16 @@ section stay. `core/customTasks.ts` holds the palette (`TASK_PALETTE`, built
 from `VISIBLE_DOMAINS`) and the sort (`byColor`); the stored value is
 validated as `#rrggbb` rather than as palette membership, so a later change
 to the palette cannot strip everyone's colours on the next import.
+
+**Monthly moves the picture** (`core/habits.drivesPanel`, `docs/plan/phase-4.md`
+§4.1). Phase 1 kept `monthly` out of the panel engine — "Maandelijks bestaat,
+maar alleen voor streaks en XP, niet voor het beeld" — on the theory that a
+month is too coarse a unit to move a drawing. Phase 4 reverses it: the engine
+was already period-generic, `monthly` already had a 30-day period for due-ness
+and the lapse warning, and a commitment the user genuinely keeps once a month
+should move the picture once a month rather than never. A monthly habit ticked
+anywhere inside its month now credits a hit on the day that month closes, the
+same +1/-1 the shorter cadences already got.
 
 ## The weekly warning
 
@@ -421,6 +486,9 @@ src/core/      the model — no DOM, no clock, no storage
   atRisk.ts      the lapse warning + the digest sent to the server
   projection.ts  AppState + a date -> what the screen needs
   scoring.ts     Full Day + log bookkeeping (§5)
+  onboarding.ts  the decision tree (§4.3 of docs/plan/phase-4.md): steps(),
+                 profileFrom(), buildInitialState()
+  personas.ts    the persona catalogue (id/name/blurb), from content/personas.json
 src/store/     Store interface, IndexedDB/in-memory impls, migrate.ts (v1 -> v2)
 src/visual/    scene.ts (the slot table + fallback-chain resolver) and the compositing Avatar
 src/ui/        the base components (Button, Chip, Checkbox, Card, Field,
@@ -429,10 +497,15 @@ src/ui/        the base components (Button, Chip, Checkbox, Card, Field,
 src/styles/    tokens.css (the only file with a colour literal), base.css,
                components.css, screens.css — src/styles.css just @imports them
 src/app/       the shell: useLifeOS is the one place touching Store and clock;
-               every screen takes state as props
+               every screen takes state as props. Onboarding renders the
+               decision tree; DiscoverScreen is the full-screen catalogue
+               browser pushed from Settings; ProfileFields and HabitPicker
+               are shared by two consumers each (onboarding + Settings,
+               onboarding's starters step + Discover)
 src/i18n/      every fixed user-facing string, flat key map, English only —
                habit titles are data now, not i18n
-src/content/   catalog.json, generated by scripts/import-catalog.mjs
+src/content/   catalog.json, generated by scripts/import-catalog.mjs;
+               personas.json, hand-written
 api/           the only server-side code: push subscription + the daily send
 scripts/       catalogue import, icon generation, artwork slicing, placeholder sheets
 docs/plan/     the v2 roadmap and per-phase plans

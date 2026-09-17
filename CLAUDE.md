@@ -5,7 +5,7 @@ Binary daily checks in, a scene at age +15 out.
 
 ## Read these first, in this order
 
-1. **`README.md`** — how the app actually works now, plus four deliberate
+1. **`README.md`** — how the app actually works now, plus five deliberate
    reversals of the spec and the reasoning behind each. Read it first: the
    spec no longer describes the built system.
 2. **`life-os-spec.md`** — the original design. Still worth reading for the
@@ -46,6 +46,25 @@ components (`Button`, `Chip`/`ChipRow`, `Checkbox`, `Card`, `Field`,
 through. README's "The look" section explains the palette, the self-hosted
 serif and the grain. Onboarding, Home and the gamification layer are still
 ahead — `docs/plan/PLAN.md` tracks what phase comes next.
+
+**Phase 4 has since shipped too** (`docs/plan/phase-4.md`): a real
+onboarding decision tree replaces the single explainer screen —
+`core/onboarding.ts`'s `steps()`/`profileFrom()`/`buildInitialState()`,
+rendered by `app/Onboarding.tsx`. `Profile.domainOrder` is the domains the
+user turned on during onboarding, in the order they chose; `core/domains.ts`'s
+`orderedDomains()` reads it to order Home's groups (`MainScreen.groupHabits`)
+and feeds Settings' own domain-order control (`app/ProfileFields.tsx`'s
+`DomainOrderField`) — nothing is ever hidden by it, a habit added later from
+an off domain still shows, only its group's position on screen changes.
+`app/DiscoverScreen.tsx` replaces the inline catalogue `<select>` with a
+full-screen, searchable browser opened from Settings, sharing
+`app/HabitPicker.tsx` with onboarding's starter step. `monthly` now drives a
+panel like any other cadence (`core/habits.drivesPanel`), reversing phase 1's
+rule — see README's "Departures from the spec" for why. `core/personas.ts`
+reads `src/content/personas.json`, but nothing writes `Profile.personaId`:
+the persona is phase 6's to ask for, once it has quotes behind it, and it
+must never steer which habits get picked. Home itself (§4.8's one-line
+`groupHabits` edit aside) and the gamification layer are still ahead.
 
 Live on the user's Vercel deployment, which builds from `main` on GitHub.
 
@@ -110,21 +129,28 @@ src/core/       the model — pure: no DOM, no clock, no storage
   atRisk.ts       the lapse warning + the id-only digest sent to the server
   projection.ts   what the screen shows now; scoring.ts: Full Day, log trimming
   types.ts        AppState, DayLog, UserHabit, Profile, Projection
+  onboarding.ts   the decision tree: steps()/profileFrom()/buildInitialState()
+  personas.ts     the persona catalogue (id/name/blurb), from content/personas.json
 src/store/      Store interface (types.ts), indexeddb.ts, memory.ts, serialize.ts,
                 migrate.ts (v1 -> v2, run on first load of an old record)
 src/visual/     scene.ts (the slot table + the fallback-chain resolver, the
                 only file naming PNGs), Avatar.tsx (paints a resolved Scene)
-src/app/        App (onboarding gate), Shell (tabs), Main/History/Settings screens,
-                useLifeOS (the only bridge to Store + clock — habit CRUD lives here
-                as thin wiring around core/habits.ts), push.ts, warmArtwork.ts,
-                Celebration
+src/app/        App (onboarding gate), Onboarding (the decision tree renderer),
+                Shell (tabs), Main/History/Settings screens, DiscoverScreen
+                (full-screen catalogue browser, from Settings), ProfileFields
+                (Gender/Hair/Partner/Children/DomainOrder fields, shared by
+                Onboarding and Settings), HabitPicker (shared by Onboarding's
+                starters step and Discover), useLifeOS (the only bridge to
+                Store + clock — habit CRUD lives here as thin wiring around
+                core/habits.ts), push.ts, warmArtwork.ts, Celebration
 src/ui/         Button, Chip/ChipRow, Checkbox, Card, Field, Select,
                 SectionHeading, Note, FullDayStrip — thin components over
                 components.css; tokens.ts (parser + contrast helper),
                 tokens.test.ts, chrome.test.ts
 src/content/    catalog.json (scripts/import-catalog.mjs), scene.json
                 (hand-written scene geometry), artwork.json (scripts/build-
-                artwork-manifest.mjs, the file inventory scene.ts resolves against)
+                artwork-manifest.mjs, the file inventory scene.ts resolves against),
+                personas.json (hand-written, id/name/blurb)
 src/i18n/en.ts  every fixed user-facing string; habit titles are data, not i18n
 src/styles/     tokens.css (the only file with a colour literal), base.css,
                 components.css, screens.css; src/styles.css just @imports them
@@ -150,6 +176,7 @@ Tests sit next to the code they cover (`*.test.ts`).
 | **Push subscription** + digest (ids, each habit's own period anchor, last hit, period length — no titles, no log) | Vercel Blob, **private** store, `push/subscription.json` (`SUBSCRIPTION_PATH`, `api/subscribe.ts`). |
 | Secrets and keys | Vercel env vars: `VITE_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET`, `BLOB_READ_WRITE_TOKEN`. Locally only `VITE_VAPID_PUBLIC_KEY` in `.env.local` (gitignored via `*.local`). The private key never goes in the repo. |
 | Catalogue content | `docs/habits.csv` (source) → `src/content/catalog.json` (what ships), via `scripts/import-catalog.mjs` |
+| Persona content | `src/content/personas.json`, hand-written, read by `src/core/personas.ts` |
 | Domain/panel definitions | `src/core/domains.ts` |
 | Scene geometry (slots, rects, variants) | `src/content/scene.json`, typed and resolved by `src/visual/scene.ts` |
 | Artwork inventory | `src/content/artwork.json`, generated from `public/avatar/` by `scripts/build-artwork-manifest.mjs` (`npm run manifest`) |

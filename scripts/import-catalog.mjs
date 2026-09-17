@@ -323,12 +323,23 @@ function CHALLENGE_NOTE() {
 }
 
 // --- Starter selection: top 3 per domain by importance, ties by lowest effort ---
+//
+// Eligible means it can actually move the picture once accepted: a habit
+// (not a milestone, challenge or reminder) on a cadence `core/habits.ts`'s
+// drivesPanel() also accepts. Kept as its own copy here — this script does
+// not import TypeScript — but catalog.test.ts imports the real drivesPanel
+// and pins the two against each other.
 
 const EFFORT_RANK = { low: 0, medium: 1, high: 2 };
+
+function drivesPanel(cadence) {
+  return cadence !== 'situational' && cadence !== 'once';
+}
 
 function markStarters(items) {
   const byDomain = new Map();
   for (const item of items) {
+    if (item.kind !== 'habit' || !drivesPanel(item.cadence)) continue;
     const list = byDomain.get(item.domain) ?? [];
     list.push(item);
     byDomain.set(item.domain, list);

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "marcus-aurelius",
+    "name": "Marcus Aurelius",
+    "blurb": "A Roman emperor who wrote his private discipline down every night, never expecting anyone to read it."
+  },
+  {
+    "id": "benjamin-franklin",
+    "name": "Benjamin Franklin",
+    "blurb": "Tracked thirteen virtues on a chart every day for years, one small mark at a time."
+  },
+  {
+    "id": "marie-curie",
+    "name": "Marie Curie",
+    "blurb": "Worked through cold, poverty and two Nobel Prizes on the same relentless, unglamorous focus."
+  },
+  {
+    "id": "theodore-roosevelt",
+    "name": "Theodore Roosevelt",
+    "blurb": "Built a sickly childhood into 'the strenuous life' by treating the body as the foundation, not an afterthought."
+  },
+  {
+    "id": "florence-nightingale",
+    "name": "Florence Nightingale",
+    "blurb": "Turned a hospital's chaos into a system, one meticulous record at a time."
+  },
+  {
+    "id": "the-quiet-operator",
+    "name": "The Quiet Operator",
+    "blurb": "No name, no source — the archetype of someone who fixes what's broken and moves on without needing the credit."
+  }
+]

@@ -46,11 +46,11 @@ describe('cadencePeriodDays / drivesPanel', () => {
     expect(cadencePeriodDays('once')).toBeNull();
   });
 
-  it('daily, weekly and every-N-days drive a panel; monthly and the rest do not', () => {
+  it('daily, weekly, monthly and every-N-days drive a panel; situational and once do not', () => {
     expect(drivesPanel('daily')).toBe(true);
     expect(drivesPanel('weekly')).toBe(true);
+    expect(drivesPanel('monthly')).toBe(true);
     expect(drivesPanel({ everyDays: 90 })).toBe(true);
-    expect(drivesPanel('monthly')).toBe(false);
     expect(drivesPanel('situational')).toBe(false);
     expect(drivesPanel('once')).toBe(false);
   });
