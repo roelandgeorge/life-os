@@ -8,10 +8,10 @@
  */
 
 import { diffDays, type DateKey } from './dates';
-import type { Cadence, CatalogItem } from './catalog';
+import type { CatalogFilter, CatalogItem, Cadence, Requirement } from './catalog';
 import { DOMAINS, getDomain, type DomainKey } from './domains';
 import { completedPeriods, currentPeriod, hitInRange, periodAt } from './periods';
-import type { DayLog, UserHabit } from './types';
+import type { DayLog, Profile, UserHabit } from './types';
 
 export const MAX_HABIT_TITLE_LENGTH = 60;
 /** A cap on self-written (domain-less) habits — catalogue habits are not capped. */
@@ -164,6 +164,26 @@ export function byColor(habits: readonly UserHabit[]): UserHabit[] {
 
 /** Own habits default to weight 3 — the middle of the scale, same reasoning as the v1 migration. */
 export const DEFAULT_IMPORTANCE = 3;
+
+/**
+ * The profile-to-catalogue bridge (phase 4): `has` is set the moment either
+ * question has an answer, so a "no" hides a requiring item just as a "yes"
+ * reveals one — only a profile that has answered *neither* leaves `has`
+ * undefined, which `catalogFor` reads as unknown and filters permissively.
+ * That is the one case a record written before onboarding existed needs.
+ */
+export function catalogFilterFor(profile: Profile | undefined): CatalogFilter {
+  const filter: CatalogFilter = {};
+  if (profile?.gender !== undefined) filter.audience = profile.gender;
+
+  if (profile?.partner?.wanted !== undefined || profile?.children !== undefined) {
+    const has: Requirement[] = [];
+    if (profile?.partner?.wanted === true) has.push('partner');
+    if (profile?.children === true) has.push('children');
+    filter.has = has;
+  }
+  return filter;
+}
 
 export function newHabitFromCatalog(item: CatalogItem, id: string, startDate: DateKey): UserHabit {
   return {

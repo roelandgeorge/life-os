@@ -62,3 +62,23 @@ export function getDomain(key: DomainKey): DomainConfig {
 export function domainsForPanel(panel: PanelKey): readonly DomainConfig[] {
   return DOMAINS.filter((d) => d.panels.includes(panel));
 }
+
+/**
+ * `Profile.domainOrder` applied to `DOMAINS` (phase 4): the domains the user
+ * turned on during onboarding, in the order they chose, first — then every
+ * other domain in `DOMAINS`' own order. Nothing is ever hidden by this — a
+ * habit added later from a domain that was left off (or never ordered at
+ * all) still appears on Home, this only decides where its group sits.
+ */
+export function orderedDomains(order: readonly DomainKey[] | undefined): readonly DomainConfig[] {
+  if (order === undefined || order.length === 0) return DOMAINS;
+  const seen = new Set<DomainKey>();
+  const listed: DomainConfig[] = [];
+  for (const key of order) {
+    if (seen.has(key)) continue;
+    seen.add(key);
+    listed.push(getDomain(key));
+  }
+  const rest = DOMAINS.filter((d) => !seen.has(d.key));
+  return [...listed, ...rest];
+}
