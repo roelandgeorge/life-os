@@ -192,6 +192,11 @@
   margin-left: auto;
 }
 
+.onboarding-nav .onboarding-step {
+  margin: 0;
+  align-self: center;
+}
+
 .onboarding .closing p {
   color: var(--paper);
 }

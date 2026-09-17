@@ -5,7 +5,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import type { AppState } from '../core/types';
+import { dateKeyFor } from '../core/dates';
+import { buildInitialState, type Answers } from '../core/onboarding';
 import { en } from '../i18n/en';
 import { Button } from '../ui/Button';
 import { Note } from '../ui/Note';
@@ -43,8 +44,8 @@ export function App() {
     };
   }, []);
 
-  async function finishOnboarding() {
-    const initial: AppState = { schemaVersion: 2, logs: [], habits: [], notificationTime: null };
+  async function finishOnboarding(answers: Answers) {
+    const initial = buildInitialState(answers, () => crypto.randomUUID(), dateKeyFor(new Date()));
     await store.save(initial);
     setPhase({ kind: 'ready' });
   }
@@ -72,7 +73,7 @@ export function App() {
   }
 
   if (phase.kind === 'onboarding') {
-    return <Onboarding onComplete={() => void finishOnboarding()} />;
+    return <Onboarding onComplete={(answers) => void finishOnboarding(answers)} />;
   }
 
   return <Shell />;

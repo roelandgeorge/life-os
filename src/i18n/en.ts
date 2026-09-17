@@ -55,7 +55,38 @@ export const en = {
   'main.bestVersion.headline': 'This is future you, at your best.',
   'main.bestVersion.subhead': 'Every part at its top step. Two good days is all any one of them takes.',
 
-  // Onboarding — one explanation screen; the decision tree is phase 4.
+  // Onboarding — the decision tree (§4.6 of docs/plan/phase-4.md).
+  'onboarding.nav.back': 'Back',
+  'onboarding.nav.next': 'Next',
+  'onboarding.nav.step': 'Step {current} of {total}',
+
+  'onboarding.gender.title': 'Which drawing is you?',
+  'onboarding.gender.note': 'Changeable later in Settings.',
+  'onboarding.hair.title': 'And your hair?',
+  'onboarding.hair.note': 'Changeable later in Settings.',
+
+  'onboarding.partner.title': 'Do you have a partner?',
+  'onboarding.partner.note': "One panel is theirs — this is only about whether it's drawn.",
+  'onboarding.partner.yes': 'Yes',
+  'onboarding.partner.no': 'No',
+
+  'onboarding.partnerLooks.title': 'Which drawing is your partner?',
+  'onboarding.partnerLooks.note': 'Changeable later in Settings.',
+
+  'onboarding.children.title': 'Do you have children?',
+  'onboarding.children.note': "Some habits only make sense once there's a child in the picture.",
+  'onboarding.children.yes': 'Yes',
+  'onboarding.children.no': 'No',
+
+  'onboarding.domains.title': "Which parts of life do you want to work on, and in what order?",
+  'onboarding.domains.note': "Turn on as many as you like. The order decides where each group sits on Home — nothing is ever hidden by this.",
+
+  'onboarding.starters.title': '{domain}: pick your habits',
+  'onboarding.starters.note': 'Three are checked already, picked for evidence and importance. Add or remove anything.',
+
+  'onboarding.persona.title': 'Pick a persona (optional)',
+  'onboarding.persona.note': "Filed for later — this has no effect yet. You can change or clear it in Settings.",
+
   'onboarding.closing.title': 'How this works',
   'onboarding.closing.line1': 'Each day you check off the habits you picked — sleep, food, training, and whatever else you added. Some only need a tick once a week or once a month.',
   'onboarding.closing.line2': "Nothing here scores your day. Each part of the picture moves one step at a time: enough of your habits closing out well takes it up, a stretch of them missing takes it down.",
