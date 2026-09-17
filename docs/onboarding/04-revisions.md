@@ -16,7 +16,10 @@ life before they have done anything.
 
 | Node | Spec | Use instead |
 |---|---|---|
-| Q1 | Which one is furthest from where you want it? | What do you want to work on? |
+| Q1 | Which one is furthest from where you want it? | What do you most want to work on? |
+
+"Most" is load-bearing: the answer is the first thing the user names, and
+section 11 turns that order into the order their habits sit in on Home.
 
 The five panel cards, their labels and their sub-lines are unchanged. The sixth
 row is unchanged.
@@ -139,18 +142,23 @@ keeps history correct.
 screen, so it arrives with that domain already filled in. The form collects:
 
 - the title
-- how much it matters, three choices mapping to `importance` 1, 3 and 5
+- how much it matters, three choices
 - how often, the cadence
 - the domain, pre-filled from where the form was opened
 - an emoji of the user's own
+
+The three choices and what they store:
+
+| On screen | `importance` |
+|---|---|
+| Important | 5 |
+| Medium | 3 |
+| Not important | 1 |
 
 `UserHabit` gains `emoji?: string`. It is filing only, exactly like `color`,
 and nothing may ever map it back to a domain or a panel. No colour picker is
 offered, and `color` stays in the type for habits migrated from v1 and for the
 domain default.
-
-Three labels are needed for the importance choices. They are not written here
-because they are copy and the user should see them before they ship.
 
 ## 10. Settings keeps four things
 
@@ -164,25 +172,67 @@ After sections 5, 6 and 9, Settings holds:
 Gone: the Profile section (gender, hair, partner, children, domain order), the
 habit editor, and the catalogue button.
 
-`Profile.domainOrder` now has no writer at all, since the domain picker is gone
-from both onboarding and Settings. `03-decisions.md` kept it alive for the
-Settings control that no longer exists. Decide during the build: either the
-landings write it in the order the panels were chosen, which keeps Home's
-grouping meaningful, or the field and `orderedDomains` go. The first is
-cheaper and keeps `MainScreen` untouched.
+`Profile.domainOrder` is written by the onboarding, see section 11.
+
+## 11. Ask until they stop, and that order is the order
+
+The spec caps it at two panels: "Two panels is the cap. After the second
+landing, the 'One more?' screen is not shown." That cap is removed. Take as
+many as they want.
+
+The loop:
+
+| Node | Spec | Use instead |
+|---|---|---|
+| Q1, first visit | Which one is furthest from where you want it? | What do you most want to work on? |
+| Q-More | One more, or is that it? | Is there anything else you want to work on? |
+| Q-More options | One more. / That's it. | Yes. / No, that's it. |
+
+Q-More is shown after **every** landing, not once, and it is not shown when all
+five panels have been chosen or when Q1 was answered "None of them". Q1 on a
+repeat visit hides **every** panel already chosen, not only the first, and never
+shows the "None of them" row.
+
+**The order they are named in is `Profile.domainOrder`.** Do not derive it from
+the panels, because a domain can feed more than one panel and the mapping is
+not one to one. Derive it from the seeds: walk the seeded habits in the order
+they were seeded, take each one's `domain`, drop repeats. That is exactly "the
+order I picked things in", it needs no new field, and `orderedDomains` and
+`MainScreen` stay as they are.
+
+Changing the order means running the "what you work on" part again, which is
+what section 5 already provides.
+
+Two consequences worth stating rather than discovering:
+
+- **The path has no fixed length any more.** The spec's "longest path is 11"
+  check cannot survive. Replace it with a bound per panel: one Q1 tap, one or
+  two branch taps, one Q-More tap, so five panels plus the two figure questions
+  is the ceiling.
+- **Home can get long.** Five panels at up to two seeds each is ten habits on
+  day one, against the spec's "seed few" intent. That is the user's choice to
+  make each time they answer Q-More, and the count line on the landing screen
+  is what makes the size of it visible. Do not add a cap.
 
 ## What this changes in the earlier documents
 
 | Document | Still binding | Overridden |
 |---|---|---|
 | `00-brief.md` | the constraints, the order of work, the rule about asking | step 6's list of removals, extended by sections 6, 9 and 10 |
-| `01-onboarding-spec.md` | sections 1 to 5, 7, the landings table | §6's Q1 and Situation block copy, §8 path counts, §9's checks that rest on them |
+| `01-onboarding-spec.md` | sections 1, 2, 4, 5, 7, the landings table | §3.4's two-panel cap, §6's Q1, Q-More and Situation block copy, §8's path counts, §9's checks that rest on them |
 | `02-catalog-changes.md` | all of it | nothing |
 | `03-decisions.md` | the engine decision, the habit-id rule, the starter decision | the partner-appearance and `domainOrder` decisions, both of which kept Settings controls that are now gone |
 
 ## Acceptance checks that replace the affected ones
 
-- Q1 reads "What do you want to work on?".
+- Q1 reads "What do you most want to work on?".
+- Q-More is shown after every landing, and not after the fifth panel or after
+  "None of them".
+- Q1 on a repeat visit shows only panels not yet chosen, and never the "None of
+  them" row.
+- `Profile.domainOrder` matches the order the seeded habits' domains first
+  appear, with repeats dropped.
+- A user-written habit's three importance choices store 5, 3 and 1.
 - Partner and children are each asked at most once, only inside the Partner
   branch, in the words in section 2.
 - No Situation block exists, and no screen carries "Two things the drawing
