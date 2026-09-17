@@ -23,7 +23,7 @@ export default defineConfig({
         // install, three quarters of it drawings this user will never see.
         // `warmArtwork` (app/warmArtwork.ts) fetches just the active ones
         // into the runtime cache below instead.
-        globPatterns: ['**/*.{js,css,html,webmanifest}', 'icons/*.png', 'avatar/*.png'],
+        globPatterns: ['**/*.{js,css,html,webmanifest}', 'icons/*.png', 'avatar/*.png', 'fonts/*.woff2'],
         // Illustrated PNGs run larger than the 2 MB default allows.
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         // generateSW writes the service worker for us, so the push and
