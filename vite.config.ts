@@ -15,15 +15,31 @@ export default defineConfig({
       devOptions: { enabled: true },
       includeAssets: ['icons/icon-192.png', 'icons/icon-512.png'],
       workbox: {
-        // The avatar layers are the app: without them a cached shell shows an
+        // The avatar slots are the app: without them a cached shell shows an
         // empty frame offline, which is worse than not caching at all. The
-        // default glob leaves them out, so name the patterns explicitly.
+        // default glob leaves them out, so name the pattern explicitly — and
+        // a single `*` stays clear of avatar/you/, the variant art, on
+        // purpose: precaching all ~60 variant drawings would be an 18 MB
+        // install, three quarters of it drawings this user will never see.
+        // `warmArtwork` (app/warmArtwork.ts) fetches just the active ones
+        // into the runtime cache below instead.
         globPatterns: ['**/*.{js,css,html,webmanifest}', 'icons/*.png', 'avatar/*.png'],
         // Illustrated PNGs run larger than the 2 MB default allows.
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         // generateSW writes the service worker for us, so the push and
         // notificationclick handlers have to be imported into it.
         importScripts: ['/push-sw.js'],
+        runtimeCaching: [
+          {
+            // Fetched on use rather than precached — see the note above.
+            urlPattern: ({ url }) => url.pathname.startsWith('/avatar/you/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'avatar-variants',
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 365 },
+            },
+          },
+        ],
       },
       manifest: {
         name: 'Life OS',
