@@ -148,6 +148,36 @@ that expands the catalogue `note`, and the effort marker where Home puts its
 streak. `.catalog-row*` is gone. A row should not read differently depending
 on which screen it is on.
 
+## 7. Every catalogue item carries a note
+
+Sections 3 and 6 made the note the only thing a row expands to. Walking it
+showed why that was not enough on its own: **65 of the 86 habits had no
+note**, so tapping their title toggled a class and changed nothing on screen.
+The tap was not broken, there was simply nothing behind it.
+
+Worse, the 21 notes that did exist were editorial rather than user-facing:
+"Gates H137", "One source, from a list of 8 to 20 variants", "Domain is
+deliberate". Notes for whoever was assembling the catalogue, not for the
+person holding the phone.
+
+So all 137 were rewritten, and titles were shortened by moving their detail
+down into the note, which is what gives a short title something to expand to:
+
+- "Keep a fixed, early bedtime (e.g. 21:30)" becomes **Keep a fixed bedtime**,
+  with "Same time every night, early enough to get your hours. The consistency
+  matters more than the hour."
+- "Take your daily base supplements (creatine, zinc, D3, omega-3, magnesium)"
+  becomes **Take your base supplements**, with the list in the note.
+
+110 of 137 titles got shorter. The mean is now 25.7 characters.
+
+`catalog.test.ts` pins the rule: every item has a note, and no note merely
+repeats its title. A future item cannot ship without one.
+
+**A row expands on its own.** The catalogue was an accordion, one row at a
+time, while Home let several stand open. Same markup should mean same
+behaviour, so each catalogue row now holds its own state.
+
 ## Acceptance checks
 
 These replace the ones in `01-onboarding-spec.md` §9 that they contradict.
@@ -170,3 +200,7 @@ Every other check there still stands.
 - Remove is an ✕ with an accessible name, not a labelled danger button.
 - A domain's catalogue lists no habit already on the user's list.
 - A catalogue row and a habit row use the same markup and the same CSS class.
+- Every catalogue item has a note, and no note repeats its title.
+- Tapping a catalogue row's title expands it to that note, and opening one row
+  does not close another.
+- A domain's +, a catalogue row's + and a habit row's ✕ are the same size.

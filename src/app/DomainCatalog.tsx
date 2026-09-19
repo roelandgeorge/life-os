@@ -138,15 +138,13 @@ export function WriteHabitForm({
 
 function CatalogRow({
   item,
-  expanded,
-  onToggleExpand,
   onAdd,
 }: {
   item: CatalogItem;
-  expanded: boolean;
-  onToggleExpand: () => void;
   onAdd: () => void;
 }) {
+  // Per row, like `MainScreen`'s own rows: opening one does not shut another.
+  const [expanded, setExpanded] = useState(false);
   return (
     <Card className={expanded ? 'checkin expanded' : 'checkin'}>
       <div className="checkin-box">
@@ -161,7 +159,7 @@ function CatalogRow({
         </Button>
       </div>
 
-      <button type="button" className="checkin-main" aria-expanded={expanded} onClick={onToggleExpand}>
+      <button type="button" className="checkin-main" aria-expanded={expanded} onClick={() => setExpanded((v) => !v)}>
         <span className="label">{item.title}</span>
         <EffortMarker effort={item.effort} />
       </button>
@@ -184,7 +182,6 @@ export function DomainCatalog({
   onAddCustom: (input: NewCustomHabitInput) => void;
   onClose: () => void;
 }) {
-  const [expanded, setExpanded] = useState<string | null>(null);
   const [writing, setWriting] = useState(false);
 
   const addedIds = new Set<string>();
@@ -209,8 +206,6 @@ export function DomainCatalog({
           <CatalogRow
             key={item.id}
             item={item}
-            expanded={expanded === item.id}
-            onToggleExpand={() => setExpanded((current) => (current === item.id ? null : item.id))}
             onAdd={() => onAddHabit(item.id)}
           />
         ))}
