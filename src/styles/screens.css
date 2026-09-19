@@ -113,6 +113,10 @@
 
 .checkin {
   display: flex;
+  /* The expanded note and menu are extra flex children. Without wrapping they
+     compete with the title for the one row and squeeze it to a few characters
+     wide, so each takes its own line and the title never moves. */
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
@@ -121,7 +125,6 @@
   background-size: var(--grain-size) var(--grain-size);
   border: var(--hairline) solid var(--rule);
   border-radius: var(--radius-md);
-  cursor: pointer;
 }
 
 .checkin input {
@@ -133,7 +136,7 @@
 
 .checkin .label {
   font-weight: 600;
-  flex: 1;
+  min-width: 0;
 }
 
 .checkin.collapsed {
@@ -152,6 +155,92 @@
   white-space: nowrap;
 }
 
+/* Two tap targets (docs/onboarding/05-revisions.md §3): the box ticks, the
+   title expands. Both carry their own padding so the split is felt with a
+   thumb rather than only seen. */
+.checkin-box {
+  display: flex;
+  align-items: center;
+  flex: none;
+  padding: var(--space-2);
+  margin: calc(var(--space-2) * -1);
+  cursor: pointer;
+}
+
+.checkin-box input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--bronze);
+  flex: none;
+}
+
+.checkin-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) 0 var(--space-2) var(--space-3);
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.checkin.expanded .note {
+  width: 100%;
+  margin: 0;
+}
+
+.domain-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.checkins:first-of-type .domain-heading-row {
+  margin-top: 0;
+}
+
+.domain-heading-row .domain-heading,
+.domain-heading-row .custom-heading {
+  margin: 0;
+}
+
+.domain-heading-row button {
+  min-width: var(--tap);
+  min-height: 28px;
+  padding: 0 var(--space-2);
+}
+
+/* ---- a habit row's own menu (docs/onboarding/04-revisions.md §9) -------- */
+
+/* Only an expanded row has a menu, so it sits in the row's own flow rather
+   than floating over the rows below it. */
+.habit-menu {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.habit-menu button {
+  white-space: nowrap;
+}
+
+/* Remove is an ✕, not a full-width danger button: it shares a line with Edit
+   and should not read as the row's main action. */
+.habit-remove {
+  min-width: var(--tap);
+  padding: 0 var(--space-3);
+  line-height: 1;
+}
+
 .best-version-toggle {
   display: block;
   margin: var(--space-4) 0 0;
@@ -162,7 +251,7 @@
   font-weight: 600;
 }
 
-/* ---- onboarding (§7) --------------------------------------------------- */
+/* ---- onboarding — the tree renderer (docs/onboarding/) ------------------ */
 
 .onboarding h2 {
   font-family: var(--serif);
@@ -172,7 +261,7 @@
   color: var(--paper);
   border: none;
   padding: 0;
-  margin: 0 0 var(--space-2);
+  margin: 0 0 var(--space-3);
 }
 
 .onboarding .note {
@@ -181,20 +270,81 @@
   margin: 0 0 var(--space-4);
 }
 
-.onboarding-nav {
+/* Only the two drawing questions carry a figure (docs/onboarding/05-revisions.md
+   §2). Every question before them has no portrait element at all, so the
+   options start at the top of the screen and five panel cards still clear
+   the fold at 390x844. */
+.onboarding.figureless .below {
+  padding-top: var(--space-5);
+}
+
+.onboarding-rows {
   display: flex;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-top: var(--space-5);
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
-.onboarding-nav button.primary {
-  margin-left: auto;
+.onboarding-row {
+  display: block;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  min-height: 48px;
 }
 
-.onboarding-nav .onboarding-step {
+/* One row per panel, a label over a sub-line. No artwork: the user has not
+   said what they look like yet (docs/onboarding/05-revisions.md §2). */
+.panel-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.panel-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-0);
+  padding: var(--space-3);
+  text-align: left;
+  min-height: var(--tap);
+}
+
+.panel-card-label {
+  font-weight: 600;
+}
+
+.panel-card-sub {
   margin: 0;
-  align-self: center;
+}
+
+.drawing-picker {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.drawing-tile {
+  flex: 1;
+  min-width: 96px;
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drawing-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.drawing-tile-fallback {
+  font-size: var(--text-sm);
+  color: var(--paper-dim);
 }
 
 /* ---- shell / nav -------------------------------------------------------- */
@@ -336,6 +486,71 @@
   font: inherit;
 }
 
+/* ---- a domain's own catalogue (docs/onboarding/04-revisions.md §6-§9) --- */
+
+/* A catalogue row is a `.checkin`, the same shape Home uses
+   (docs/onboarding/05-revisions.md §4) — only the add button and the effort
+   marker differ from a habit row, and both sit where Home's own controls do. */
+.catalog-add {
+  min-width: var(--tap);
+  padding: 0 var(--space-3);
+  line-height: 1;
+}
+
+.effort-marker {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  flex: none;
+}
+
+.effort-bar {
+  display: block;
+  width: 4px;
+  background: var(--rule);
+  border-radius: 1px;
+}
+
+.effort-bar:nth-child(1) {
+  height: 6px;
+}
+.effort-bar:nth-child(2) {
+  height: 10px;
+}
+.effort-bar:nth-child(3) {
+  height: 14px;
+}
+
+.effort-bar.filled {
+  background: var(--bronze);
+}
+
+.write-habit-open {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-3);
+}
+
+.write-habit-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  background-color: var(--surface);
+  border: var(--hairline) solid var(--rule);
+  border-radius: var(--radius-md);
+}
+
+.write-habit-form input[type='text'] {
+  background: var(--ground);
+  color: var(--paper);
+  border: var(--hairline) solid var(--rule);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+}
+
 .settings-screen section {
   margin-top: var(--space-6);
   padding-top: var(--space-4);
@@ -360,87 +575,13 @@
   gap: var(--space-2);
 }
 
-/* ---- profile fields (§4.5 of docs/plan/phase-4.md) --------------------- */
-
-.domain-order {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  margin-top: var(--space-3);
-}
-
-.domain-order-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-.domain-order-row label {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.domain-order-controls {
-  display: flex;
-  gap: var(--space-1);
-  flex: none;
-}
-
-.domain-order-controls button {
-  min-width: var(--tap);
-}
-
-/* ---- habit picker (§4.5) — onboarding's starters step + Discover -------- */
+/* ---- a domain's own catalogue's list wrapper (app/DomainCatalog.tsx) ---- */
 
 .habit-picker {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   margin-top: var(--space-3);
-}
-
-.habit-picker-item {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  background-color: var(--surface);
-  background-image: var(--grain);
-  background-size: var(--grain-size) var(--grain-size);
-  border: var(--hairline) solid var(--rule);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-}
-
-.habit-picker-item input {
-  margin-top: 3px;
-  width: 18px;
-  height: 18px;
-  accent-color: var(--bronze);
-  flex: none;
-}
-
-.habit-picker-item.locked {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.habit-picker-body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.habit-picker-title {
-  font-weight: 600;
-}
-
-.habit-picker-meta {
-  color: var(--paper-dim);
-  font-size: var(--text-xs);
 }
 
 /* ---- layered artwork ---------------------------------------------------- */
@@ -505,28 +646,7 @@
   text-align: center;
 }
 
-.task-label {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.task-label input {
-  flex: 1;
-  min-width: 0;
-  background: var(--surface);
-  color: var(--paper);
-  border: var(--hairline) solid var(--rule);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
-  font: inherit;
-}
-
-.task-label input::placeholder {
-  color: var(--paper-dim);
-}
-
-/* ---- user-added tasks --------------------------------------------------- */
+/* ---- user-added habits --------------------------------------------------- */
 
 .custom-heading {
   font-size: var(--text-xs);
@@ -536,65 +656,6 @@
   border: none;
   padding: 0;
   margin: 0 0 var(--space-2);
-}
-
-/* ---- habit editor (§1.6/§1.7) ------------------------------------------- */
-
-.habit-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.habit-row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding-bottom: var(--space-3);
-  border-bottom: var(--hairline) solid var(--rule);
-}
-
-.habit-row-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  padding-left: var(--space-0);
-}
-
-.habit-weight {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-size: var(--text-xs);
-  color: var(--paper-dim);
-}
-
-.habit-weight input {
-  width: 44px;
-  background: var(--surface);
-  color: var(--paper);
-  border: var(--hairline) solid var(--rule);
-  border-radius: var(--radius-sm);
-  padding: var(--space-1) var(--space-2);
-  font: inherit;
-}
-
-.add-custom-row {
-  display: flex;
-  gap: var(--space-2);
-  margin-top: var(--space-3);
-}
-
-.add-custom-row input {
-  flex: 1;
-  min-width: 0;
-  background: var(--surface);
-  color: var(--paper);
-  border: var(--hairline) solid var(--rule);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
-  font: inherit;
 }
 
 .domain-heading {

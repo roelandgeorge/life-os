@@ -20,14 +20,16 @@ import {
   toggleHabitTick,
   updateHabit as updateHabitPure,
   type HabitPatch,
+  type NewCustomHabitInput,
 } from '../core/habits';
+import { domainOrderFromSeeds, profileFrom, seededCatalogItems, type Answers } from '../core/onboarding';
 import { buildProjection } from '../core/projection';
 import { trimLogs } from '../core/scoring';
 import type { AppState, DayLog, Profile, Projection, UserHabit } from '../core/types';
 import type { Store } from '../store/types';
 
-/** Either a catalogue item to copy in, or a title for a habit the user writes themselves. */
-export type NewHabitSource = { catalogId: string } | { title: string };
+/** Either a catalogue item to copy in, or a habit the user writes themselves (docs/onboarding/04-revisions.md §9). */
+export type NewHabitSource = { catalogId: string } | NewCustomHabitInput;
 
 export type LifeOS = {
   state: AppState | null;
@@ -40,8 +42,17 @@ export type LifeOS = {
   /** A soft delete — see `core/habits.ts`. */
   removeHabit: (id: string) => void;
   updateNotificationTime: (value: string | null) => void;
-  /** Shallow-merged onto the existing profile — Settings' Appearance section builds the whole `partner` object each time it changes. */
+  /** Shallow-merged onto the existing profile. */
   updateProfile: (patch: Partial<Profile>) => void;
+  /**
+   * Settings' "Redo what you work on" (docs/onboarding/04-revisions.md §5):
+   * adds this run's newly seeded habits (an id already active is skipped
+   * rather than duplicated) and replaces `domainOrder` with this run's own
+   * seed order — the same way reordering Home is meant to work.
+   */
+  completeWorkOnRedo: (answers: Answers) => void;
+  /** Settings' "Redo the figure" — writes only gender/hair. */
+  completeFigureRedo: (answers: Answers) => void;
 };
 
 export function useLifeOS(store: Store): LifeOS {
@@ -113,7 +124,7 @@ export function useLifeOS(store: Store): LifeOS {
       return;
     }
     mutateHabits((habits) =>
-      canAddCustomHabit(habits) ? [...habits, newCustomHabit(crypto.randomUUID(), source.title, today)] : habits,
+      canAddCustomHabit(habits) ? [...habits, newCustomHabit(crypto.randomUUID(), source, today)] : habits,
     );
   }
 
@@ -143,6 +154,31 @@ export function useLifeOS(store: Store): LifeOS {
     });
   }
 
+  function completeWorkOnRedo(answers: Answers) {
+    setState((prev) => {
+      if (!prev) return prev;
+      const items = seededCatalogItems(answers);
+      const active = new Set(
+        prev.habits.filter((h) => h.removedDate === undefined && h.catalogId !== undefined).map((h) => h.catalogId),
+      );
+      const additions = items
+        .filter((item) => !active.has(item.id))
+        .map((item) => newHabitFromCatalog(item, crypto.randomUUID(), today));
+      const order = domainOrderFromSeeds(items);
+      const next: AppState = {
+        ...prev,
+        habits: [...prev.habits, ...additions],
+        profile: { ...prev.profile, ...(order.length > 0 ? { domainOrder: order } : {}) },
+      };
+      void store.save(next);
+      return next;
+    });
+  }
+
+  function completeFigureRedo(answers: Answers) {
+    updateProfile(profileFrom(answers));
+  }
+
   const projection = useMemo(() => (state ? buildProjection(state, today) : null), [state, today]);
   return {
     state,
@@ -154,5 +190,7 @@ export function useLifeOS(store: Store): LifeOS {
     removeHabit,
     updateNotificationTime,
     updateProfile,
+    completeWorkOnRedo,
+    completeFigureRedo,
   };
 }

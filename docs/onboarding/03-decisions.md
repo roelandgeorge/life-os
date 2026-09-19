@@ -1,7 +1,8 @@
 # Decisions
 
-> **Partly superseded.** `04-revisions.md` overrides the partner-appearance and `domainOrder`
-> decisions below, both of which kept Settings controls that no longer exist.
+> **Partly superseded.** `04-revisions.md` overrides the partner-appearance and
+> `domainOrder` decisions below, both of which kept Settings controls that no longer
+> exist. `05-revisions.md` is the last word in this folder.
 
 `00-brief.md` asked for a plan and for the open questions to be answered before
 any file changed. This is that answer. `01-onboarding-spec.md` still wins

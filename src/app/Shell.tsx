@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react';
 import { en } from '../i18n/en';
 import { Button } from '../ui/Button';
+import type { JustOnboarded } from './App';
 import { HistoryScreen } from './HistoryScreen';
 import { MainScreen } from './MainScreen';
 import { SettingsScreen } from './SettingsScreen';
@@ -20,7 +21,7 @@ import { warmArtwork } from './warmArtwork';
 
 type Tab = 'main' | 'history' | 'settings';
 
-export function Shell() {
+export function Shell({ justOnboarded }: { justOnboarded?: JustOnboarded }) {
   const {
     state,
     projection,
@@ -30,7 +31,8 @@ export function Shell() {
     updateHabit,
     removeHabit,
     updateNotificationTime,
-    updateProfile,
+    completeWorkOnRedo,
+    completeFigureRedo,
   } = useLifeOS(store);
   const [tab, setTab] = useState<Tab>('main');
 
@@ -69,7 +71,16 @@ export function Shell() {
     <div className="shell">
       <div className="shell-body">
         {tab === 'main' && (
-          <MainScreen state={state} projection={projection} today={today} toggleHabit={toggleHabit} />
+          <MainScreen
+            state={state}
+            projection={projection}
+            today={today}
+            toggleHabit={toggleHabit}
+            onAddHabit={addHabit}
+            onUpdateHabit={updateHabit}
+            onRemoveHabit={removeHabit}
+            {...(justOnboarded ? { landingDailyCount: justOnboarded.dailyCount } : {})}
+          />
         )}
         {tab === 'history' && <HistoryScreen state={state} today={today} />}
         {tab === 'settings' && (
@@ -78,10 +89,8 @@ export function Shell() {
             today={today}
             store={store}
             onNotificationTimeChange={updateNotificationTime}
-            onAddHabit={addHabit}
-            onUpdateHabit={updateHabit}
-            onRemoveHabit={removeHabit}
-            onUpdateProfile={updateProfile}
+            onCompleteWorkOnRedo={completeWorkOnRedo}
+            onCompleteFigureRedo={completeFigureRedo}
           />
         )}
       </div>

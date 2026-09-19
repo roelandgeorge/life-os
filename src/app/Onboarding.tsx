@@ -1,219 +1,193 @@
 /**
- * §7 onboarding, rebuilt as the decision tree phase 4 was waiting to build
- * (docs/plan/phase-4.md §4.6). A renderer over `steps(answers)`: this
- * component holds `Answers` plus an index into that array, and re-derives
- * the sequence — and clamps the index against it — on every render, because
- * going back and turning a domain off shortens the sequence underneath it.
+ * A renderer over the tree (docs/onboarding/01-onboarding-spec.md,
+ * docs/onboarding/04-revisions.md) — a plain (nodeId, Answers) state machine.
+ * There is no back button and no Next: every option is a single tap that
+ * both answers the question and advances, matching "one thumb, standing up"
+ * and 00-brief.md's rule against adding chrome the spec doesn't ask for.
  *
- * The avatar is recomputed every render from `profileFrom(answers)` rather
- * than a fixed constant, so the figure answers the appearance questions
- * live — the whole reason appearance goes first.
+ * The figure is drawn only on the two drawing questions, where the user is
+ * choosing it, and then on the landing (docs/onboarding/05-revisions.md §2):
+ * before that the app has not asked what they look like, so any figure on
+ * screen would be a stranger's.
+ *
+ * `start`/`terminal` let the same component serve three independent entries
+ * (docs/onboarding/04-revisions.md §5): the full run (`App.tsx`, Q1 to LAND),
+ * "Redo what you work on" (Q1 to FIG_gender, the figure untouched) and "Redo
+ * the figure" (FIG_gender to LAND, the work-on panels untouched) — Settings
+ * holds both. `onComplete` fires the moment the chosen option's own
+ * resolution reaches `terminal`, before that node is ever rendered: LAND and
+ * the FIG_gender hand-off are hooks for the caller, not screens of their own.
  */
 
 import { useState, type ReactNode } from 'react';
-import { catalogFor, startersFor } from '../core/catalog';
-import { getDomain, PANEL_KEYS, type DomainKey, type PanelSteps } from '../core/domains';
-import { catalogFilterFor } from '../core/habits';
-import { profileFrom, steps as onboardingSteps, type Answers, type Step } from '../core/onboarding';
+import {
+  choose,
+  chooseDrawing,
+  profileFrom,
+  step,
+  type Advance,
+  type Answers,
+  type StepOption,
+} from '../core/onboarding';
+import { PANEL_KEYS, type PanelSteps } from '../core/domains';
 import { START_STEP } from '../core/steps';
-import { en, t, type I18nKey } from '../i18n/en';
+import type { Gender, Hair, Profile } from '../core/types';
+import { en } from '../i18n/en';
 import { Avatar } from '../visual/Avatar';
 import { scene } from '../visual/scene';
-import { HabitPicker, type PickerItem } from './HabitPicker';
-import { DomainOrderField, GenderField, HairField } from './ProfileFields';
 import { Button } from '../ui/Button';
-import { Chip, ChipRow } from '../ui/Chip';
-import { Note } from '../ui/Note';
 import { SectionHeading } from '../ui/SectionHeading';
 
-const START_STEPS: PanelSteps = Object.fromEntries(PANEL_KEYS.map((k) => [k, START_STEP])) as PanelSteps;
+const MID_STEPS: PanelSteps = Object.fromEntries(PANEL_KEYS.map((k) => [k, START_STEP])) as PanelSteps;
 
-export function Onboarding({ onComplete }: { onComplete: (answers: Answers) => void }) {
+function previewSrc(slot: string, profile: Profile | undefined): string | undefined {
+  return scene(MID_STEPS, profile).find((s) => s.slot === slot)?.src;
+}
+
+const GENDER_VALUES: readonly Gender[] = ['male', 'female'];
+const HAIR_VALUES: readonly Hair[] = ['blond', 'dark', 'none'];
+
+const GENDER_LABEL: Record<Gender, 'profile.gender.male' | 'profile.gender.female'> = {
+  male: 'profile.gender.male',
+  female: 'profile.gender.female',
+};
+const HAIR_LABEL: Record<Hair, 'profile.hair.blond' | 'profile.hair.dark' | 'profile.hair.none'> = {
+  blond: 'profile.hair.blond',
+  dark: 'profile.hair.dark',
+  none: 'profile.hair.none',
+};
+
+export function Onboarding({
+  start,
+  terminal,
+  onComplete,
+}: {
+  start: string;
+  terminal: string;
+  onComplete: (answers: Answers) => void;
+}) {
+  const [nodeId, setNodeId] = useState(start);
   const [answers, setAnswers] = useState<Answers>({});
-  const [index, setIndex] = useState(0);
 
-  const sequence = onboardingSteps(answers);
-  const clampedIndex = Math.min(index, sequence.length - 1);
-  const current: Step = sequence[clampedIndex] ?? { kind: 'gender' };
-  // Re-derived rather than remembered: answering the domains step grows the
-  // sequence underneath the user, so which step is the last one changes while
-  // they are standing on it.
-  const isLast = clampedIndex === sequence.length - 1;
+  const current = step(nodeId, answers);
+  const profile = profileFrom(answers);
+  const showsFigure = current.optionsFrom === 'drawings';
 
-  const avatarScene = scene(START_STEPS, profileFrom(answers));
-
-  function next() {
-    setIndex((i) => Math.min(i + 1, sequence.length - 1));
-  }
-  function back() {
-    setIndex((i) => Math.max(i - 1, 0));
-  }
-
-  /**
-   * Turning a domain on seeds it with its starter ids (once — a later
-   * customisation is never overwritten); turning one off drops its picks
-   * entirely, so a habit from a domain the user unchecked never sneaks into
-   * the seeded state.
-   */
-  function updateDomains(nextDomains: readonly DomainKey[]) {
-    setAnswers((prev) => {
-      const filter = catalogFilterFor(profileFrom(prev));
-      const picked: Record<string, readonly string[]> = { ...prev.picked };
-      for (const key of nextDomains) {
-        if (picked[key] === undefined) picked[key] = startersFor(key, filter).map((i) => i.id);
-      }
-      for (const key of Object.keys(picked)) {
-        if (!nextDomains.includes(key as DomainKey)) delete picked[key];
-      }
-      return { ...prev, domains: nextDomains, picked };
-    });
-  }
-
-  function togglePicked(domain: DomainKey, id: string) {
-    setAnswers((prev) => {
-      const ids = new Set(prev.picked?.[domain] ?? []);
-      if (ids.has(id)) ids.delete(id);
-      else ids.add(id);
-      return { ...prev, picked: { ...prev.picked, [domain]: [...ids] } };
-    });
+  function advance(result: Advance) {
+    // The terminal node is a hand-off, never rendered — LAND is the app's
+    // real main screen and FIG_gender is where "redo what you work on" stops
+    // short of touching the figure.
+    if (result.nextId === terminal) {
+      onComplete(result.answers);
+      return;
+    }
+    setAnswers(result.answers);
+    setNodeId(result.nextId);
   }
 
   return (
-    <div className="main-screen onboarding">
-      <div className="portrait">
-        <Avatar scene={avatarScene} />
-      </div>
+    <div className={showsFigure ? 'main-screen onboarding' : 'main-screen onboarding figureless'}>
+      {showsFigure && (
+        <div className="portrait">
+          <Avatar scene={scene(MID_STEPS, profile)} />
+        </div>
+      )}
 
       <div className="below">
-        {current.kind === 'gender' && (
-          <StepSection title={en['onboarding.gender.title']} note={en['onboarding.gender.note']}>
-            <GenderField value={answers.gender} onChange={(gender) => setAnswers((prev) => ({ ...prev, gender }))} />
-          </StepSection>
-        )}
-
-        {current.kind === 'hair' && (
-          <StepSection title={en['onboarding.hair.title']} note={en['onboarding.hair.note']}>
-            <HairField value={answers.hair} onChange={(hair) => setAnswers((prev) => ({ ...prev, hair }))} />
-          </StepSection>
-        )}
-
-        {current.kind === 'partner' && (
-          <StepSection title={en['onboarding.partner.title']} note={en['onboarding.partner.note']}>
-            <YesNo
-              value={answers.partnerWanted}
-              onChange={(partnerWanted) => setAnswers((prev) => ({ ...prev, partnerWanted }))}
-              yesLabel={en['onboarding.partner.yes']}
-              noLabel={en['onboarding.partner.no']}
-            />
-          </StepSection>
-        )}
-
-        {current.kind === 'partnerLooks' && (
-          <StepSection title={en['onboarding.partnerLooks.title']} note={en['onboarding.partnerLooks.note']}>
-            <div className="row">
-              <GenderField
-                value={answers.partnerGender}
-                onChange={(partnerGender) => setAnswers((prev) => ({ ...prev, partnerGender }))}
+        {current.optionsFrom === 'drawings' && current.field === 'gender' && (
+          <DrawingQuestion text={current.text}>
+            {GENDER_VALUES.map((value) => (
+              <DrawingTile
+                key={value}
+                label={en[GENDER_LABEL[value]]}
+                src={previewSrc('body', { ...profile, gender: value })}
+                onPick={() => advance(chooseDrawing(nodeId, answers, value))}
               />
-              <HairField
-                value={answers.partnerHair}
-                onChange={(partnerHair) => setAnswers((prev) => ({ ...prev, partnerHair }))}
+            ))}
+          </DrawingQuestion>
+        )}
+
+        {current.optionsFrom === 'drawings' && current.field === 'hair' && (
+          <DrawingQuestion text={current.text}>
+            {HAIR_VALUES.map((value) => (
+              <DrawingTile
+                key={value}
+                label={en[HAIR_LABEL[value]]}
+                src={previewSrc('head', { ...profile, hair: value })}
+                onPick={() => advance(chooseDrawing(nodeId, answers, value))}
               />
-            </div>
-          </StepSection>
+            ))}
+          </DrawingQuestion>
         )}
 
-        {current.kind === 'children' && (
-          <StepSection title={en['onboarding.children.title']} note={en['onboarding.children.note']}>
-            <YesNo
-              value={answers.children}
-              onChange={(children) => setAnswers((prev) => ({ ...prev, children }))}
-              yesLabel={en['onboarding.children.yes']}
-              noLabel={en['onboarding.children.no']}
-            />
-          </StepSection>
+        {current.optionsFrom !== 'drawings' && (
+          <OptionsQuestion
+            nodeId={nodeId}
+            text={current.text}
+            options={current.options ?? []}
+            onPick={(index) => advance(choose(nodeId, answers, index))}
+          />
         )}
-
-        {current.kind === 'domains' && (
-          <StepSection title={en['onboarding.domains.title']} note={en['onboarding.domains.note']}>
-            <DomainOrderField order={answers.domains} onChange={updateDomains} />
-          </StepSection>
-        )}
-
-        {current.kind === 'starters' && (
-          <StartersStep domain={current.domain} answers={answers} onToggle={togglePicked} />
-        )}
-
-        <div className="onboarding-nav">
-          <Button onClick={back} disabled={clampedIndex === 0}>
-            {en['onboarding.nav.back']}
-          </Button>
-          <Note className="onboarding-step">
-            {t('onboarding.nav.step', { current: clampedIndex + 1, total: sequence.length })}
-          </Note>
-          <Button variant="primary" onClick={isLast ? () => onComplete(answers) : next}>
-            {isLast ? en['onboarding.nav.start'] : en['onboarding.nav.next']}
-          </Button>
-        </div>
       </div>
     </div>
   );
 }
 
-/** One question's chrome: heading, note, the control, all inside a `<section>`. */
-function StepSection({ title, note, children }: { title: string; note: string; children: ReactNode }) {
+function DrawingQuestion({ text, children }: { text: string; children: ReactNode }) {
   return (
     <section>
-      <SectionHeading>{title}</SectionHeading>
-      <Note>{note}</Note>
-      {children}
+      <SectionHeading>{text}</SectionHeading>
+      <div className="drawing-picker">{children}</div>
     </section>
   );
 }
 
-function YesNo({
-  value,
-  onChange,
-  yesLabel,
-  noLabel,
-}: {
-  value: boolean | undefined;
-  onChange: (v: boolean) => void;
-  yesLabel: string;
-  noLabel: string;
-}) {
+function DrawingTile({ label, src, onPick }: { label: string; src: string | undefined; onPick: () => void }) {
   return (
-    <ChipRow className="chips">
-      <Chip on={value === true} onClick={() => onChange(true)}>
-        {yesLabel}
-      </Chip>
-      <Chip on={value === false} onClick={() => onChange(false)}>
-        {noLabel}
-      </Chip>
-    </ChipRow>
+    <button type="button" className="drawing-tile" aria-label={label} onClick={onPick}>
+      {src ? <img src={src} alt="" draggable={false} /> : <span className="drawing-tile-fallback">{label}</span>}
+    </button>
   );
 }
 
-function StartersStep({
-  domain,
-  answers,
-  onToggle,
+function OptionsQuestion({
+  nodeId,
+  text,
+  options,
+  onPick,
 }: {
-  domain: DomainKey;
-  answers: Answers;
-  onToggle: (domain: DomainKey, id: string) => void;
+  nodeId: string;
+  text: string;
+  options: readonly StepOption[];
+  onPick: (index: number) => void;
 }) {
-  const filter = catalogFilterFor(profileFrom(answers));
-  const items = catalogFor(domain, filter);
-  const picked = new Set(answers.picked?.[domain] ?? startersFor(domain, filter).map((i) => i.id));
-  const pickerItems: PickerItem[] = items.map((item) => ({ item, checked: picked.has(item.id) }));
+  const cards = nodeId === 'Q1' ? options.filter((o) => o.id !== 'none') : [];
+  const rows = nodeId === 'Q1' ? options.filter((o) => o.id === 'none') : options;
 
   return (
-    <StepSection
-      title={t('onboarding.starters.title', { domain: en[getDomain(domain).label as I18nKey] })}
-      note={en['onboarding.starters.note']}
-    >
-      <HabitPicker items={pickerItems} onToggle={(id) => onToggle(domain, id)} />
-    </StepSection>
+    <section>
+      <SectionHeading>{text}</SectionHeading>
+
+      {cards.length > 0 && (
+        <div className="panel-cards">
+          {cards.map((option) => (
+            <button type="button" key={option.index} className="panel-card" onClick={() => onPick(option.index)}>
+              <span className="panel-card-label">{option.label}</span>
+              {option.sub && <span className="note panel-card-sub">{option.sub}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {rows.length > 0 && (
+        <div className="onboarding-rows">
+          {rows.map((option) => (
+            <Button key={option.index} className="onboarding-row" onClick={() => onPick(option.index)}>
+              {option.label}
+            </Button>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

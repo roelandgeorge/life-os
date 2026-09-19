@@ -34,12 +34,34 @@ exact rect over the box behind them: the frame the drawing itself must be
 made against, not just where the app happens to place it. `wealth` and
 `network` have no variants, so it's one drawing per state, full stop.
 
-## The twelve sheets
+**Two gaps, both deliberate, both written down here rather than left to be
+rediscovered** (docs/onboarding/04-revisions.md §4 and its "Hair 'none'"
+decision):
+
+- The onboarding rebuild never asks the partner's appearance — no question,
+  no Settings control. `scene.json`'s partner slot keeps its `gender`/`hair`
+  variant axes (the drawing system itself is untouched), but with nothing in
+  `Profile.partner` ever setting them, the resolver's fallback chain lands
+  every time on the one default variant (`DEFAULT_APPEARANCE` in
+  `scene.json`, currently male/blond). Only **five of the twenty** partner
+  drawings below are reachable until something asks for the rest.
+- `Hair` gained a `'none'` value with no drawing planned anywhere in this
+  guide. Nothing here lists a bare `head.png`, so the resolver's fallback
+  chain (`head-{gender}-none` → `head-{gender}` → `head`) runs out and a
+  bald choice renders no head overlay at all — the same as before any head
+  art exists. `head-male-none1.png` through `head-female-none5.png` (ten
+  files, listed in the checklist below) close that gap if drawn; nothing
+  else needs to change for them to take effect.
+
+## The fourteen sheets
 
 Draw five states per sheet, one image, states side by side, **worst on the
 left, best on the right**, and save it under the exact name below. Sheet
 width is the slot's rect width times 5. Height is the rect height,
-unchanged.
+unchanged. Twelve of these are the original set; the two `head-*-none`
+sheets close the `Hair: 'none'` gap noted above and are optional in the
+sense that nothing breaks without them, not in the sense that they're less
+real — a bald choice renders no head at all until they exist.
 
 | Sheet file | Save to | Canvas (w × 5 × h) |
 |---|---|---|
@@ -51,6 +73,8 @@ unchanged.
 | `head-male-dark.png` | `public/avatar/you/` | 820 × 164 |
 | `head-female-blond.png` | `public/avatar/you/` | 820 × 164 |
 | `head-female-dark.png` | `public/avatar/you/` | 820 × 164 |
+| `head-male-none.png` | `public/avatar/you/` | 820 × 164 |
+| `head-female-none.png` | `public/avatar/you/` | 820 × 164 |
 | `partner-male-blond.png` | `public/avatar/you/` | 845 × 518 |
 | `partner-male-dark.png` | `public/avatar/you/` | 845 × 518 |
 | `partner-female-blond.png` | `public/avatar/you/` | 845 × 518 |
@@ -67,8 +91,8 @@ pipeline" below.
 
 ## One style preamble, byte-identical every time
 
-Prepend this exact paragraph to every prompt, unchanged, so the twelve
-sheets read as one wardrobe rather than twelve unrelated illustrations:
+Prepend this exact paragraph to every prompt, unchanged, so the fourteen
+sheets read as one wardrobe rather than fourteen unrelated illustrations:
 
 > Grainy editorial illustration. Muted, desaturated palette with a single
 > warm bronze accent. Fine halftone film grain over the whole image. Soft
@@ -105,7 +129,7 @@ verbatim.
 
 **head-{gender}-{hair}**
 > [preamble]. Five panels left to right on one canvas, each `164×164`, the
-> same [male/female] figure's head and face with [blond/dark] hair, from a
+> same [male/female] figure's head and face with [blond/dark/no] hair, from a
 > tired, unkempt expression to a clear, well-rested one. Face fills the
 > frame, chin at a fixed height (see registration below). Transparent
 > background, figure only, nothing behind it.
@@ -163,7 +187,7 @@ Drop one file at a time. The fallback chain in `visual/scene.ts` means a
 slot with no drawing yet just doesn't render (an overlay) or keeps its
 shared fallback (a box), never a broken image.
 
-## Checklist, all sixty files
+## Checklist, all seventy files
 
 Box slots (`public/avatar/`):
 
@@ -178,11 +202,16 @@ Variant slots (`public/avatar/you/`):
 - [ ] `head-male-dark1.png` through `head-male-dark5.png`
 - [ ] `head-female-blond1.png` through `head-female-blond5.png`
 - [ ] `head-female-dark1.png` through `head-female-dark5.png`
-- [ ] `partner-male-blond1.png` through `partner-male-blond5.png`
+- [ ] `head-male-none1.png` through `head-male-none5.png` — closes the
+      `Hair: 'none'` gap above; not part of the original ten variant groups
+- [ ] `head-female-none1.png` through `head-female-none5.png` — same
+- [ ] `partner-male-blond1.png` through `partner-male-blond5.png` — only
+      this one partner variant is reachable until something asks for the
+      partner's appearance (see the gap noted above)
 - [ ] `partner-male-dark1.png` through `partner-male-dark5.png`
 - [ ] `partner-female-blond1.png` through `partner-female-blond5.png`
 - [ ] `partner-female-dark1.png` through `partner-female-dark5.png`
 
-Ten groups of five, plus the two box groups: sixty files. Nothing has to
-arrive at once, the app renders correctly with any subset of this list
+Twelve groups of five, plus the two box groups: seventy files. Nothing has
+to arrive at once, the app renders correctly with any subset of this list
 present, falling back one rung for whatever's still missing.

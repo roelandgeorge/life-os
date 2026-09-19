@@ -113,14 +113,14 @@
   },
   {
     "id": "H009",
-    "title": "Hit 200g protein (~2g/kg bodyweight)",
+    "title": "Hit 1.6–2g protein per kg bodyweight",
     "domain": "nutrition",
     "kind": "habit",
     "cadence": "daily",
     "importance": 5,
     "effort": "medium",
     "evidence": "strong",
-    "note": "Best-supported nutrition rule in the collection.",
+    "note": "Best-supported nutrition rule in the collection. Per-kilo rule replaces the fixed 200g figure, which only fit a 100kg man.",
     "audience": "all",
     "requires": [],
     "starter": true
@@ -304,7 +304,9 @@
     "evidence": "moderate",
     "note": "",
     "audience": "all",
-    "requires": [],
+    "requires": [
+      "gym"
+    ],
     "starter": false
   },
   {
@@ -460,7 +462,9 @@
     "evidence": "moderate",
     "note": "",
     "audience": "all",
-    "requires": [],
+    "requires": [
+      "hair"
+    ],
     "starter": true
   },
   {
@@ -951,7 +955,7 @@
     "note": "",
     "audience": "all",
     "requires": [],
-    "starter": false
+    "starter": true
   },
   {
     "id": "H069",
@@ -1007,7 +1011,7 @@
     "note": "",
     "audience": "all",
     "requires": [],
-    "starter": true
+    "starter": false
   },
   {
     "id": "H073",
@@ -1037,7 +1041,7 @@
     "requires": [
       "children"
     ],
-    "starter": true
+    "starter": false
   },
   {
     "id": "H075",
@@ -1073,19 +1077,19 @@
   },
   {
     "id": "H077",
-    "title": "Have the 10 pre-marriage conversations",
+    "title": "Have the 10 conversations",
     "domain": "family",
     "kind": "milestone",
     "cadence": "once",
     "importance": 5,
     "effort": "high",
     "evidence": "anecdotal",
-    "note": "One source, a coherent set.",
+    "note": "One source, a coherent set. Formerly \"pre-marriage conversations\". Applies to any couple, married or not.",
     "audience": "all",
     "requires": [
       "partner"
     ],
-    "starter": false
+    "starter": true
   },
   {
     "id": "H078",
@@ -1101,7 +1105,7 @@
     "requires": [
       "partner"
     ],
-    "starter": false
+    "starter": true
   },
   {
     "id": "H079",
@@ -1143,7 +1147,7 @@
     "note": "",
     "audience": "all",
     "requires": [],
-    "starter": false
+    "starter": true
   },
   {
     "id": "H082",
@@ -1184,7 +1188,9 @@
     "evidence": "anecdotal",
     "note": "",
     "audience": "all",
-    "requires": [],
+    "requires": [
+      "self-employed"
+    ],
     "starter": false
   },
   {
@@ -1198,7 +1204,9 @@
     "evidence": "anecdotal",
     "note": "",
     "audience": "all",
-    "requires": [],
+    "requires": [
+      "self-employed"
+    ],
     "starter": false
   },
   {
@@ -1214,7 +1222,9 @@
     "evidence": "anecdotal",
     "note": "",
     "audience": "all",
-    "requires": [],
+    "requires": [
+      "self-employed"
+    ],
     "starter": false
   },
   {
@@ -1228,7 +1238,9 @@
     "evidence": "anecdotal",
     "note": "",
     "audience": "all",
-    "requires": [],
+    "requires": [
+      "self-employed"
+    ],
     "starter": true
   },
   {
@@ -1734,5 +1746,211 @@
     "audience": "all",
     "requires": [],
     "starter": false
+  },
+  {
+    "id": "H124",
+    "title": "Bodyweight session at home: squats, push-ups, rows, 20 minutes",
+    "domain": "training",
+    "kind": "habit",
+    "cadence": "weekly",
+    "importance": 4,
+    "effort": "medium",
+    "evidence": "strong",
+    "note": "For when there is no gym. Progress by reps. Three sessions a week.",
+    "audience": "all",
+    "requires": [],
+    "starter": true
+  },
+  {
+    "id": "H125",
+    "title": "Groom: nails, brows, beard or shave",
+    "domain": "appearance",
+    "kind": "habit",
+    "cadence": "weekly",
+    "importance": 2,
+    "effort": "low",
+    "evidence": "anecdotal",
+    "note": "",
+    "audience": "all",
+    "requires": [],
+    "starter": false
+  },
+  {
+    "id": "H126",
+    "title": "Ten minutes outside. Nothing in your ears.",
+    "domain": "mindset",
+    "kind": "habit",
+    "cadence": "daily",
+    "importance": 3,
+    "effort": "low",
+    "evidence": "moderate",
+    "note": "The only daily calm habit in the catalogue. Not a walk to somewhere.",
+    "audience": "all",
+    "requires": [],
+    "starter": true
+  },
+  {
+    "id": "H127",
+    "title": "Pick the one skill for the next 6–12 months",
+    "domain": "mindset",
+    "kind": "milestone",
+    "cadence": "once",
+    "importance": 4,
+    "effort": "low",
+    "evidence": "anecdotal",
+    "note": "Gates H053.",
+    "audience": "all",
+    "requires": [],
+    "starter": true
+  },
+  {
+    "id": "H128",
+    "title": "Message one person you have lost touch with",
+    "domain": "social",
+    "kind": "habit",
+    "cadence": "weekly",
+    "importance": 4,
+    "effort": "low",
+    "evidence": "moderate",
+    "note": "A message, not a call. Lower bar, higher completion.",
+    "audience": "all",
+    "requires": [],
+    "starter": true
+  },
+  {
+    "id": "H129",
+    "title": "Find one recurring thing with the same people every week",
+    "domain": "social",
+    "kind": "milestone",
+    "cadence": "once",
+    "importance": 4,
+    "effort": "medium",
+    "evidence": "strong",
+    "note": "Club, class, team, game. Gates H130.",
+    "audience": "all",
+    "requires": [],
+    "starter": true
+  },
+  {
+    "id": "H130",
+    "title": "Go to it",
+    "domain": "social",
+    "kind": "habit",
+    "cadence": "weekly",
+    "importance": 4,
+    "effort": "medium",
+    "evidence": "strong",
+    "note": "The habit half of H129.",
+    "audience": "all",
+    "requires": [
+      "H129"
+    ],
+    "starter": true
+  },
+  {
+    "id": "H131",
+    "title": "Make one plan with someone this week",
+    "domain": "social",
+    "kind": "habit",
+    "cadence": "weekly",
+    "importance": 4,
+    "effort": "low",
+    "evidence": "moderate",
+    "note": "Making the plan counts, not the meeting.",
+    "audience": "all",
+    "requires": [],
+    "starter": true
+  },
+  {
+    "id": "H132",
+    "title": "Be in one room with people you do not know yet",
+    "domain": "family",
+    "kind": "habit",
+    "cadence": "weekly",
+    "importance": 4,
+    "effort": "medium",
+    "evidence": "anecdotal",
+    "note": "The only single-person item that feeds the partner panel. Domain is deliberate.",
+    "audience": "all",
+    "requires": [
+      "single"
+    ],
+    "starter": true
+  },
+  {
+    "id": "H133",
+    "title": "One hour a week, just the two of you, no phones, no logistics",
+    "domain": "family",
+    "kind": "habit",
+    "cadence": "weekly",
+    "importance": 5,
+    "effort": "medium",
+    "evidence": "moderate",
+    "note": "The weekly companion every couple landing lacked.",
+    "audience": "all",
+    "requires": [
+      "partner"
+    ],
+    "starter": true
+  },
+  {
+    "id": "H134",
+    "title": "Five-minute money look: every account, every week",
+    "domain": "finance",
+    "kind": "habit",
+    "cadence": "weekly",
+    "importance": 4,
+    "effort": "low",
+    "evidence": "moderate",
+    "note": "Weekly companion to H082 and H083.",
+    "audience": "all",
+    "requires": [],
+    "starter": true
+  },
+  {
+    "id": "H135",
+    "title": "One hour a week on the thing that raises your rate",
+    "domain": "finance",
+    "kind": "habit",
+    "cadence": "weekly",
+    "importance": 4,
+    "effort": "medium",
+    "evidence": "moderate",
+    "note": "The only earning habit for an employee.",
+    "audience": "all",
+    "requires": [
+      "employed"
+    ],
+    "starter": true
+  },
+  {
+    "id": "H136",
+    "title": "List every debt on one page",
+    "domain": "finance",
+    "kind": "milestone",
+    "cadence": "once",
+    "importance": 5,
+    "effort": "low",
+    "evidence": "strong",
+    "note": "Gates H137.",
+    "audience": "all",
+    "requires": [],
+    "starter": true
+  },
+  {
+    "id": "H137",
+    "title": "Smallest debt first, automated",
+    "domain": "finance",
+    "kind": "habit",
+    "cadence": "monthly",
+    "importance": 5,
+    "effort": "low",
+    "evidence": "strong",
+    "note": "Snowball order, chosen for completion rate rather than interest.",
+    "audience": "all",
+    "requires": [
+      "H136"
+    ],
+    "starter": true
   }
 ]

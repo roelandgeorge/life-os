@@ -1,5 +1,9 @@
 # Revisions
 
+> **Partly superseded.** `05-revisions.md` is a later round and the last word in this
+> folder. It removes the S0 screen, takes the figure off every question before the
+> drawing ones, splits the habit row into two tap targets, and drops the offers row.
+
 Ten remarks after reading the spec, before any of it was built. This document
 **overrides** `01-onboarding-spec.md` and `03-decisions.md` wherever they
 disagree. Read it last, and treat the spec's "copy is final" rule as applying
