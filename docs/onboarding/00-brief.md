@@ -11,7 +11,8 @@ Read everything in this folder before writing anything. Then produce a plan and 
 - `onboarding-tree.json`. The tree from the spec as static data.
 - `landings.json`. Landing id to seeds and offers.
 - `03-decisions.md`. Step 1 of this brief, answered.
-- `04-revisions.md`. **Read last and treat as the final word.** It overrides parts of `01-onboarding-spec.md` and `03-decisions.md`, and its own first section says which.
+- `04-revisions.md`. A first round of revisions. It overrides parts of `01-onboarding-spec.md` and `03-decisions.md`, and its own first section says which.
+- `05-revisions.md`. **Read last and treat as the final word.** A second round after walking the built app.
 
 ## Constraints
 

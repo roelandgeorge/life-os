@@ -1,7 +1,9 @@
 # Onboarding spec
 
-> **Partly superseded.** `04-revisions.md` overrides §3.4, parts of §6 and §8, and the §9 checks
-> that rest on them. Read it before building anything from this document.
+> **Partly superseded.** `04-revisions.md` overrides §3.4, parts of §6 and §8, and the §9
+> checks that rest on them. `05-revisions.md` then removes the S0 screen and the figure
+> from every question before the drawing ones. Read both before building from this
+> document. `05-revisions.md` is the last word.
 
 This document is the source of truth. `onboarding-tree.json` and `landings.json` are the same content as static data. If they ever disagree, this document wins and the data is wrong.
 
