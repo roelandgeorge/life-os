@@ -124,7 +124,6 @@ export const en = {
   // only way into the catalogue, replacing the old cross-domain Discover.
   'domainCatalog.back': 'Back',
   'domainCatalog.add': 'Add {title}',
-  'domainCatalog.added': 'Added',
   'domainCatalog.write.open': 'Write your own',
   'domainCatalog.write.title.placeholder': 'Habit name',
   'domainCatalog.write.importance.important': 'Important',

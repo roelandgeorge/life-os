@@ -1,8 +1,9 @@
 # Revisions, second round
 
-Five remarks after walking the built onboarding and Home. This document
-**overrides** `01-onboarding-spec.md` and `04-revisions.md` wherever they
-disagree, and it is now the last word in this folder.
+Remarks from walking the built onboarding and Home, in two rounds: sections 1
+to 5 before it was built, section 6 after. This document **overrides**
+`01-onboarding-spec.md` and `04-revisions.md` wherever they disagree, and it
+is now the last word in this folder.
 
 Nothing here touches the engine, the panel step logic, the catalogue data or
 the tree's questions and landings. It changes what is drawn and what is
@@ -68,10 +69,9 @@ catalogue items, the row expands to show the menu and nothing else. Do not
 invent text to fill it, and do not fall back to showing cadence or importance:
 those are the machinery that `04-revisions.md` §9 took off the screen.
 
-`app/DomainCatalog.tsx` already does exactly this split for catalogue rows,
-`catalog-row` with a `catalog-row-main` button inside it. Reuse that shape and
-its CSS rather than writing a second one, so a row reads the same in both
-places.
+`app/DomainCatalog.tsx` already does exactly this split for catalogue rows.
+Reuse that shape rather than writing a second one, so a row reads the same in
+both places. Section 6 finishes the job: both ended up on `.checkin`.
 
 - `src/app/MainScreen.tsx`: `HabitRow` gains an expanded state, the `<label
   className="checkin-tap">` shrinks to wrap only the checkbox, the title
@@ -123,6 +123,31 @@ domain-less habit any more.
 | `CatalogItem.starter` | already recorded in CLAUDE.md, unchanged here |
 | `"render": "panel card"` in the tree | still describes the card, now without art |
 
+## 6. A row keeps its title still, and both screens use the same row
+
+Found by walking the built version of sections 3 and 4.
+
+**Expanding must not move the title.** `.checkin` was `display: flex` with no
+wrapping, so the expanded note and menu became extra children competing for
+the same row: the title collapsed from 259px wide to 45px and wrapped onto
+three lines, and the note landed beside it rather than under it. The row
+wraps now, so the note and the menu each take their own line and the title
+does not move by a pixel.
+
+**Remove is an ✕.** A full-width danger button reading "Remove" is the
+heaviest thing in an expanded row, which is the wrong weight for the rarest
+action. It keeps its 44px tap target and its accessible name.
+
+**A domain's catalogue never lists a habit already on the list.** Showing it
+greyed out with "Added" spends a row on something that cannot be tapped. The
+screen is now only what is still on offer.
+
+**A catalogue row is a habit row.** Both use the same `.checkin` markup and
+CSS: the add button where Home puts its checkbox, the title as the tap target
+that expands the catalogue `note`, and the effort marker where Home puts its
+streak. `.catalog-row*` is gone. A row should not read differently depending
+on which screen it is on.
+
 ## Acceptance checks
 
 These replace the ones in `01-onboarding-spec.md` §9 that they contradict.
@@ -140,3 +165,8 @@ Every other check there still stands.
 - Home shows no offers row.
 - `DomainCatalog` is the only caller of `onAddHabit`, and it is reachable only
   from a domain group's plus.
+- Expanding a habit row leaves the title's position and width unchanged, and
+  the note renders below it.
+- Remove is an ✕ with an accessible name, not a labelled danger button.
+- A domain's catalogue lists no habit already on the user's list.
+- A catalogue row and a habit row use the same markup and the same CSS class.

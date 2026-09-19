@@ -1,7 +1,7 @@
 import type { HTMLAttributes, LabelHTMLAttributes, ReactNode } from 'react';
 
 /**
- * `.checkin`, `.catalog-row`, `.risk-warning` — a raised or bordered box.
+ * `.checkin`, `.risk-warning` — a raised or bordered box.
  * `interactive` renders a `<label>` instead of a `<div>` for a card that
  * wraps its own control (the check-in row wraps its checkbox), so a tap
  * anywhere on the card reaches the control without a click handler of its

@@ -4,10 +4,14 @@
  * cross-domain Discover is gone. A domain the user never turned on has no
  * group on Home and therefore no way in here, which is deliberate.
  *
- * Each row is collapsed to its title and an effort marker (§7, §8); tapping
- * it expands the catalogue `note` and nothing else — cadence, importance and
- * evidence stay out of view entirely. Adding is one tap regardless of
- * whether the row is expanded. "Write your own" at the bottom opens
+ * A row is the same `.checkin` shape Home uses (docs/onboarding/05-revisions.md
+ * §4): the add button where Home puts its checkbox, the title as the tap
+ * target that expands the catalogue `note`, an effort marker where Home puts
+ * its streak. Cadence, importance and evidence stay out of view entirely
+ * (§7, §8). Adding is one tap regardless of whether the row is expanded.
+ *
+ * A habit already on the list is not shown at all, so this screen is only
+ * ever what is still on offer. "Write your own" at the bottom opens
  * `WriteHabitForm`, pre-filled with this domain (§9); `MainScreen` reuses the
  * same form, pre-filled from the habit instead, to edit one the user wrote.
  */
@@ -134,32 +138,34 @@ export function WriteHabitForm({
 
 function CatalogRow({
   item,
-  added,
   expanded,
   onToggleExpand,
   onAdd,
 }: {
   item: CatalogItem;
-  added: boolean;
   expanded: boolean;
   onToggleExpand: () => void;
   onAdd: () => void;
 }) {
   return (
-    <Card className={expanded ? 'catalog-row expanded' : 'catalog-row'}>
-      <button type="button" className="catalog-row-main" onClick={onToggleExpand}>
-        <span className="catalog-row-title">{item.title}</span>
+    <Card className={expanded ? 'checkin expanded' : 'checkin'}>
+      <div className="checkin-box">
+        <Button
+          small
+          variant="primary"
+          className="catalog-add"
+          aria-label={t('domainCatalog.add', { title: item.title })}
+          onClick={onAdd}
+        >
+          +
+        </Button>
+      </div>
+
+      <button type="button" className="checkin-main" aria-expanded={expanded} onClick={onToggleExpand}>
+        <span className="label">{item.title}</span>
         <EffortMarker effort={item.effort} />
       </button>
-      <Button
-        small
-        {...(added ? {} : { variant: 'primary' as const })}
-        disabled={added}
-        aria-label={t('domainCatalog.add', { title: item.title })}
-        onClick={onAdd}
-      >
-        {added ? en['domainCatalog.added'] : '+'}
-      </Button>
+
       {expanded && item.note && <Note>{item.note}</Note>}
     </Card>
   );
@@ -188,7 +194,7 @@ export function DomainCatalog({
 
   const filter = catalogFilterFor(state.profile);
   const items = catalogFor(domain, { ...filter, completed: completedCatalogIds(state.habits, state.logs) }).filter(
-    (item) => item.kind === 'habit',
+    (item) => item.kind === 'habit' && !addedIds.has(item.id),
   );
 
   return (
@@ -203,7 +209,6 @@ export function DomainCatalog({
           <CatalogRow
             key={item.id}
             item={item}
-            added={addedIds.has(item.id)}
             expanded={expanded === item.id}
             onToggleExpand={() => setExpanded((current) => (current === item.id ? null : item.id))}
             onAdd={() => onAddHabit(item.id)}

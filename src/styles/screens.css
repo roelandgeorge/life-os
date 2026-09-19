@@ -113,6 +113,10 @@
 
 .checkin {
   display: flex;
+  /* The expanded note and menu are extra flex children. Without wrapping they
+     compete with the title for the one row and squeeze it to a few characters
+     wide, so each takes its own line and the title never moves. */
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
@@ -121,7 +125,6 @@
   background-size: var(--grain-size) var(--grain-size);
   border: var(--hairline) solid var(--rule);
   border-radius: var(--radius-md);
-  cursor: pointer;
 }
 
 .checkin input {
@@ -133,7 +136,7 @@
 
 .checkin .label {
   font-weight: 600;
-  flex: 1;
+  min-width: 0;
 }
 
 .checkin.collapsed {
@@ -222,11 +225,20 @@
 .habit-menu {
   width: 100%;
   display: flex;
+  justify-content: flex-end;
   gap: var(--space-2);
 }
 
 .habit-menu button {
   white-space: nowrap;
+}
+
+/* Remove is an ✕, not a full-width danger button: it shares a line with Edit
+   and should not read as the row's main action. */
+.habit-remove {
+  min-width: var(--tap);
+  padding: 0 var(--space-3);
+  line-height: 1;
 }
 
 .best-version-toggle {
@@ -476,38 +488,13 @@
 
 /* ---- a domain's own catalogue (docs/onboarding/04-revisions.md §6-§9) --- */
 
-.catalog-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  background-color: var(--surface);
-  border: var(--hairline) solid var(--rule);
-  border-radius: var(--radius-md);
-}
-
-.catalog-row-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  background: none;
-  border: none;
-  padding: var(--space-1) 0;
-  text-align: left;
-  min-height: 0;
-}
-
-.catalog-row-title {
-  min-width: 0;
-}
-
-.catalog-row.expanded .note {
-  width: 100%;
-  margin: 0;
+/* A catalogue row is a `.checkin`, the same shape Home uses
+   (docs/onboarding/05-revisions.md §4) — only the add button and the effort
+   marker differ from a habit row, and both sit where Home's own controls do. */
+.catalog-add {
+  min-width: var(--tap);
+  padding: 0 var(--space-3);
+  line-height: 1;
 }
 
 .effort-marker {

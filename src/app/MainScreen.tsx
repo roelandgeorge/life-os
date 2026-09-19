@@ -305,8 +305,14 @@ function HabitRow({
               {en['habits.menu.edit']}
             </Button>
           )}
-          <Button small variant="danger" onClick={onRemove}>
-            {en['settings.habits.remove']}
+          <Button
+            small
+            variant="danger"
+            className="habit-remove"
+            aria-label={en['settings.habits.remove']}
+            onClick={onRemove}
+          >
+            ✕
           </Button>
         </div>
       )}
