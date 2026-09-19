@@ -152,28 +152,44 @@
   white-space: nowrap;
 }
 
-.checkin-tap {
+/* Two tap targets (docs/onboarding/05-revisions.md §3): the box ticks, the
+   title expands. Both carry their own padding so the split is felt with a
+   thumb rather than only seen. */
+.checkin-box {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  flex: 1;
-  min-width: 0;
+  flex: none;
+  padding: var(--space-2);
+  margin: calc(var(--space-2) * -1);
   cursor: pointer;
 }
 
-.checkin-tap input {
+.checkin-box input {
   width: 18px;
   height: 18px;
   accent-color: var(--bronze);
   flex: none;
 }
 
-/* A landing offer (docs/onboarding/01-onboarding-spec.md §6) — a suggestion,
-   not yet a commitment, so it reads as a lighter, dashed version of a
-   check-in rather than one more box to tick. */
-.checkin.offer {
-  border-style: dashed;
-  opacity: 0.85;
+.checkin-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) 0 var(--space-2) var(--space-3);
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.checkin.expanded .note {
+  width: 100%;
+  margin: 0;
 }
 
 .domain-heading-row {
@@ -201,27 +217,15 @@
 
 /* ---- a habit row's own menu (docs/onboarding/04-revisions.md §9) -------- */
 
+/* Only an expanded row has a menu, so it sits in the row's own flow rather
+   than floating over the rows below it. */
 .habit-menu {
-  position: relative;
-  flex: none;
-}
-
-.habit-menu-popover {
-  position: absolute;
-  top: calc(100% + var(--space-1));
-  right: 0;
-  z-index: 1;
+  width: 100%;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-2);
-  background: var(--surface);
-  border: var(--hairline) solid var(--rule);
-  border-radius: var(--radius-md);
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--well) 70%, transparent);
+  gap: var(--space-2);
 }
 
-.habit-menu-popover button {
+.habit-menu button {
   white-space: nowrap;
 }
 
@@ -254,29 +258,14 @@
   margin: 0 0 var(--space-4);
 }
 
-/* Every question but S0 and the two drawing screens: a small strip instead
-   of the full 64% portrait, so several options never push below the fold. */
-.onboarding.compact .portrait {
-  height: 22%;
+/* Only the two drawing questions carry a figure (docs/onboarding/05-revisions.md
+   §2). Every question before them has no portrait element at all, so the
+   options start at the top of the screen and five panel cards still clear
+   the fold at 390x844. */
+.onboarding.figureless .below {
+  padding-top: var(--space-5);
 }
 
-.onboarding-lede {
-  font-family: var(--serif);
-  font-size: var(--text-lg);
-  margin: 0 0 var(--space-2);
-}
-
-.onboarding-go {
-  display: block;
-  width: 100%;
-  margin-top: var(--space-4);
-  padding: var(--space-3) var(--space-4);
-}
-
-/* S0 and FIG_gender/FIG_hair show the figure directly, but every question in
-   between is answered before appearance is known, so .portrait keeps its
-   normal share of the screen and the options sit in the usual flow below it —
-   no crowding at 390x844 even with five panel cards. */
 .onboarding-rows {
   display: flex;
   flex-direction: column;
@@ -291,11 +280,8 @@
   min-height: 48px;
 }
 
-/* One compact row per panel, a small thumbnail leading it — not the 2-up
-   grid of large cards the spec's prose suggests, because two of the five
-   panels (head, partner) have no artwork yet and render as an empty box,
-   and "nothing below the fold" (00-brief.md) rules out spending the height
-   a big image would need on cards half of which are blank anyway. */
+/* One row per panel, a label over a sub-line. No artwork: the user has not
+   said what they look like yet (docs/onboarding/05-revisions.md §2). */
 .panel-cards {
   display: flex;
   flex-direction: column;
@@ -304,35 +290,12 @@
 
 .panel-card {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-0);
+  padding: var(--space-3);
   text-align: left;
   min-height: var(--tap);
-}
-
-.panel-card-art {
-  flex: none;
-  display: block;
-  width: 52px;
-  height: 52px;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  background: var(--well);
-}
-
-.panel-card-art img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.panel-card-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
 }
 
 .panel-card-label {

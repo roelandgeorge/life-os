@@ -191,8 +191,7 @@ most want to work on?" against the five panels — Body, Head, People, Partner,
 Money (the code still calls the third one `network`; only `en.ts`'s
 `panel.network` says "People" on screen, per `01-onboarding-spec.md` §4.4).
 Each branch then asks what's actually wrong, in that panel's own words, down
-to one of 40 landings that seeds at most two catalogue habits and offers a
-third. "Is there anything else you want to work on?" repeats after every
+to one of 40 landings that seeds at most two catalogue habits. "Is there anything else you want to work on?" repeats after every
 landing except one reached through "None of them" or once all five panels
 are chosen — `04-revisions.md` §11 reverses phase 4's two-panel cap — and a
 repeat visit to Q1 hides every panel already picked and never re-offers
@@ -231,9 +230,11 @@ The moment the tree reaches its landing, `App.tsx` calls `buildInitialState`
 and hands straight to `Shell` — there is no "you're done" screen of its own.
 For that one session `MainScreen` shows the landing headline ("Fifteen years
 out. Everything in the middle.") and a count line instead of the everyday
-"This is future you.", plus a row of whatever wasn't seeded, each a one-tap
-add; both are gone the moment every offer's been acted on or the app
-reloads (`App.tsx`'s `JustOnboarded`, session-only, never written to disk).
+"This is future you.", gone the moment the app reloads (`App.tsx`'s
+`JustOnboarded`, session-only, never written to disk). `05-revisions.md` §4
+removed the row of unseeded suggestions that used to sit under it: those
+items are in their own domain's catalogue already, so the plus on a domain
+group is the single way to add anything.
 
 **The catalogue only opens from a domain's own group on Home** — a domain
 never chosen has no group there and so no way in (§6), which is deliberate:
@@ -528,8 +529,8 @@ src/core/      the model — no DOM, no clock, no storage
   onboarding.ts  the tree (docs/onboarding/), read from src/content/
                  onboarding-tree.json + landings.json: step()/choose()/
                  chooseDrawing() walk it, resolveSeeds() (via buildInitialState,
-                 seededCatalogItems, offeredCatalogItems) turns a finished
-                 run into catalogue ids once the whole profile is known
+                 seededCatalogItems) turns a finished run into catalogue ids
+                 once the whole profile is known
   personas.ts    the persona catalogue (id/name/blurb), from content/personas.json
 src/store/     Store interface, IndexedDB/in-memory impls, migrate.ts (v1 -> v2)
 src/visual/    scene.ts (the slot table + fallback-chain resolver) and the compositing Avatar
@@ -541,7 +542,7 @@ src/styles/    tokens.css (the only file with a colour literal), base.css,
 src/app/       the shell: useLifeOS is the one place touching Store and clock;
                every screen takes state as props. Onboarding is a plain
                (nodeId, Answers) renderer over the tree, run three ways —
-               the full S0-to-LAND path, and Settings' two redos between a
+               the full Q1-to-LAND path, and Settings' two redos between a
                different (start, terminal) node pair each; DomainCatalog is
                a single domain's own catalogue, opened from that domain's
                group on Home, sharing its WriteHabitForm with MainScreen's

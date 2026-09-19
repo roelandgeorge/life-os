@@ -6,7 +6,6 @@
  */
 
 import { useEffect, useState } from 'react';
-import type { CatalogItem } from '../core/catalog';
 import { en } from '../i18n/en';
 import { Button } from '../ui/Button';
 import type { JustOnboarded } from './App';
@@ -36,10 +35,6 @@ export function Shell({ justOnboarded }: { justOnboarded?: JustOnboarded }) {
     completeFigureRedo,
   } = useLifeOS(store);
   const [tab, setTab] = useState<Tab>('main');
-  // Session-only: what the landing screen still has to offer. Lost on reload
-  // (App never passes justOnboarded again after the store already holds a
-  // record), which is fine — it is a first-session nicety, not state.
-  const [landingOffers, setLandingOffers] = useState<readonly CatalogItem[]>(justOnboarded?.offers ?? []);
 
   // Refresh what the server knows about the weekly-or-longer commitments,
   // once per open. Only ids, anchors and dates travel; see core/atRisk.ts.
@@ -85,11 +80,6 @@ export function Shell({ justOnboarded }: { justOnboarded?: JustOnboarded }) {
             onUpdateHabit={updateHabit}
             onRemoveHabit={removeHabit}
             {...(justOnboarded ? { landingDailyCount: justOnboarded.dailyCount } : {})}
-            landingOffers={landingOffers}
-            onAddLandingOffer={(catalogId) => {
-              addHabit({ catalogId });
-              setLandingOffers((offers) => offers.filter((o) => o.id !== catalogId));
-            }}
           />
         )}
         {tab === 'history' && <HistoryScreen state={state} today={today} />}

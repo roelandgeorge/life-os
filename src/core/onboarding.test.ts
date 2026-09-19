@@ -9,7 +9,6 @@ import {
   chooseDrawing,
   dailySeedCount,
   everyLandingCatalogId,
-  offeredCatalogItems,
   profileFrom,
   seededCatalogItems,
   step,
@@ -90,10 +89,13 @@ describe('landings.json against catalog.json', () => {
 });
 
 describe('the copy — pinned verbatim against docs/onboarding/04-revisions.md, the final word', () => {
-  it('S0 opens with the fixed explainer and "Go on"', () => {
-    expect(node('S0').text).toBe(
-      "This is you in fifteen years.\nEverything starts in the middle. It moves with what you do, both ways.",
-    );
+  it('the tree opens straight on Q1, with no explainer screen before it', () => {
+    expect(START_NODE).toBe('Q1');
+    expect(NODES['S0']).toBeUndefined();
+    // LAND is the only `screen` left, and it is a terminal hand-off the
+    // renderer never reaches — nothing shows a screen node any more.
+    const screens = Object.entries(NODES).filter(([, n]) => n.kind === 'screen');
+    expect(screens.map(([id]) => id)).toEqual(['LAND']);
   });
 
   it('Q1 asks what the revision replaces it with, not the original spec wording', () => {
@@ -161,7 +163,7 @@ describe('the copy — pinned verbatim against docs/onboarding/04-revisions.md, 
     const original = (await import('../../docs/onboarding/onboarding-tree.json')) as unknown as {
       default: { nodes: Record<string, TreeNodeJson> };
     };
-    const revisedOrRemoved = new Set(['Q1', 'Q2N', 'Q3Ny', 'QMORE', 'SIT', 'SIT_partner', 'SIT_children']);
+    const revisedOrRemoved = new Set(['S0', 'Q1', 'Q2N', 'Q3Ny', 'QMORE', 'SIT', 'SIT_partner', 'SIT_children']);
     for (const [id, sourceNode] of Object.entries(original.default.nodes)) {
       if (revisedOrRemoved.has(id)) continue;
       const shipped = NODES[id];
@@ -279,15 +281,6 @@ describe('the Money branch sets employed / self-employed', () => {
     expect(landed.answers.employed).toBe(true);
     expect(landed.answers.selfEmployed).toBe(true);
     expect(landed.answers.landings).toEqual(['M3s']);
-  });
-});
-
-describe('offers', () => {
-  it('never repeats an id that was already seeded', () => {
-    const q1 = chooseById('Q1', {}, 'body');
-    const landed = chooseById('Q2B', q1.answers, 'No strength. No shape.');
-    const seededIds = new Set(seededCatalogItems(landed.answers).map((i) => i.id));
-    for (const offer of offeredCatalogItems(landed.answers)) expect(seededIds.has(offer.id)).toBe(false);
   });
 });
 

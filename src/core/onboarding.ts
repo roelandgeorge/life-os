@@ -258,13 +258,6 @@ export function choose(nodeId: string, answers: Answers, optionIndex: number): A
   return advanceThroughLandings(resolveNextRef(option.next, next), next);
 }
 
-/** Advances past a `screen` node's single button (S0's "Go on"). */
-export function advanceScreen(nodeId: string, answers: Answers): Advance {
-  const node = TREE.nodes[nodeId];
-  if (!node || node.kind !== 'screen' || !node.next) throw new Error(`${nodeId} is not an advanceable screen`);
-  return advanceThroughLandings(node.next, answers);
-}
-
 /** Advances past FIG_gender/FIG_hair, whose options are drawings rather than tree data. */
 export function chooseDrawing(nodeId: string, answers: Answers, value: Gender | Hair): Advance {
   const node = TREE.nodes[nodeId];
@@ -306,25 +299,6 @@ export function seededCatalogItems(answers: Answers): readonly CatalogItem[] {
   return resolveSeeds(answers);
 }
 
-/** The landing screen's one-tap-add offers — never one already seeded. */
-export function offeredCatalogItems(answers: Answers): readonly CatalogItem[] {
-  const seededIds = new Set(resolveSeeds(answers).map((i) => i.id));
-  const filter = catalogFilterFor(profileFrom(answers));
-  const seen = new Set<string>();
-  const items: CatalogItem[] = [];
-  for (const landingId of answers.landings ?? []) {
-    const landing = LANDINGS[landingId];
-    if (!landing) continue;
-    for (const id of landing.offers) {
-      if (seen.has(id) || seededIds.has(id)) continue;
-      const item = catalogById(id);
-      if (!item || !requirementsMet(item, filter)) continue;
-      seen.add(id);
-      items.push(item);
-    }
-  }
-  return items;
-}
 
 /** The landing screen's count line: seeded habits across every landing reached that are due today. */
 export function dailySeedCount(answers: Answers): number {

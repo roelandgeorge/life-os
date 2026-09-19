@@ -15,7 +15,6 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import type { CatalogItem } from '../core/catalog';
 import { orderedDomains, PANEL_KEYS, type DomainConfig, type DomainKey, type PanelSteps } from '../core/domains';
 import { dailyTasksDone, editableDays, isDueToday, isRestDay, lastHit } from '../core/due';
 import { fullDayStrip } from '../core/scoring';
@@ -35,6 +34,7 @@ import { atRiskItems, type RiskItem } from '../core/atRisk';
 import { Avatar } from '../visual/Avatar';
 import { scene as buildScene } from '../visual/scene';
 import { Celebration } from './Celebration';
+import { catalogById } from '../core/catalog';
 import { DomainCatalog, WriteHabitForm } from './DomainCatalog';
 import type { NewHabitSource } from './useLifeOS';
 import { Button } from '../ui/Button';
@@ -86,8 +86,6 @@ export function MainScreen({
   onUpdateHabit,
   onRemoveHabit,
   landingDailyCount,
-  landingOffers,
-  onAddLandingOffer,
 }: {
   state: AppState;
   projection: Projection;
@@ -98,8 +96,6 @@ export function MainScreen({
   onRemoveHabit: (id: string) => void;
   /** Set only for the session right after onboarding — see App.tsx's `JustOnboarded`. */
   landingDailyCount?: number;
-  landingOffers: readonly CatalogItem[];
-  onAddLandingOffer: (catalogId: string) => void;
 }) {
   const [showBest, setShowBest] = useState(false);
   const [catalogDomain, setCatalogDomain] = useState<DomainKey | null>(null);
@@ -238,24 +234,6 @@ export function MainScreen({
               </div>
             ))}
 
-            {landingOffers.length > 0 && (
-              <div className="checkins landing-offers">
-                {landingOffers.map((item) => (
-                  <Card key={item.id} className="checkin offer">
-                    <span className="label">{item.title}</span>
-                    <Button
-                      small
-                      variant="primary"
-                      aria-label={t('main.landing.offer.add', { title: item.title })}
-                      onClick={() => onAddLandingOffer(item.id)}
-                    >
-                      +
-                    </Button>
-                  </Card>
-                ))}
-              </div>
-            )}
-
             {editing !== today && <Note className="editing-past">{t('main.editingPast', { day: dayLabel(editing, today) })}</Note>}
             <Note className="next-move">{nextMove(projection)}</Note>
           </>
@@ -282,7 +260,7 @@ function HabitRow({
   onEdit: (() => void) | undefined;
   onRemove: () => void;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const due = isDueToday(habit, state.logs, today);
   const checked = isHabitTicked(editingLog ?? undefined, habit.id);
   const last = lastHit(state.logs, habit.id, today);
@@ -294,52 +272,44 @@ function HabitRow({
   const streak = habitStreak(state.logs, habit, today);
   const color = effectiveColor(habit);
 
+  // Two tap targets, not one (docs/onboarding/05-revisions.md §3): the box
+  // ticks, the title expands. The same split DomainCatalog's rows use, so a
+  // row reads the same in both places.
+  const note = habit.catalogId === undefined ? undefined : catalogById(habit.catalogId)?.note;
+
   return (
-    <Card className={due ? 'checkin' : 'checkin collapsed'}>
-      <label className="checkin-tap">
+    <Card className={[due ? 'checkin' : 'checkin collapsed', expanded ? 'expanded' : ''].join(' ').trim()}>
+      <label className="checkin-box" aria-label={habitTitle(habit, en['settings.habits.title.placeholder'])}>
         <Checkbox checked={checked} onChange={onToggle} />
+      </label>
+
+      <button type="button" className="checkin-main" aria-expanded={expanded} onClick={() => setExpanded((v) => !v)}>
         <span className="label" style={color === undefined ? undefined : { color }}>
           {habit.emoji ? `${habit.emoji} ` : ''}
           {habitTitle(habit, en['settings.habits.title.placeholder'])}
         </span>
-      </label>
-      {!due && (
-        <span className={rest ? 'lastHit rest' : 'lastHit'}>
-          {rest ? en['main.restDay'] : last ? t('main.lastHit', { date: last }) : en['main.neverHit']}
-        </span>
-      )}
-      {due && streak > 1 && <span className="lastHit">{t('habits.streak', { count: streak })}</span>}
-
-      <div className="habit-menu">
-        <Button small aria-label={en['habits.menu.open']} onClick={() => setMenuOpen((v) => !v)}>
-          ⋯
-        </Button>
-        {menuOpen && (
-          <div className="habit-menu-popover">
-            {onEdit && (
-              <Button
-                small
-                onClick={() => {
-                  setMenuOpen(false);
-                  onEdit();
-                }}
-              >
-                {en['habits.menu.edit']}
-              </Button>
-            )}
-            <Button
-              small
-              variant="danger"
-              onClick={() => {
-                setMenuOpen(false);
-                onRemove();
-              }}
-            >
-              {en['settings.habits.remove']}
-            </Button>
-          </div>
+        {!due && (
+          <span className={rest ? 'lastHit rest' : 'lastHit'}>
+            {rest ? en['main.restDay'] : last ? t('main.lastHit', { date: last }) : en['main.neverHit']}
+          </span>
         )}
-      </div>
+        {due && streak > 1 && <span className="lastHit">{t('habits.streak', { count: streak })}</span>}
+      </button>
+
+      {expanded && note && <Note>{note}</Note>}
+
+      {expanded && (
+        <div className="habit-menu">
+          {onEdit && (
+            <Button small onClick={onEdit}>
+              {en['habits.menu.edit']}
+            </Button>
+          )}
+          <Button small variant="danger" onClick={onRemove}>
+            {en['settings.habits.remove']}
+          </Button>
+        </div>
+      )}
     </Card>
   );
 }

@@ -5,8 +5,13 @@
  * both answers the question and advances, matching "one thumb, standing up"
  * and 00-brief.md's rule against adding chrome the spec doesn't ask for.
  *
+ * The figure is drawn only on the two drawing questions, where the user is
+ * choosing it, and then on the landing (docs/onboarding/05-revisions.md §2):
+ * before that the app has not asked what they look like, so any figure on
+ * screen would be a stranger's.
+ *
  * `start`/`terminal` let the same component serve three independent entries
- * (docs/onboarding/04-revisions.md §5): the full run (`App.tsx`, S0 to LAND),
+ * (docs/onboarding/04-revisions.md §5): the full run (`App.tsx`, Q1 to LAND),
  * "Redo what you work on" (Q1 to FIG_gender, the figure untouched) and "Redo
  * the figure" (FIG_gender to LAND, the work-on panels untouched) — Settings
  * holds both. `onComplete` fires the moment the chosen option's own
@@ -16,7 +21,6 @@
 
 import { useState, type ReactNode } from 'react';
 import {
-  advanceScreen,
   choose,
   chooseDrawing,
   profileFrom,
@@ -35,15 +39,6 @@ import { Button } from '../ui/Button';
 import { SectionHeading } from '../ui/SectionHeading';
 
 const MID_STEPS: PanelSteps = Object.fromEntries(PANEL_KEYS.map((k) => [k, START_STEP])) as PanelSteps;
-
-/** Q1's own panel vocabulary against the slot `scene()` resolves for a preview — "people" and "money" are what Q1 calls the network and wealth panels. */
-const Q1_SLOT: Record<string, string> = {
-  body: 'body',
-  head: 'head',
-  people: 'network',
-  partner: 'partner',
-  money: 'wealth',
-};
 
 function previewSrc(slot: string, profile: Profile | undefined): string | undefined {
   return scene(MID_STEPS, profile).find((s) => s.slot === slot)?.src;
@@ -76,11 +71,7 @@ export function Onboarding({
 
   const current = step(nodeId, answers);
   const profile = profileFrom(answers);
-  // "One thumb, standing up: nothing below the fold" (00-brief.md) rules out
-  // the full 64% portrait on a question with several options — S0 and the
-  // two drawing questions are the only steps where seeing the figure is the
-  // point, so every other step gets a small strip instead.
-  const compact = current.kind !== 'screen' && current.optionsFrom !== 'drawings';
+  const showsFigure = current.optionsFrom === 'drawings';
 
   function advance(result: Advance) {
     // The terminal node is a hand-off, never rendered — LAND is the app's
@@ -95,26 +86,15 @@ export function Onboarding({
   }
 
   return (
-    <div className={compact ? 'main-screen onboarding compact' : 'main-screen onboarding'}>
-      <div className="portrait">
-        <Avatar scene={scene(MID_STEPS, profile)} />
-      </div>
+    <div className={showsFigure ? 'main-screen onboarding' : 'main-screen onboarding figureless'}>
+      {showsFigure && (
+        <div className="portrait">
+          <Avatar scene={scene(MID_STEPS, profile)} />
+        </div>
+      )}
 
       <div className="below">
-        {current.kind === 'screen' && (
-          <section>
-            {current.text.split('\n').map((line, i) => (
-              <p className={i === 0 ? 'onboarding-lede' : 'note'} key={i}>
-                {line}
-              </p>
-            ))}
-            <Button variant="primary" className="onboarding-go" onClick={() => advance(advanceScreen(nodeId, answers))}>
-              {current.button}
-            </Button>
-          </section>
-        )}
-
-        {current.kind !== 'screen' && current.optionsFrom === 'drawings' && current.field === 'gender' && (
+        {current.optionsFrom === 'drawings' && current.field === 'gender' && (
           <DrawingQuestion text={current.text}>
             {GENDER_VALUES.map((value) => (
               <DrawingTile
@@ -127,7 +107,7 @@ export function Onboarding({
           </DrawingQuestion>
         )}
 
-        {current.kind !== 'screen' && current.optionsFrom === 'drawings' && current.field === 'hair' && (
+        {current.optionsFrom === 'drawings' && current.field === 'hair' && (
           <DrawingQuestion text={current.text}>
             {HAIR_VALUES.map((value) => (
               <DrawingTile
@@ -140,12 +120,11 @@ export function Onboarding({
           </DrawingQuestion>
         )}
 
-        {current.kind !== 'screen' && current.optionsFrom !== 'drawings' && (
+        {current.optionsFrom !== 'drawings' && (
           <OptionsQuestion
             nodeId={nodeId}
             text={current.text}
             options={current.options ?? []}
-            {...(nodeId === 'Q1' ? { panelPreview: (id: string) => previewSrc(Q1_SLOT[id] ?? '', undefined) } : {})}
             onPick={(index) => advance(choose(nodeId, answers, index))}
           />
         )}
@@ -175,13 +154,11 @@ function OptionsQuestion({
   nodeId,
   text,
   options,
-  panelPreview,
   onPick,
 }: {
   nodeId: string;
   text: string;
   options: readonly StepOption[];
-  panelPreview?: (id: string) => string | undefined;
   onPick: (index: number) => void;
 }) {
   const cards = nodeId === 'Q1' ? options.filter((o) => o.id !== 'none') : [];
@@ -193,18 +170,12 @@ function OptionsQuestion({
 
       {cards.length > 0 && (
         <div className="panel-cards">
-          {cards.map((option) => {
-            const src = panelPreview?.(option.id ?? '');
-            return (
-              <button type="button" key={option.index} className="panel-card" onClick={() => onPick(option.index)}>
-                <span className="panel-card-art">{src && <img src={src} alt="" draggable={false} />}</span>
-                <span className="panel-card-text">
-                  <span className="panel-card-label">{option.label}</span>
-                  {option.sub && <span className="note panel-card-sub">{option.sub}</span>}
-                </span>
-              </button>
-            );
-          })}
+          {cards.map((option) => (
+            <button type="button" key={option.index} className="panel-card" onClick={() => onPick(option.index)}>
+              <span className="panel-card-label">{option.label}</span>
+              {option.sub && <span className="note panel-card-sub">{option.sub}</span>}
+            </button>
+          ))}
         </div>
       )}
 

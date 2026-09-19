@@ -64,12 +64,12 @@ arrives wanting — where the new tree points at the picture's own five panels
 and asks what's in the way of each. `src/content/onboarding-tree.json` and
 `landings.json` hold it as data, character-for-character pinned by
 `core/onboarding.test.ts`; `core/onboarding.ts`'s `step()`/`choose()`/
-`chooseDrawing()` walk it and `buildInitialState()`/`seededCatalogItems()`/
-`offeredCatalogItems()` resolve a finished run into catalogue ids, deferred
+`chooseDrawing()` walk it and `buildInitialState()`/`seededCatalogItems()`
+resolve a finished run into catalogue ids, deferred
 until the whole profile is known so a requirement like H033's `hair` still
 gates correctly even though hair is asked last. `app/Onboarding.tsx` is now a
 plain `(nodeId, Answers)` renderer with no back/next chrome — every option
-both answers and advances in one tap — run three ways: the full S0-to-LAND
+both answers and advances in one tap — run three ways: the full Q1-to-LAND
 path (`App.tsx`, before the store holds any state) and Settings' two
 independent redos, "Redo the figure" and "Redo what you work on"
 (`docs/onboarding/04-revisions.md` §5), each between a different
@@ -83,6 +83,20 @@ seeded habits' domains first appear, repeats dropped. `core/domains.ts`'s
 `orderedDomains()` still reads it the same way to order Home's groups
 (`MainScreen.groupHabits`); changing the order means running "what you work
 on" again, which is the only reorder control there is now.
+
+**A second review round then trimmed it** (`docs/onboarding/05-revisions.md`,
+now the last word in that folder). The figure is drawn only on the two
+drawing questions and the landing: before those the app has not asked what
+the user looks like, so any figure on screen is a stranger's. That took the
+opening S0 explainer with it — it existed to show that figure — so the tree
+now starts at `Q1` and `LAND` is the only `screen` node left, a terminal
+hand-off the renderer never reaches. Q1's five cards lost their panel art.
+A habit row on Home has two tap targets rather than one: the checkbox ticks,
+the title expands to the catalogue `note` and the row's own menu, which does
+not exist in the DOM while collapsed. The landing's row of unseeded offers
+is gone, and with it `offeredCatalogItems()` and `Shell`'s `landingOffers`;
+`landings.json`'s `offers` is now unused metadata exactly like
+`CatalogItem.starter`, so check who reads it before building on it.
 
 `app/DiscoverScreen.tsx`, `app/ProfileFields.tsx`, `app/HabitPicker.tsx` and
 `src/ui/Field.tsx`/`Select.tsx` are gone — each had zero remaining callers
@@ -161,7 +175,7 @@ src/core/       the model — pure: no DOM, no clock, no storage
   types.ts        AppState, DayLog, UserHabit, Profile, Projection
   onboarding.ts   the tree (docs/onboarding/): step()/choose()/chooseDrawing()
                   walk it, buildInitialState()/seededCatalogItems()/
-                  offeredCatalogItems() resolve a finished run
+                  seededCatalogItems() resolve a finished run
   personas.ts     the persona catalogue (id/name/blurb), from content/personas.json
 src/store/      Store interface (types.ts), indexeddb.ts, memory.ts, serialize.ts,
                 migrate.ts (v1 -> v2, run on first load of an old record)

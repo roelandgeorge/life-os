@@ -137,7 +137,6 @@ export const en = {
 
   // A habit row's menu (§9) — Remove for everyone, Edit for a habit the user
   // wrote themselves. Remove reuses settings.habits.remove.
-  'habits.menu.open': 'More options',
   'habits.menu.edit': 'Edit',
 
   // The landing screen (docs/onboarding/01-onboarding-spec.md §6) — shown
@@ -150,7 +149,6 @@ export const en = {
   'main.landing.count.2': 'Two boxes today.',
   'main.landing.count.3': 'Three boxes today.',
   'main.landing.count.4': 'Four boxes today.',
-  'main.landing.offer.add': 'Add {title}',
 } as const;
 
 export type I18nKey = keyof typeof en;
