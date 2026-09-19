@@ -153,7 +153,7 @@ function CatalogRow({
         <Button
           small
           variant="primary"
-          className="catalog-add"
+          className="icon-action"
           aria-label={t('domainCatalog.add', { title: item.title })}
           onClick={onAdd}
         >

@@ -212,11 +212,7 @@
   margin: 0;
 }
 
-.domain-heading-row button {
-  min-width: var(--tap);
-  min-height: 28px;
-  padding: 0 var(--space-2);
-}
+
 
 /* ---- a habit row's own menu (docs/onboarding/04-revisions.md §9) -------- */
 
@@ -233,11 +229,18 @@
   white-space: nowrap;
 }
 
-/* Remove is an ✕, not a full-width danger button: it shares a line with Edit
-   and should not read as the row's main action. */
-.habit-remove {
+/* The small square actions: a domain group's +, a catalogue row's +, and a
+   habit row's ✕. One size for all three, so ✕ and + never read as different
+   weights of the same gesture.
+
+   44x28 is under `--tap`'s 44px floor on the short axis, deliberately: the
+   width still gives a thumb its 44px, the domain + has worked at this size
+   since it shipped, and a 44px-tall ✕ next to a 28px + looked like a bigger
+   promise than removing a row deserves. */
+.icon-action {
   min-width: var(--tap);
-  padding: 0 var(--space-3);
+  min-height: 28px;
+  padding: 0 var(--space-2);
   line-height: 1;
 }
 
@@ -491,11 +494,6 @@
 /* A catalogue row is a `.checkin`, the same shape Home uses
    (docs/onboarding/05-revisions.md §4) — only the add button and the effort
    marker differ from a habit row, and both sit where Home's own controls do. */
-.catalog-add {
-  min-width: var(--tap);
-  padding: 0 var(--space-3);
-  line-height: 1;
-}
 
 .effort-marker {
   display: flex;
