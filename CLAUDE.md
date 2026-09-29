@@ -130,6 +130,16 @@ trash can, and all five are drawn in `src/ui/Glyph.tsx` rather than typed as
 `✎`/`✕`/`🗑`. The rule is `button.icon-action`, not `.icon-action` —
 `button.small` outranks a bare class and silently ate `padding: 0`.
 
+**Merge to `main` yourself, and always post the links.** The user does not
+want to be the one clicking Merge. Once `npm test`, `npm run typecheck` and
+`npm run build` are green and the change has been checked in a browser at
+390x844, merge the PR. Then post, in the reply, the PR, the branch and the
+Vercel deployment for that commit — the deployment URL comes from the head
+commit's `Vercel` status `target_url`, since the proxy blocks `vercel.app`
+and a guessed preview hostname cannot be verified from here. Every merge
+goes straight to the user's production deployment, so the browser check is
+not optional.
+
 **Do not offer to export before a destructive step during development.** The
 user is testing and is content to lose the data. `settings.reset.note`, which
 said "Export first if you want to keep it", is gone for the same reason. This
