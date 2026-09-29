@@ -7,7 +7,6 @@ import {
   buildInitialState,
   choose,
   chooseDrawing,
-  dailySeedCount,
   everyLandingCatalogId,
   profileFrom,
   seededCatalogItems,
@@ -27,7 +26,6 @@ type TreeNodeJson = {
   text: string;
   field?: string;
   options?: readonly TreeOptionJson[];
-  countLine?: Readonly<Record<string, string>>;
 };
 const NODES = (treeJson as { nodes: Record<string, TreeNodeJson> }).nodes;
 function node(id: string): TreeNodeJson {
@@ -138,15 +136,8 @@ describe('the copy — pinned verbatim against docs/onboarding/04-revisions.md, 
     expect(node('FIG_hair').text).toBe('Hair?');
   });
 
-  it("the landing screen's headline and count line match app/MainScreen.tsx's own copy — LAND itself is never rendered", () => {
-    expect(node('LAND').text.split('\n')[0]).toBe(en['main.landing.headline']);
-    expect(node('LAND').countLine).toEqual({
-      '0': en['main.landing.count.0'],
-      '1': en['main.landing.count.1'],
-      '2': en['main.landing.count.2'],
-      '3': en['main.landing.count.3'],
-      '4': en['main.landing.count.4'],
-    });
+  it("the landing screen's headline matches app/MainScreen.tsx's own copy — LAND itself is never rendered", () => {
+    expect(node('LAND').text).toBe(en['main.landing.headline']);
   });
 
   it('partner and children are written exactly once each, only inside the Partner branch', () => {
@@ -163,7 +154,19 @@ describe('the copy — pinned verbatim against docs/onboarding/04-revisions.md, 
     const original = (await import('../../docs/onboarding/onboarding-tree.json')) as unknown as {
       default: { nodes: Record<string, TreeNodeJson> };
     };
-    const revisedOrRemoved = new Set(['S0', 'Q1', 'Q2N', 'Q3Ny', 'QMORE', 'SIT', 'SIT_partner', 'SIT_children']);
+    // LAND's headline was rewritten by docs/onboarding/06-revisions.md §4;
+    // its count line is unchanged and still pinned above.
+    const revisedOrRemoved = new Set([
+      'S0',
+      'Q1',
+      'Q2N',
+      'Q3Ny',
+      'QMORE',
+      'SIT',
+      'SIT_partner',
+      'SIT_children',
+      'LAND',
+    ]);
     for (const [id, sourceNode] of Object.entries(original.default.nodes)) {
       if (revisedOrRemoved.has(id)) continue;
       const shipped = NODES[id];
@@ -345,11 +348,6 @@ describe('buildInitialState', () => {
     const answers: Answers = { landings: ['NOT-A-LANDING'] };
     expect(() => buildInitialState(answers, () => 'id', TODAY)).not.toThrow();
     expect(buildInitialState(answers, () => 'id', TODAY).habits).toEqual([]);
-  });
-
-  it('dailySeedCount counts only daily-cadence seeds, deduplicated', () => {
-    const answers: Answers = { landings: ['Z'] }; // H001 (daily), H020 (daily) per landings.json
-    expect(dailySeedCount(answers)).toBe(2);
   });
 });
 

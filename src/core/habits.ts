@@ -14,6 +14,9 @@ import { completedPeriods, currentPeriod, hitInRange, periodAt } from './periods
 import type { DayLog, Profile, UserHabit } from './types';
 
 export const MAX_HABIT_TITLE_LENGTH = 60;
+
+/** The expanded line under a title. Long enough for the catalogue's own notes, short enough to stay one paragraph. */
+export const MAX_HABIT_NOTE_LENGTH = 160;
 /** A cap on self-written (domain-less) habits — catalogue habits are not capped. */
 export const MAX_CUSTOM_HABITS = 10;
 
@@ -221,19 +224,19 @@ export function newHabitFromCatalog(item: CatalogItem, id: string, startDate: Da
  * The three choices a user-written habit's weight offers on screen
  * (docs/onboarding/04-revisions.md §9) — never a free 1-5 number.
  */
-export const CUSTOM_IMPORTANCE: readonly { value: number; key: 'important' | 'medium' | 'notImportant' }[] = [
-  { value: 5, key: 'important' },
-  { value: 3, key: 'medium' },
-  { value: 1, key: 'notImportant' },
-];
 
-export type NewCustomHabitInput = {
+/** Everything the write-a-habit form collects. Editing an existing habit writes the same set. */
+export type WrittenHabitFields = {
   title: string;
   importance: number;
   cadence: Cadence;
+  emoji?: string;
+  note?: string;
+};
+
+export type NewCustomHabitInput = WrittenHabitFields & {
   /** Pre-filled from the domain catalogue screen the form was opened from. */
   domain: DomainKey;
-  emoji?: string;
 };
 
 /**
@@ -252,12 +255,44 @@ export function newCustomHabit(id: string, input: NewCustomHabitInput, startDate
     startDate,
   };
   if (input.emoji !== undefined) habit.emoji = input.emoji;
+  if (input.note !== undefined) habit.note = input.note;
   return habit;
 }
 
 export function canAddCustomHabit(habits: readonly UserHabit[]): boolean {
   const activeCustom = habits.filter((h) => h.catalogId === undefined && h.removedDate === undefined);
   return activeCustom.length < MAX_CUSTOM_HABITS;
+}
+
+/**
+ * The cadences the habit editor offers. `{ everyDays }` was always in the
+ * model (`cadencePeriodDays`, `serialize`, `migrate`) but never on screen,
+ * so a habit like "train full body 3-4x a week" had to be filed as weekly,
+ * where one tick satisfied the whole week.
+ *
+ * Data rather than a branch, and compared with `sameCadence` rather than
+ * `===`, since two of them are objects.
+ */
+/**
+ * What a habit the user writes weighs. The editor no longer asks
+ * (docs/onboarding/07-revisions.md §2): a weight is what the panel engine
+ * reads, not something a person holding a phone has an opinion about, and
+ * the three-choice picker was the last piece of machinery left on that
+ * screen. A catalogue habit keeps the catalogue's own value.
+ */
+export const DEFAULT_IMPORTANCE = 3;
+
+export const CADENCE_CHOICES: readonly { key: string; cadence: Cadence }[] = [
+  { key: 'daily', cadence: 'daily' },
+  { key: 'everyOtherDay', cadence: { everyDays: 2 } },
+  { key: 'weekly', cadence: 'weekly' },
+  { key: 'everyTwoWeeks', cadence: { everyDays: 14 } },
+  { key: 'monthly', cadence: 'monthly' },
+];
+
+export function sameCadence(a: Cadence, b: Cadence): boolean {
+  if (typeof a === 'string' || typeof b === 'string') return a === b;
+  return a.everyDays === b.everyDays;
 }
 
 export type HabitPatch = {
@@ -270,6 +305,8 @@ export type HabitPatch = {
   domain?: DomainKey | null;
   /** `null` clears the filing emoji. */
   emoji?: string | null;
+  /** `null` clears back to the catalogue item's own note. */
+  note?: string | null;
 };
 
 export function updateHabit(habits: readonly UserHabit[], id: string, patch: HabitPatch): UserHabit[] {
@@ -286,6 +323,10 @@ export function updateHabit(habits: readonly UserHabit[], id: string, patch: Hab
     if (patch.emoji !== undefined) {
       if (patch.emoji === null) delete next.emoji;
       else next.emoji = patch.emoji;
+    }
+    if (patch.note !== undefined) {
+      if (patch.note === null) delete next.note;
+      else next.note = patch.note.slice(0, MAX_HABIT_NOTE_LENGTH);
     }
     if (patch.domain !== undefined) {
       if (patch.domain === null) delete next.domain;

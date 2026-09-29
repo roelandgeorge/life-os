@@ -8,7 +8,6 @@
 import { useEffect, useState } from 'react';
 import { en } from '../i18n/en';
 import { Button } from '../ui/Button';
-import type { JustOnboarded } from './App';
 import { HistoryScreen } from './HistoryScreen';
 import { MainScreen } from './MainScreen';
 import { SettingsScreen } from './SettingsScreen';
@@ -21,7 +20,7 @@ import { warmArtwork } from './warmArtwork';
 
 type Tab = 'main' | 'history' | 'settings';
 
-export function Shell({ justOnboarded }: { justOnboarded?: JustOnboarded }) {
+export function Shell({ justOnboarded }: { justOnboarded?: true }) {
   const {
     state,
     projection,
@@ -79,7 +78,7 @@ export function Shell({ justOnboarded }: { justOnboarded?: JustOnboarded }) {
             onAddHabit={addHabit}
             onUpdateHabit={updateHabit}
             onRemoveHabit={removeHabit}
-            {...(justOnboarded ? { landingDailyCount: justOnboarded.dailyCount } : {})}
+            {...(justOnboarded ? { justOnboarded } : {})}
           />
         )}
         {tab === 'history' && <HistoryScreen state={state} today={today} />}

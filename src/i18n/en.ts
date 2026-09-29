@@ -30,8 +30,6 @@ export const en = {
 
   'main.headline': 'This is future you.',
   'main.subhead': 'If today holds.',
-  'main.nextMove.gained': "Today's ticks moved {count} of them up a step.",
-  'main.nextMove.waiting': 'Tick a box today and the picture moves.',
   'main.day.today': 'Today',
   'main.day.yesterday': 'Yesterday',
   'habits.own': 'Your own habits',
@@ -63,11 +61,10 @@ export const en = {
   'nav.history': 'History',
   'nav.settings': 'Settings',
 
+  // One window for every track on the screen (app/history.ts), so no row
+  // states its own span.
   'history.title': 'History',
-  'history.subhead': 'Last {days} days.',
-  'history.fullDay': 'Full Day density, last 30 days',
-  'history.habit.daily': 'last 30 days',
-  'history.habit.periods': 'last {count} periods',
+  'history.fullDay': 'Full Day density',
 
   'settings.title': 'Settings',
 
@@ -86,15 +83,19 @@ export const en = {
 
   'settings.habits': 'Your habits',
   'settings.habits.title.placeholder': 'Habit name',
-  'settings.habits.cadence.daily': 'Daily',
-  'settings.habits.cadence.weekly': 'Weekly',
-  'settings.habits.cadence.monthly': 'Monthly',
+  // The cadences the habit editor offers (core/habits.ts's CADENCE_CHOICES).
+  // Two of them are `{ everyDays }`, which the model always had and the
+  // screen never offered.
+  'habits.cadence.daily': 'Daily',
+  'habits.cadence.everyOtherDay': 'Every other day',
+  'habits.cadence.weekly': 'Weekly',
+  'habits.cadence.everyTwoWeeks': 'Every 2 weeks',
+  'habits.cadence.monthly': 'Monthly',
   'settings.habits.remove': 'Remove',
   'settings.habits.empty': 'No habits yet. Add one from a domain above, or redo what you work on in Settings.',
 
   'settings.notifications': 'Daily reminder',
-  'settings.notifications.note': 'One notification a day, in the evening. The exact minute is not guaranteed — the free plan schedules it within the hour.',
-  'settings.notifications.enable': 'Remind me each evening',
+  'settings.notifications.enable': 'Remind me each evening, give or take an hour',
   'settings.notifications.on': 'On. A reminder arrives each evening.',
   'settings.notifications.working': 'Setting up…',
   'settings.notifications.error.unsupported': 'This browser cannot do push notifications.',
@@ -103,21 +104,16 @@ export const en = {
   'settings.notifications.error.failed': 'Could not set up notifications.',
   'settings.notifications.test': 'Send a test notification',
   'settings.notifications.testing': 'Sending…',
-  'settings.notifications.test.note':
-    'Goes through the whole chain the evening reminder uses, and says where it stops if it stops.',
   'settings.data': 'Data',
   'settings.export': 'Export',
   'settings.import': 'Import',
   'settings.reset': 'Reset',
-  'settings.reset.note': 'Deletes everything on this device and returns to onboarding. Export first if you want to keep it.',
   'settings.reset.confirm': 'Delete all Life OS data on this device? This cannot be undone.',
 
   // Settings' two remaining onboarding controls (docs/onboarding/04-revisions.md
   // §5, §10) — each re-runs one independent half of onboarding and writes only
   // its own fields.
-  'settings.figure': 'Figure',
   'settings.figure.redo': 'Redo the figure',
-  'settings.workOn': 'What you work on',
   'settings.workOn.redo': 'Redo what you work on',
 
   // A domain group's own catalogue (docs/onboarding/04-revisions.md §6) — the
@@ -125,29 +121,26 @@ export const en = {
   'domainCatalog.back': 'Back',
   'domainCatalog.add': 'Add {title}',
   'domainCatalog.write.open': 'Write your own',
-  'domainCatalog.write.title.placeholder': 'Habit name',
-  'domainCatalog.write.importance.important': 'Important',
-  'domainCatalog.write.importance.medium': 'Medium',
-  'domainCatalog.write.importance.notImportant': 'Not important',
-  'domainCatalog.write.emoji.placeholder': 'Emoji (optional)',
-  'domainCatalog.write.save': 'Add',
-  'domainCatalog.edit.save': 'Save',
   'action.cancel': 'Cancel',
 
-  // A habit row's menu (§9) — Remove for everyone, Edit for a habit the user
-  // wrote themselves. Remove reuses settings.habits.remove.
+  // The habit editor (docs/onboarding/07-revisions.md §3) — an editable row,
+  // so these are the fields' accessible names as much as their placeholders.
+  'habits.edit.title.placeholder': 'Habit name',
+  'habits.edit.note.placeholder': 'One line under it (optional)',
+  'habits.edit.emoji': 'Emoji',
+  'habits.edit.save': 'Save',
+
+  // A habit row's menu — Edit and Remove for every habit, catalogue or not
+  // (docs/onboarding/06-revisions.md §2). Remove reuses settings.habits.remove.
   'habits.menu.edit': 'Edit',
 
   // The landing screen (docs/onboarding/01-onboarding-spec.md §6) — shown
   // once, right after onboarding, as MainScreen's own headline for that
-  // session. Copy pinned verbatim against src/content/onboarding-tree.json's
-  // LAND node, which App.tsx/Onboarding.tsx never render directly.
-  'main.landing.headline': 'Fifteen years out. Everything in the middle.',
-  'main.landing.count.0': 'Nothing due today.',
-  'main.landing.count.1': 'One box today.',
-  'main.landing.count.2': 'Two boxes today.',
-  'main.landing.count.3': 'Three boxes today.',
-  'main.landing.count.4': 'Four boxes today.',
+  // session, and nothing else: the count line under it is gone
+  // (docs/onboarding/06-revisions.md §4). Copy pinned verbatim against
+  // src/content/onboarding-tree.json's LAND node, which App.tsx and
+  // Onboarding.tsx never render directly.
+  'main.landing.headline': 'This is you in fifteen years.',
 } as const;
 
 export type I18nKey = keyof typeof en;

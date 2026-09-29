@@ -12,36 +12,31 @@
  *
  * A habit already on the list is not shown at all, so this screen is only
  * ever what is still on offer. "Write your own" at the bottom opens
- * `WriteHabitForm`, pre-filled with this domain (§9); `MainScreen` reuses the
- * same form, pre-filled from the habit instead, to edit one the user wrote.
+ * `HabitEditor` as an empty row of the same shape; `MainScreen` uses the same
+ * component in place of a habit's own row to edit it.
  */
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { catalogFor, type Cadence, type CatalogItem, type Effort } from '../core/catalog';
 import { getDomain, type DomainKey } from '../core/domains';
 import {
+  CADENCE_CHOICES,
   canAddCustomHabit,
+  DEFAULT_IMPORTANCE,
   catalogFilterFor,
   completedCatalogIds,
-  CUSTOM_IMPORTANCE,
+  MAX_HABIT_NOTE_LENGTH,
   MAX_HABIT_TITLE_LENGTH,
+  sameCadence,
 } from '../core/habits';
-import type { NewCustomHabitInput } from '../core/habits';
+import type { NewCustomHabitInput, WrittenHabitFields } from '../core/habits';
 import type { AppState } from '../core/types';
 import { en, t, type I18nKey } from '../i18n/en';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Chip, ChipRow } from '../ui/Chip';
 import { Note } from '../ui/Note';
-
-const NAMED_CADENCES: readonly Cadence[] = ['daily', 'weekly', 'monthly'];
-
-function cadenceLabel(c: Cadence): I18nKey | null {
-  if (c === 'daily') return 'settings.habits.cadence.daily';
-  if (c === 'weekly') return 'settings.habits.cadence.weekly';
-  if (c === 'monthly') return 'settings.habits.cadence.monthly';
-  return null;
-}
+import { CheckGlyph, CrossGlyph, PlusGlyph } from '../ui/Glyph';
 
 const EFFORT_LEVEL: Record<Effort, number> = { low: 1, medium: 2, high: 3 };
 const EFFORT_LABEL: Record<Effort, I18nKey> = {
@@ -61,78 +56,189 @@ function EffortMarker({ effort }: { effort: Effort }) {
   );
 }
 
-const IMPORTANCE_LABEL: Record<'important' | 'medium' | 'notImportant', I18nKey> = {
-  important: 'domainCatalog.write.importance.important',
-  medium: 'domainCatalog.write.importance.medium',
-  notImportant: 'domainCatalog.write.importance.notImportant',
-};
+/**
+ * Editing happens in the row, not in a panel under it
+ * (docs/onboarding/07-revisions.md §3). The card keeps its surface, its
+ * shape and its typography: the title and the line under it simply become
+ * carets in the place they already occupied, and the only thing that
+ * appears is the cadence. A dark form box below the row changed everything
+ * about the row except the thing being edited.
+ *
+ * The same component writes a new habit, where the fields start empty. It
+ * does not know the domain: the caller adds it when creating, and editing
+ * never moves a habit between domains, because the domain decides which
+ * panel the habit moves.
+ */
+/**
+ * A field that is the text it replaces: no box, no background, and it wraps
+ * and grows exactly as that text does. A single-line `<input>` scrolls a
+ * long title out of view instead of wrapping it, which is the one thing the
+ * read-mode row never does.
+ */
+function GrowField({
+  className,
+  value,
+  onChange,
+  onKey,
+  maxLength,
+  label,
+  color,
+  autoFocus,
+}: {
+  className: string;
+  value: string;
+  onChange: (v: string) => void;
+  onKey: (e: { key: string; preventDefault: () => void }) => void;
+  maxLength: number;
+  label: string;
+  color?: string;
+  autoFocus?: true;
+}) {
+  const field = useRef<HTMLTextAreaElement>(null);
 
-export function WriteHabitForm({
-  domain,
+  // Height follows content on every keystroke; reset to auto first or it can
+  // only ever grow.
+  useEffect(() => {
+    const el = field.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value]);
+
+  // The caret lands at the end of the existing text rather than selecting it:
+  // this is an edit of something, not a replacement of it.
+  useEffect(() => {
+    if (!autoFocus) return;
+    const el = field.current;
+    if (!el) return;
+    el.focus();
+    el.setSelectionRange(el.value.length, el.value.length);
+  }, [autoFocus]);
+
+  return (
+    <textarea
+      ref={field}
+      className={className}
+      rows={1}
+      maxLength={maxLength}
+      placeholder={label}
+      aria-label={label}
+      value={value}
+      style={color === undefined ? undefined : { color }}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={(e) => onKey(e)}
+    />
+  );
+}
+
+/**
+ * Editing happens in the row, not in a panel under it
+ * (docs/onboarding/07-revisions.md §3). The card keeps its surface, its
+ * shape and its typography: the title and the line under it become carets
+ * in the place they already occupied, and the only thing that appears is
+ * the cadence. A dark form box below the row changed everything about the
+ * row except the thing being edited.
+ *
+ * The same component writes a new habit, where the fields start empty. It
+ * does not know the domain: the caller adds it when creating, and editing
+ * never moves a habit between domains, because the domain decides which
+ * panel the habit moves.
+ */
+export function HabitEditor({
   initial,
+  color,
   onCancel,
   onSave,
 }: {
-  domain: DomainKey;
-  initial?: { title: string; importance: number; cadence: Cadence; emoji?: string };
+  initial?: WrittenHabitFields;
+  /** The row's own title colour, so editing it does not repaint it. */
+  color?: string;
   onCancel: () => void;
-  onSave: (input: NewCustomHabitInput) => void;
+  onSave: (input: WrittenHabitFields) => void;
 }) {
   const [title, setTitle] = useState(initial?.title ?? '');
-  const [importance, setImportance] = useState(initial?.importance ?? 3);
+  const [note, setNote] = useState(initial?.note ?? '');
   const [cadence, setCadence] = useState<Cadence>(initial?.cadence ?? 'daily');
   const [emoji, setEmoji] = useState(initial?.emoji ?? '');
 
   function save() {
     const trimmed = title.trim();
     if (!trimmed) return;
-    const input: NewCustomHabitInput = { title: trimmed, importance, cadence, domain };
+    const input: WrittenHabitFields = {
+      title: trimmed,
+      importance: initial?.importance ?? DEFAULT_IMPORTANCE,
+      cadence,
+    };
     const trimmedEmoji = emoji.trim();
     if (trimmedEmoji) input.emoji = trimmedEmoji;
+    const trimmedNote = note.trim();
+    if (trimmedNote) input.note = trimmedNote;
     onSave(input);
   }
 
+  // Enter commits rather than breaking the line: these read as one-line
+  // fields even though they wrap like the text they stand in for.
+  function onKey(e: { key: string; preventDefault: () => void }) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      save();
+    }
+    if (e.key === 'Escape') onCancel();
+  }
+
   return (
-    <div className="write-habit-form">
-      <input
-        type="text"
-        maxLength={MAX_HABIT_TITLE_LENGTH}
-        placeholder={en['domainCatalog.write.title.placeholder']}
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
+    <Card className="checkin editing">
+      <div className="checkin-box">
+        <input
+          className="emoji-field"
+          type="text"
+          maxLength={2}
+          value={emoji}
+          aria-label={en['habits.edit.emoji']}
+          onChange={(e) => setEmoji(e.target.value)}
+          onKeyDown={onKey}
+        />
+      </div>
+
+      <div className="checkin-main">
+        <GrowField
+          className="label title-field"
+          value={title}
+          onChange={setTitle}
+          onKey={onKey}
+          maxLength={MAX_HABIT_TITLE_LENGTH}
+          label={en['habits.edit.title.placeholder']}
+          {...(color === undefined ? {} : { color })}
+          autoFocus
+        />
+      </div>
+
+      <div className="habit-menu">
+        <Button small className="icon-action" aria-label={en['habits.edit.save']} onClick={save}>
+          <CheckGlyph />
+        </Button>
+        <Button small className="icon-action" aria-label={en['action.cancel']} onClick={onCancel}>
+          <CrossGlyph />
+        </Button>
+      </div>
+
+      <GrowField
+        className="note-field"
+        value={note}
+        onChange={setNote}
+        onKey={onKey}
+        maxLength={MAX_HABIT_NOTE_LENGTH}
+        label={en['habits.edit.note.placeholder']}
       />
-      <ChipRow className="chips">
-        {CUSTOM_IMPORTANCE.map(({ value, key }) => (
-          <Chip key={key} on={importance === value} onClick={() => setImportance(value)}>
-            {en[IMPORTANCE_LABEL[key]]}
+
+      <ChipRow className="chips cadence">
+        {CADENCE_CHOICES.map(({ key, cadence: option }) => (
+          <Chip key={key} on={sameCadence(cadence, option)} onClick={() => setCadence(option)}>
+            {en[`habits.cadence.${key}` as I18nKey]}
           </Chip>
         ))}
       </ChipRow>
-      <ChipRow className="chips cadence">
-        {NAMED_CADENCES.map((c) => {
-          const label = cadenceLabel(c);
-          if (!label) return null;
-          return (
-            <Chip key={String(c)} on={cadence === c} onClick={() => setCadence(c)}>
-              {en[label]}
-            </Chip>
-          );
-        })}
-      </ChipRow>
-      <input
-        type="text"
-        maxLength={4}
-        placeholder={en['domainCatalog.write.emoji.placeholder']}
-        value={emoji}
-        onChange={(e) => setEmoji(e.target.value)}
-      />
-      <div className="row">
-        <Button onClick={onCancel}>{en['action.cancel']}</Button>
-        <Button variant="primary" onClick={save}>
-          {initial ? en['domainCatalog.edit.save'] : en['domainCatalog.write.save']}
-        </Button>
-      </div>
-    </div>
+    </Card>
   );
 }
 
@@ -155,7 +261,7 @@ function CatalogRow({
           aria-label={t('domainCatalog.add', { title: item.title })}
           onClick={onAdd}
         >
-          +
+          <PlusGlyph />
         </Button>
       </div>
 
@@ -212,11 +318,10 @@ export function DomainCatalog({
       </div>
 
       {writing ? (
-        <WriteHabitForm
-          domain={domain}
+        <HabitEditor
           onCancel={() => setWriting(false)}
           onSave={(input) => {
-            onAddCustom(input);
+            onAddCustom({ ...input, domain });
             setWriting(false);
           }}
         />

@@ -4,6 +4,7 @@ import {
   HABIT_COLOR_PALETTE,
   MAX_CUSTOM_HABITS,
   byColor,
+  CADENCE_CHOICES,
   cadencePeriodDays,
   canAddCustomHabit,
   drivesPanel,
@@ -17,6 +18,7 @@ import {
   removeHabit,
   toggleHabitTick,
   updateHabit,
+  sameCadence,
 } from './habits';
 import { catalogById } from './catalog';
 import type { DayLog, UserHabit } from './types';
@@ -32,6 +34,38 @@ function day(date: string, ticked: string[] = []): DayLog {
   for (const id of ticked) ticks[id] = true;
   return { date, opened: true, ticks };
 }
+
+describe('the cadences the editor offers (docs/onboarding/07-revisions.md §1)', () => {
+  it('offers every other day and every two weeks, which only the model had', () => {
+    expect(CADENCE_CHOICES.map((c) => c.key)).toEqual([
+      'daily',
+      'everyOtherDay',
+      'weekly',
+      'everyTwoWeeks',
+      'monthly',
+    ]);
+    expect(CADENCE_CHOICES.map((c) => cadencePeriodDays(c.cadence))).toEqual([1, 2, 7, 14, 30]);
+  });
+
+  it('every one of them moves a panel, so no choice quietly disconnects a habit from the picture', () => {
+    for (const { key, cadence } of CADENCE_CHOICES) {
+      expect(drivesPanel(cadence), key).toBe(true);
+    }
+  });
+
+  it('sameCadence compares the object cadences by value, since === never will', () => {
+    expect(sameCadence({ everyDays: 2 }, { everyDays: 2 })).toBe(true);
+    expect(sameCadence({ everyDays: 2 }, { everyDays: 14 })).toBe(false);
+    expect(sameCadence('weekly', 'weekly')).toBe(true);
+    expect(sameCadence('weekly', { everyDays: 7 })).toBe(false);
+  });
+
+  it('H019 is filed at the frequency its own title states', () => {
+    // "Train full body 3-4x a week" sat at `weekly`, where one tick satisfied
+    // the whole week.
+    expect(cadencePeriodDays(catalogById('H019')!.cadence)).toBe(2);
+  });
+});
 
 describe('cadencePeriodDays / drivesPanel', () => {
   it('maps the fixed cadences to their period lengths', () => {

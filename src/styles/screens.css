@@ -69,8 +69,8 @@
 }
 
 .headline {
-  font-family: var(--serif);
   font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
   margin: 0;
 }
 
@@ -139,6 +139,26 @@
   min-width: 0;
 }
 
+/* Once a row wraps — a two-line title, the note, the cadence chips — centring
+   every child on the whole row drops the tick box and the actions half a line
+   below the title they belong to. They centre on the title's first line
+   instead, which is what "on the same line" has to mean for a row that can
+   be three lines tall. */
+.checkin.expanded,
+.checkin.editing {
+  align-items: flex-start;
+}
+
+.checkin.expanded .checkin-box,
+.checkin.editing .checkin-box,
+.checkin.expanded .habit-menu,
+.checkin.editing .habit-menu {
+  min-height: calc(var(--space-2) * 2 + var(--text-base) * var(--leading-base));
+  align-items: center;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 .checkin.collapsed {
   padding: var(--space-2) var(--space-4);
   opacity: 0.6;
@@ -195,6 +215,70 @@
   margin: 0;
 }
 
+/* ---- a row being edited (docs/onboarding/07-revisions.md §3) ----------- */
+
+/* The row keeps its surface, its border and its typography. Every field is
+   the text it replaces, in the place that text was, so the only thing that
+   changes on tapping edit is that a caret appears. The dark form panel this
+   replaces changed everything about the row except the thing being edited. */
+.checkin.editing input,
+.checkin.editing textarea {
+  background: none;
+  border: 0;
+  border-bottom: var(--hairline) dashed var(--rule-strong);
+  border-radius: 0;
+  padding: 0 0 var(--space-1);
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  width: 100%;
+  min-width: 0;
+  resize: none;
+  overflow: hidden;
+}
+
+.checkin.editing input:focus,
+.checkin.editing textarea:focus {
+  outline: none;
+  border-bottom-style: solid;
+  border-bottom-color: var(--bronze);
+}
+
+/* The title field stands exactly where the title stood: same weight, same
+   leading, and it wraps at the same place, so committing the edit moves
+   nothing. */
+.checkin.editing .title-field {
+  font-weight: 600;
+  line-height: var(--leading-base);
+  display: block;
+}
+
+.checkin.editing .note-field {
+  width: 100%;
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+  color: var(--paper-dim);
+  display: block;
+}
+
+/* Where the tick box is on every other row, so the row's left edge does not
+   shift between reading it and editing it. The dashed rule is what says it
+   is a field at all, an empty one being otherwise invisible. */
+.checkin.editing .emoji-field {
+  width: 18px;
+  text-align: center;
+  padding: 0;
+  /* The checkbox it stands in for carries the browser's own default margin
+     on a tick box. Matching it is what keeps the title at the same x between
+     reading the row and editing it. */
+  margin: 0 3px 0 4px;
+}
+
+.checkin.editing .chips.cadence {
+  width: 100%;
+  padding-left: 0;
+}
+
 .domain-heading-row {
   display: flex;
   align-items: center;
@@ -203,7 +287,71 @@
   margin-top: var(--space-4);
 }
 
-.checkins:first-of-type .domain-heading-row {
+.checkins:first-of-type /* ---- a row being edited (docs/onboarding/07-revisions.md §3) ----------- */
+
+/* The row keeps its surface, its border and its typography. Every field is
+   the text it replaces, in the place that text was, so the only thing that
+   changes on tapping edit is that a caret appears. The dark form panel this
+   replaces changed everything about the row except the thing being edited. */
+.checkin.editing input,
+.checkin.editing textarea {
+  background: none;
+  border: 0;
+  border-bottom: var(--hairline) dashed var(--rule-strong);
+  border-radius: 0;
+  padding: 0 0 var(--space-1);
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  width: 100%;
+  min-width: 0;
+  resize: none;
+  overflow: hidden;
+}
+
+.checkin.editing input:focus,
+.checkin.editing textarea:focus {
+  outline: none;
+  border-bottom-style: solid;
+  border-bottom-color: var(--bronze);
+}
+
+/* The title field stands exactly where the title stood: same weight, same
+   leading, and it wraps at the same place, so committing the edit moves
+   nothing. */
+.checkin.editing .title-field {
+  font-weight: 600;
+  line-height: var(--leading-base);
+  display: block;
+}
+
+.checkin.editing .note-field {
+  width: 100%;
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+  color: var(--paper-dim);
+  display: block;
+}
+
+/* Where the tick box is on every other row, so the row's left edge does not
+   shift between reading it and editing it. The dashed rule is what says it
+   is a field at all, an empty one being otherwise invisible. */
+.checkin.editing .emoji-field {
+  width: 18px;
+  text-align: center;
+  padding: 0;
+  /* The checkbox it stands in for carries the browser's own default margin
+     on a tick box. Matching it is what keeps the title at the same x between
+     reading the row and editing it. */
+  margin: 0 3px 0 4px;
+}
+
+.checkin.editing .chips.cadence {
+  width: 100%;
+  padding-left: 0;
+}
+
+.domain-heading-row {
   margin-top: 0;
 }
 
@@ -216,48 +364,83 @@
 
 /* ---- a habit row's own menu (docs/onboarding/04-revisions.md §9) -------- */
 
-/* Only an expanded row has a menu, so it sits in the row's own flow rather
-   than floating over the rows below it. */
+/* On the row's own line, in the space the streak vacates when the row
+   expands, rather than wrapped onto a line of its own. Both actions read in
+   the same colour as everything else in the row: a red remove was a louder
+   promise than removing a row deserves. */
 .habit-menu {
-  width: 100%;
+  flex: none;
   display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
-}
-
-.habit-menu button {
-  white-space: nowrap;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 /* The small square actions: a domain group's +, a catalogue row's +, and a
-   habit row's ✕. One size for all three, so ✕ and + never read as different
-   weights of the same gesture.
+   habit row's ✎ and ✕. All four are the size of the tick box they sit
+   beside, which is what makes them read as row furniture rather than as
+   buttons the screen is asking you to press.
 
-   44x28 is under `--tap`'s 44px floor on the short axis, deliberately: the
-   width still gives a thumb its 44px, the domain + has worked at this size
-   since it shipped, and a 44px-tall ✕ next to a 28px + looked like a bigger
-   promise than removing a row deserves. */
-.icon-action {
-  min-width: var(--tap);
-  min-height: 28px;
-  padding: 0 var(--space-2);
+   Well under `--tap`'s 44px floor, deliberately and against that rule: at
+   44px they were the heaviest thing in a row whose point is the habit's
+   name. The gap between them is what keeps them separable by thumb. */
+/* `button.icon-action`, not `.icon-action`: `button.small` in components.css
+   is a class on an element and outranks a bare class, so `padding: 0` here
+   silently lost and squeezed the drawn glyph to 4px wide. */
+button.icon-action {
+  width: 22px;
+  height: 22px;
+  color: var(--paper-dim);
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  font-size: var(--text-sm);
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* src/ui/Glyph.tsx. currentColor keeps every row action on the row's voice. */
+.glyph {
+  width: 14px;
+  height: 14px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The headline and the one control that changes what the picture shows,
+   on one line. */
+.below-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.below-copy {
+  min-width: 0;
 }
 
 .best-version-toggle {
-  display: block;
-  margin: var(--space-4) 0 0;
-  padding: var(--space-3) var(--space-4);
-  width: 100%;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  font-size: var(--text-lg);
+  line-height: 1;
   border-color: var(--bronze);
   color: var(--bronze);
-  font-weight: 600;
 }
 
 /* ---- onboarding — the tree renderer (docs/onboarding/) ------------------ */
 
 .onboarding h2 {
-  font-family: var(--serif);
   font-size: var(--text-lg);
   text-transform: none;
   letter-spacing: normal;
@@ -549,14 +732,23 @@
   font: inherit;
 }
 
+/* No rules between the sections: four of them, each one heading and a
+   button or two, so the whitespace already separates them. */
 .settings-screen section {
   margin-top: var(--space-6);
-  padding-top: var(--space-4);
-  border-top: var(--hairline) solid var(--rule);
 }
 
 .settings-screen section:first-of-type {
-  margin-top: var(--space-4);
+  margin-top: 0;
+}
+
+/* The two redo buttons carry their own names, so this section has no
+   heading and the buttons are the whole of it. */
+.settings-screen section.redo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
 }
 
 .settings-screen h2 {
@@ -605,10 +797,6 @@
   position: absolute;
   object-fit: fill;
   user-select: none;
-}
-
-.next-move {
-  margin-top: var(--space-3);
 }
 
 .day-picker {

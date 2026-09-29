@@ -77,6 +77,7 @@ function parseHabit(v: unknown): UserHabit | null {
   if (typeof v.removedDate === 'string' && isDateKey(v.removedDate)) habit.removedDate = v.removedDate;
   if (isHexColor(v.color)) habit.color = v.color;
   if (typeof v.emoji === 'string' && v.emoji.length > 0) habit.emoji = v.emoji;
+  if (typeof v.note === 'string' && v.note.length > 0) habit.note = v.note;
   return habit;
 }
 

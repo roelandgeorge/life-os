@@ -8,6 +8,9 @@
  * A step chart rather than a sparkline: the value only ever moves by whole
  * steps, and drawing it as a smooth line would imply an in-between the model
  * does not have.
+ *
+ * Every track on this screen covers the same window (`HISTORY_DAYS`), so a
+ * row's width is the only scale the screen needs and no row carries its own.
  */
 
 import { addDays, rangeDates, type DateKey } from '../core/dates';
@@ -15,18 +18,16 @@ import { PANEL_KEYS } from '../core/domains';
 import { fullDayStrip } from '../core/scoring';
 import { MAX_STEP, panelSteps } from '../core/steps';
 import type { AppState, UserHabit } from '../core/types';
-import { en, t, type I18nKey } from '../i18n/en';
+import { en, type I18nKey } from '../i18n/en';
 import { FullDayStrip } from '../ui/FullDayStrip';
-import { Note } from '../ui/Note';
 import { SectionHeading } from '../ui/SectionHeading';
 import { byColor, cadencePeriodDays, effectiveColor, habitHitDates, habitTitle, isActiveOn } from '../core/habits';
 import { completedPeriods, hitInRange, periodAt } from '../core/periods';
-
-const HISTORY_DAYS = 90;
+import { cellsForPeriod, HISTORY_DAYS } from './history';
 
 export function HistoryScreen({ state, today }: { state: AppState; today: DateKey }) {
   const days = rangeDates(addDays(today, -(HISTORY_DAYS - 1)), today);
-  const strip = fullDayStrip(state.logs, state.habits, today, 30);
+  const strip = fullDayStrip(state.logs, state.habits, today, HISTORY_DAYS);
   const perDay = days.map((day) => panelSteps(state.logs, state.habits, day));
   // Matches scene.ts's own requires filter: hidden once the profile says no,
   // shown while it hasn't said — the picture and the history should never disagree.
@@ -41,7 +42,6 @@ export function HistoryScreen({ state, today }: { state: AppState; today: DateKe
   return (
     <div className="history-screen">
       <h1 className="headline">{en['history.title']}</h1>
-      <Note variant="subhead">{t('history.subhead', { days: HISTORY_DAYS })}</Note>
 
       <div className="sparklines">
         {panels.map((panel) => {
@@ -97,14 +97,14 @@ function StepTrack({ values, color }: { values: number[]; color: string }) {
 
 /**
  * One cell per period, filled when that period had a tick. Cadence-agnostic:
- * a daily habit shows its last 30 days, anything on a longer cadence its
- * last 12 periods — the same rule either way is what makes a filled cell
- * always mean "satisfied", whatever the habit's own cadence is.
+ * every habit covers the same window, so a daily habit gets 28 cells, a
+ * weekly one 4 and a monthly one 1. A filled cell always means "satisfied",
+ * and a row's cell count is what says how often the habit asks.
  */
 function HabitTrack({ habit, state, today }: { habit: UserHabit; state: AppState; today: DateKey }) {
   const period = cadencePeriodDays(habit.cadence);
   if (period === null) return null;
-  const cells = period === 1 ? 30 : 12;
+  const cells = cellsForPeriod(period);
 
   const hits = habitHitDates(state.logs, habit.id);
   const newest = completedPeriods(habit.startDate, today, period);
@@ -124,7 +124,6 @@ function HabitTrack({ habit, state, today }: { habit: UserHabit; state: AppState
         <span className="label" style={color === undefined ? undefined : { color }}>
           {habitTitle(habit, en['settings.habits.title.placeholder'])}
         </span>
-        <span className="num">{period === 1 ? en['history.habit.daily'] : t('history.habit.periods', { count: cells })}</span>
       </div>
       <div className="strip">
         {filled.map((on, i) => (

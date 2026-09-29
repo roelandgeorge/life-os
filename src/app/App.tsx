@@ -8,7 +8,6 @@ import { useEffect, useState } from 'react';
 import { dateKeyFor } from '../core/dates';
 import {
   buildInitialState,
-  dailySeedCount,
   LANDING_NODE,
   START_NODE,
   type Answers,
@@ -21,13 +20,11 @@ import { Onboarding } from './Onboarding';
 import { Shell } from './Shell';
 import { requestPersistentStorage, store } from './store';
 
-/** What the landing screen shows once, right after the first run — lost on reload, which is fine: it is a first-session nicety, not state. */
-export type JustOnboarded = { dailyCount: number };
-
 type Phase =
   | { kind: 'loading' }
   | { kind: 'onboarding' }
-  | { kind: 'ready'; justOnboarded?: JustOnboarded }
+  /** `justOnboarded` swaps Home's headline for the landing's, once — lost on reload, which is fine: it is a first-session nicety, not state. */
+  | { kind: 'ready'; justOnboarded?: true }
   | { kind: 'failed'; message: string };
 
 export function App() {
@@ -56,8 +53,7 @@ export function App() {
   async function finishOnboarding(answers: Answers) {
     const initial = buildInitialState(answers, () => crypto.randomUUID(), dateKeyFor(new Date()));
     await store.save(initial);
-    const justOnboarded: JustOnboarded = { dailyCount: dailySeedCount(answers) };
-    setPhase({ kind: 'ready', justOnboarded });
+    setPhase({ kind: 'ready', justOnboarded: true });
   }
 
   if (phase.kind === 'loading') {
@@ -88,5 +84,5 @@ export function App() {
     );
   }
 
-  return <Shell {...(phase.justOnboarded ? { justOnboarded: phase.justOnboarded } : {})} />;
+  return <Shell {...(phase.justOnboarded ? { justOnboarded: true as const } : {})} />;
 }

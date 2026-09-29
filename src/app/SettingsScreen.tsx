@@ -6,6 +6,10 @@
  * the catalogue button are gone: profile fields are onboarding's alone now,
  * a habit is edited from its own row on Home, and the catalogue is reached
  * per domain from there too.
+ *
+ * No rules between the sections and no heading over the two redo buttons,
+ * which name themselves. Export, Import and Reset sit on one row: all three
+ * act on the same thing, and Reset below them read as a separate warning.
  */
 
 import { useRef, useState } from 'react';
@@ -135,19 +139,13 @@ export function SettingsScreen({
     <div className="settings-screen">
       <h1 className="headline">{en['settings.title']}</h1>
 
-      <section>
-        <SectionHeading>{en['settings.figure']}</SectionHeading>
+      <section className="redo">
         <Button onClick={() => setRedo('figure')}>{en['settings.figure.redo']}</Button>
-      </section>
-
-      <section>
-        <SectionHeading>{en['settings.workOn']}</SectionHeading>
         <Button onClick={() => setRedo('workOn')}>{en['settings.workOn.redo']}</Button>
       </section>
 
       <section>
         <SectionHeading>{en['settings.notifications']}</SectionHeading>
-        <Note>{en['settings.notifications.note']}</Note>
         <label className="notification-row">
           <Checkbox
             disabled={busy}
@@ -165,8 +163,8 @@ export function SettingsScreen({
             <Button disabled={testing} onClick={() => void handleTest()}>
               {testing ? en['settings.notifications.testing'] : en['settings.notifications.test']}
             </Button>
-            <Note>{en['settings.notifications.test.note']}</Note>
             {testResult && (testResult.ok ? <Note>{testResult.detail}</Note> : <Note variant="error">{testResult.detail}</Note>)}
+
           </>
         )}
       </section>
@@ -176,6 +174,9 @@ export function SettingsScreen({
         <div className="row">
           <Button onClick={() => void handleExport()}>{en['settings.export']}</Button>
           <Button onClick={() => fileInput.current?.click()}>{en['settings.import']}</Button>
+          <Button variant="danger" onClick={() => void handleReset()}>
+            {en['settings.reset']}
+          </Button>
           <input
             ref={fileInput}
             type="file"
@@ -189,11 +190,6 @@ export function SettingsScreen({
           />
         </div>
         {message && <Note variant="error">{message}</Note>}
-
-        <Button variant="danger" onClick={() => void handleReset()}>
-          {en['settings.reset']}
-        </Button>
-        <Note>{en['settings.reset.note']}</Note>
       </section>
     </div>
   );

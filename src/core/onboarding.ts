@@ -57,7 +57,6 @@ type TreeNode = {
   optionsFrom?: 'drawings';
   next?: string;
   options?: readonly TreeOption[];
-  countLine?: Readonly<Record<string, string>>;
 };
 
 type TreeJson = { start: string; nodes: Readonly<Record<string, TreeNode>> };
@@ -141,7 +140,6 @@ export type Step = {
   field?: string;
   optionsFrom?: 'drawings';
   options?: readonly StepOption[];
-  countLine?: Readonly<Record<string, string>>;
 };
 
 function optionVisible(nodeId: string, option: TreeOption, answers: Answers): boolean {
@@ -169,7 +167,6 @@ export function step(nodeId: string, answers: Answers): Step {
   if (node.button !== undefined) base.button = node.button;
   if (node.field !== undefined) base.field = node.field;
   if (node.optionsFrom !== undefined) base.optionsFrom = node.optionsFrom;
-  if (node.countLine !== undefined) base.countLine = node.countLine;
 
   if (node.options) {
     base.options = node.options
@@ -299,11 +296,6 @@ export function seededCatalogItems(answers: Answers): readonly CatalogItem[] {
   return resolveSeeds(answers);
 }
 
-
-/** The landing screen's count line: seeded habits across every landing reached that are due today. */
-export function dailySeedCount(answers: Answers): number {
-  return resolveSeeds(answers).filter((item) => item.cadence === 'daily').length;
-}
 
 /**
  * `Profile.domainOrder` for a set of seeded catalogue items: the order their

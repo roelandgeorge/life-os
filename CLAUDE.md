@@ -98,16 +98,66 @@ is gone, and with it `offeredCatalogItems()` and `Shell`'s `landingOffers`;
 `landings.json`'s `offers` is now unused metadata exactly like
 `CatalogItem.starter`, so check who reads it before building on it.
 
+**A third round then reversed two earlier decisions**
+(`docs/onboarding/06-revisions.md`). Every
+habit's row menu offers Edit as well as Remove, catalogue or not, reversing
+`04-revisions.md` §9: the catalogue is one person's wording of a habit.
+`WriteHabitForm` is the one form for both writing and editing and no longer
+takes a `domain` — the caller adds it when creating, and **the domain is not
+editable**, because it decides which panel the habit moves. `UserHabit.note`
+holds an edited subtitle and falls back to the catalogue item's own note when
+absent, so an untouched row still reads as `catalog.json` wrote it. The
+self-hosted Instrument Serif is gone too (§8, reversing phase 3): `--sans` is
+the only family token, there is no `@font-face` and no `public/fonts/`.
+`app/history.ts`'s `HISTORY_DAYS = 28` is now the one window every track on
+History and Home's Full Day strip reads.
+
+**A fourth round** (`docs/onboarding/07-revisions.md`, now the last word in
+that folder) replaced that round's edit form with editing **in the row**:
+`HabitEditor` (was `WriteHabitForm`) renders a `.checkin` card whose title
+and note are `<textarea>`s that wrap and grow exactly as the text they stand
+in for, carrying the row's own colour, weight and x position — measured
+identical reading and editing. `.write-habit-form` is gone, and the
+catalogue's "Write your own" is the same component with empty fields.
+`core/habits.ts`'s `CADENCE_CHOICES` finally puts `{ everyDays }` on screen
+(Every other day, Every 2 weeks), compared with `sameCadence()` rather than
+`===`; H019 moved to `{ everyDays: 2 }`, the only catalogue item whose title
+stated a frequency its cadence did not keep. **Importance left the editor
+entirely** (`DEFAULT_IMPORTANCE` for a written habit, the catalogue's value
+otherwise): it is the weight the panel engine reads, which is machinery.
+Row actions sit on the title's first line in `--paper-dim`, remove is a
+trash can, and all five are drawn in `src/ui/Glyph.tsx` rather than typed as
+`✎`/`✕`/`🗑`. The rule is `button.icon-action`, not `.icon-action` —
+`button.small` outranks a bare class and silently ate `padding: 0`.
+
+**Merge to `main` yourself, and always post the links.** The user does not
+want to be the one clicking Merge. Once `npm test`, `npm run typecheck` and
+`npm run build` are green and the change has been checked in a browser at
+390x844, merge the PR. Then post, in the reply, the PR, the branch and the
+Vercel deployment for that commit — the deployment URL comes from the head
+commit's `Vercel` status `target_url`, since the proxy blocks `vercel.app`
+and a guessed preview hostname cannot be verified from here. Every merge
+goes straight to the user's production deployment, so the browser check is
+not optional.
+
+**Do not offer to export before a destructive step during development.** The
+user is testing and is content to lose the data. `settings.reset.note`, which
+said "Export first if you want to keep it", is gone for the same reason. This
+is a development-phase rule, not a change to what the app owes a real user —
+Export is still in Settings.
+
 `app/DiscoverScreen.tsx`, `app/ProfileFields.tsx`, `app/HabitPicker.tsx` and
 `src/ui/Field.tsx`/`Select.tsx` are gone — each had zero remaining callers
 once the rebuild landed. `app/DomainCatalog.tsx` replaces Discover: opened
 from a domain's own group on Home, the only route into the catalogue now (a
 domain never chosen has no group and so no way in), a row collapsed to its
-title and an effort marker, its own "Write your own" form shared with
+title and an effort marker, its own "Write your own" row shared with
 `MainScreen`'s habit-row Edit. Settings holds exactly four things now — the
 two redo buttons, the daily reminder, data — the old habit editor and
 catalogue button gone with it, since a habit is edited from its own row on
-Home and profile fields are onboarding's alone. Home itself (§4.8's one-line
+Home and profile fields are onboarding's alone. No rules between sections
+and no heading over the redo buttons, but it keeps its title, and Export,
+Import and Reset share one row (`07-revisions.md` §6). Home itself (§4.8's one-line
 `groupHabits` edit aside) and the gamification layer are still ahead.
 
 Live on the user's Vercel deployment, which builds from `main` on GitHub.
@@ -181,7 +231,9 @@ src/store/      Store interface (types.ts), indexeddb.ts, memory.ts, serialize.t
                 migrate.ts (v1 -> v2, run on first load of an old record)
 src/visual/     scene.ts (the slot table + the fallback-chain resolver, the
                 only file naming PNGs), Avatar.tsx (paints a resolved Scene)
-src/app/        App (onboarding gate), Onboarding (a plain (nodeId, Answers)
+src/app/        history.ts (HISTORY_DAYS + cellsForPeriod — the one window
+                History and Home's Full Day strip share),
+                App (onboarding gate), Onboarding (a plain (nodeId, Answers)
                 renderer over the tree, run for the full first pass and for
                 Settings' two redos), Shell (tabs), Main/History/Settings
                 screens, DomainCatalog (one domain's own catalogue, opened
@@ -191,7 +243,8 @@ src/app/        App (onboarding gate), Onboarding (a plain (nodeId, Answers)
                 thin wiring around core/habits.ts), push.ts, warmArtwork.ts,
                 Celebration
 src/ui/         Button, Chip/ChipRow, Checkbox, Card, SectionHeading, Note,
-                FullDayStrip — thin components over components.css; tokens.ts
+                FullDayStrip, Glyph (the five drawn row actions) — thin
+                components over components.css; tokens.ts
                 (parser + contrast helper), tokens.test.ts, chrome.test.ts
 src/content/    catalog.json (137 items, docs/onboarding/02-catalog-changes.md),
                 onboarding-tree.json + landings.json (docs/onboarding/,
@@ -267,7 +320,8 @@ colour back to a domain, and a coloured domain-less habit still gets no
 panel. Keep it that way — a colour must never become a link. `UserHabit.emoji`
 (docs/onboarding/04-revisions.md §9, the write-a-habit form's filing mark
 instead of a colour picker) is the same promise: nothing may ever map it
-back to a domain or a panel either.
+back to a domain or a panel either. `UserHabit.note` is the same again: it
+is the line a row expands to and nothing reads it but the row.
 
 `CatalogItem.starter` is unused metadata since the onboarding rebuild — the
 tree in `docs/onboarding/` seeds by landing, not by this flag. It survives
