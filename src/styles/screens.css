@@ -69,8 +69,8 @@
 }
 
 .headline {
-  font-family: var(--serif);
   font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
   margin: 0;
 }
 
@@ -230,34 +230,59 @@
 }
 
 /* The small square actions: a domain group's +, a catalogue row's +, and a
-   habit row's ✕. One size for all three, so ✕ and + never read as different
-   weights of the same gesture.
+   habit row's ✎ and ✕. All four are the size of the tick box they sit
+   beside, which is what makes them read as row furniture rather than as
+   buttons the screen is asking you to press.
 
-   44x28 is under `--tap`'s 44px floor on the short axis, deliberately: the
-   width still gives a thumb its 44px, the domain + has worked at this size
-   since it shipped, and a 44px-tall ✕ next to a 28px + looked like a bigger
-   promise than removing a row deserves. */
+   Well under `--tap`'s 44px floor, deliberately and against that rule: at
+   44px they were the heaviest thing in a row whose point is the habit's
+   name. The gap between them is what keeps them separable by thumb. */
 .icon-action {
-  min-width: var(--tap);
-  min-height: 28px;
-  padding: 0 var(--space-2);
+  width: 22px;
+  height: 22px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  font-size: var(--text-sm);
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.habit-menu {
+  gap: var(--space-3);
+}
+
+/* The headline and the one control that changes what the picture shows,
+   on one line. */
+.below-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.below-copy {
+  min-width: 0;
 }
 
 .best-version-toggle {
-  display: block;
-  margin: var(--space-4) 0 0;
-  padding: var(--space-3) var(--space-4);
-  width: 100%;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  font-size: var(--text-lg);
+  line-height: 1;
   border-color: var(--bronze);
   color: var(--bronze);
-  font-weight: 600;
 }
 
 /* ---- onboarding — the tree renderer (docs/onboarding/) ------------------ */
 
 .onboarding h2 {
-  font-family: var(--serif);
   font-size: var(--text-lg);
   text-transform: none;
   letter-spacing: normal;
@@ -549,14 +574,23 @@
   font: inherit;
 }
 
+/* No rules between the sections: four of them, each one heading and a
+   button or two, so the whitespace already separates them. */
 .settings-screen section {
   margin-top: var(--space-6);
-  padding-top: var(--space-4);
-  border-top: var(--hairline) solid var(--rule);
 }
 
 .settings-screen section:first-of-type {
-  margin-top: var(--space-4);
+  margin-top: 0;
+}
+
+/* The two redo buttons carry their own names, so this section has no
+   heading and the buttons are the whole of it. */
+.settings-screen section.redo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
 }
 
 .settings-screen h2 {
@@ -605,10 +639,6 @@
   position: absolute;
   object-fit: fill;
   user-select: none;
-}
-
-.next-move {
-  margin-top: var(--space-3);
 }
 
 .day-picker {

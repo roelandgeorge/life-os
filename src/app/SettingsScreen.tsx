@@ -6,6 +6,10 @@
  * the catalogue button are gone: profile fields are onboarding's alone now,
  * a habit is edited from its own row on Home, and the catalogue is reached
  * per domain from there too.
+ *
+ * No title and no rules between the sections: with four sections whose
+ * buttons name themselves, a heading and a divider above each was more
+ * furniture than content.
  */
 
 import { useRef, useState } from 'react';
@@ -133,15 +137,8 @@ export function SettingsScreen({
 
   return (
     <div className="settings-screen">
-      <h1 className="headline">{en['settings.title']}</h1>
-
-      <section>
-        <SectionHeading>{en['settings.figure']}</SectionHeading>
+      <section className="redo">
         <Button onClick={() => setRedo('figure')}>{en['settings.figure.redo']}</Button>
-      </section>
-
-      <section>
-        <SectionHeading>{en['settings.workOn']}</SectionHeading>
         <Button onClick={() => setRedo('workOn')}>{en['settings.workOn.redo']}</Button>
       </section>
 
@@ -165,8 +162,8 @@ export function SettingsScreen({
             <Button disabled={testing} onClick={() => void handleTest()}>
               {testing ? en['settings.notifications.testing'] : en['settings.notifications.test']}
             </Button>
-            <Note>{en['settings.notifications.test.note']}</Note>
             {testResult && (testResult.ok ? <Note>{testResult.detail}</Note> : <Note variant="error">{testResult.detail}</Note>)}
+
           </>
         )}
       </section>
@@ -193,7 +190,6 @@ export function SettingsScreen({
         <Button variant="danger" onClick={() => void handleReset()}>
           {en['settings.reset']}
         </Button>
-        <Note>{en['settings.reset.note']}</Note>
       </section>
     </div>
   );

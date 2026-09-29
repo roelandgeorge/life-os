@@ -38,6 +38,12 @@ export type UserHabit = {
   color?: string;
   /** A filing mark the write-a-habit form offers instead of a colour (docs/onboarding/04-revisions.md §9). Filing only — nothing maps it back to a domain or a panel. */
   emoji?: string;
+  /**
+   * The line the row expands to. Absent means fall back to the catalogue
+   * item's own note, so an unedited catalogue habit still reads as the
+   * catalogue wrote it and a later catalogue edit reaches it.
+   */
+  note?: string;
 };
 
 export type DayLog = {

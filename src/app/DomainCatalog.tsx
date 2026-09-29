@@ -24,9 +24,10 @@ import {
   catalogFilterFor,
   completedCatalogIds,
   CUSTOM_IMPORTANCE,
+  MAX_HABIT_NOTE_LENGTH,
   MAX_HABIT_TITLE_LENGTH,
 } from '../core/habits';
-import type { NewCustomHabitInput } from '../core/habits';
+import type { NewCustomHabitInput, WrittenHabitFields } from '../core/habits';
 import type { AppState } from '../core/types';
 import { en, t, type I18nKey } from '../i18n/en';
 import { Button } from '../ui/Button';
@@ -67,28 +68,34 @@ const IMPORTANCE_LABEL: Record<'important' | 'medium' | 'notImportant', I18nKey>
   notImportant: 'domainCatalog.write.importance.notImportant',
 };
 
+/**
+ * The write-a-habit form, and the edit form for a habit already on the list:
+ * the same fields either way. It does not know the domain — the caller adds
+ * it when creating, and editing never moves a habit between domains.
+ */
 export function WriteHabitForm({
-  domain,
   initial,
   onCancel,
   onSave,
 }: {
-  domain: DomainKey;
-  initial?: { title: string; importance: number; cadence: Cadence; emoji?: string };
+  initial?: WrittenHabitFields;
   onCancel: () => void;
-  onSave: (input: NewCustomHabitInput) => void;
+  onSave: (input: WrittenHabitFields) => void;
 }) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [importance, setImportance] = useState(initial?.importance ?? 3);
   const [cadence, setCadence] = useState<Cadence>(initial?.cadence ?? 'daily');
   const [emoji, setEmoji] = useState(initial?.emoji ?? '');
+  const [note, setNote] = useState(initial?.note ?? '');
 
   function save() {
     const trimmed = title.trim();
     if (!trimmed) return;
-    const input: NewCustomHabitInput = { title: trimmed, importance, cadence, domain };
+    const input: WrittenHabitFields = { title: trimmed, importance, cadence };
     const trimmedEmoji = emoji.trim();
     if (trimmedEmoji) input.emoji = trimmedEmoji;
+    const trimmedNote = note.trim();
+    if (trimmedNote) input.note = trimmedNote;
     onSave(input);
   }
 
@@ -100,6 +107,13 @@ export function WriteHabitForm({
         placeholder={en['domainCatalog.write.title.placeholder']}
         value={title}
         onChange={(e) => setTitle(e.target.value)}
+      />
+      <input
+        type="text"
+        maxLength={MAX_HABIT_NOTE_LENGTH}
+        placeholder={en['domainCatalog.write.note.placeholder']}
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
       />
       <ChipRow className="chips">
         {CUSTOM_IMPORTANCE.map(({ value, key }) => (
@@ -213,10 +227,9 @@ export function DomainCatalog({
 
       {writing ? (
         <WriteHabitForm
-          domain={domain}
           onCancel={() => setWriting(false)}
           onSave={(input) => {
-            onAddCustom(input);
+            onAddCustom({ ...input, domain });
             setWriting(false);
           }}
         />

@@ -14,6 +14,9 @@ import { completedPeriods, currentPeriod, hitInRange, periodAt } from './periods
 import type { DayLog, Profile, UserHabit } from './types';
 
 export const MAX_HABIT_TITLE_LENGTH = 60;
+
+/** The expanded line under a title. Long enough for the catalogue's own notes, short enough to stay one paragraph. */
+export const MAX_HABIT_NOTE_LENGTH = 160;
 /** A cap on self-written (domain-less) habits — catalogue habits are not capped. */
 export const MAX_CUSTOM_HABITS = 10;
 
@@ -227,13 +230,18 @@ export const CUSTOM_IMPORTANCE: readonly { value: number; key: 'important' | 'me
   { value: 1, key: 'notImportant' },
 ];
 
-export type NewCustomHabitInput = {
+/** Everything the write-a-habit form collects. Editing an existing habit writes the same set. */
+export type WrittenHabitFields = {
   title: string;
   importance: number;
   cadence: Cadence;
+  emoji?: string;
+  note?: string;
+};
+
+export type NewCustomHabitInput = WrittenHabitFields & {
   /** Pre-filled from the domain catalogue screen the form was opened from. */
   domain: DomainKey;
-  emoji?: string;
 };
 
 /**
@@ -252,6 +260,7 @@ export function newCustomHabit(id: string, input: NewCustomHabitInput, startDate
     startDate,
   };
   if (input.emoji !== undefined) habit.emoji = input.emoji;
+  if (input.note !== undefined) habit.note = input.note;
   return habit;
 }
 
@@ -270,6 +279,8 @@ export type HabitPatch = {
   domain?: DomainKey | null;
   /** `null` clears the filing emoji. */
   emoji?: string | null;
+  /** `null` clears back to the catalogue item's own note. */
+  note?: string | null;
 };
 
 export function updateHabit(habits: readonly UserHabit[], id: string, patch: HabitPatch): UserHabit[] {
@@ -286,6 +297,10 @@ export function updateHabit(habits: readonly UserHabit[], id: string, patch: Hab
     if (patch.emoji !== undefined) {
       if (patch.emoji === null) delete next.emoji;
       else next.emoji = patch.emoji;
+    }
+    if (patch.note !== undefined) {
+      if (patch.note === null) delete next.note;
+      else next.note = patch.note.slice(0, MAX_HABIT_NOTE_LENGTH);
     }
     if (patch.domain !== undefined) {
       if (patch.domain === null) delete next.domain;

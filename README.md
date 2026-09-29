@@ -157,13 +157,14 @@ a warmed off-white for text (`--paper`), a bronze accent (`--bronze`). No
 light mode: the artwork is drawn on a dark ground, so a light theme would be
 sixty more drawings, not a token swap.
 
-**Instrument Serif, self-hosted, headings only.** One woff2, Latin subset,
-in `public/fonts/` (SIL OFL 1.1, `OFL.txt` beside it) and in the precache —
-not Google Fonts by URL, which would be a third-party request on every cold
-load in an app whose premise is that it works offline. Applied by role
-through `--serif` on `.headline` and `.onboarding h2`; the section eyebrows
-(`h2`, `.domain-heading`, `.custom-heading`) stay sans on purpose, so a
-serif small-caps eyebrow never sits under a serif headline.
+**One family, and no webfont** (`docs/onboarding/06-revisions.md` §8,
+reversing phase 3's type decision). Phase 3 self-hosted Instrument Serif for
+`.headline` and `.onboarding h2`; `--sans` is now the only family token and
+the headline is distinguished by size (`--text-2xl`) and leading alone. The
+woff2, the `@font-face` block, the `--serif` token and the `fonts/*.woff2`
+precache entry are all gone — a second voice for three headlines was paying a
+webfont and a block of metric-override descriptors for a distinction nothing
+else rested on.
 
 **Grain, one `feTurbulence` SVG, tiled as a background image.** On `body`
 and on the `.checkin` card, never on `.portrait` or `.avatar` — the drawings
@@ -171,7 +172,7 @@ are already grainy editorial illustration, and a second layer over them
 reads as compression noise, not texture.
 
 `src/ui/` holds the base components (`Button`, `Chip`/`ChipRow`, `Checkbox`,
-`Card`, `Field`, `Select`, `SectionHeading`, `Note`, `FullDayStrip`) that
+`Card`, `SectionHeading`, `Note`, `FullDayStrip`) that
 `src/styles/components.css` styles. Thin presentational wrappers over
 props, no context, no variants object; a component earns a file only once
 two different screens use it.
@@ -309,6 +310,19 @@ writes to whichever day the picker is on, so disabling it would also block
 filling in a session you forgot to log — and a second tick inside one period
 changes nothing anyway. Derived from period length (< 7 days), the same
 threshold the weekly warning uses, rather than a flag on the domain.
+
+**Every habit is editable, including one from the catalogue**
+(`docs/onboarding/06-revisions.md` §2), reversing `04-revisions.md` §9 —
+which had said a catalogue habit's wording is not the user's to change,
+because showing those controls exposes the machinery. Using it argued the
+other way: the catalogue is one person's wording of a habit, and a habit you
+cannot word your own way is someone else's habit. A row's menu offers Edit and
+Remove for every habit now, through the same form `DomainCatalog` writes one
+with. The **domain** stays out of that form: it decides which panel the habit
+moves, which is a different decision from wording it. `UserHabit.note` carries
+an edited subtitle and falls back to the catalogue item's own when absent, so
+an untouched row still reads as `catalog.json` wrote it and a later catalogue
+edit still reaches it.
 
 **The "see your best version" toggle** reverses §3's "do not render an
 idealised self for comparison. There is one figure on screen." The stated

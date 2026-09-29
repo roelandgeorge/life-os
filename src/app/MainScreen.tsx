@@ -5,10 +5,11 @@
  *
  * Reworked again for the onboarding rebuild (docs/onboarding/04-revisions.md):
  * a domain group's heading is now the only way into that domain's catalogue
- * (§6); a habit row's own menu offers Remove for everyone and Edit for one
- * the user wrote (§9), since the old cross-screen habit editor is gone; and,
- * for the one session right after onboarding, the headline and an offers row
- * replace the everyday copy (§6's landing screen, docs/onboarding/01-onboarding-spec.md).
+ * (§6); a habit row's own menu offers Edit and Remove — every habit, from the
+ * catalogue or not (docs/onboarding/06-revisions.md §2, reversing §9) — since
+ * the old cross-screen habit editor is gone; and, for the one session right
+ * after onboarding, the headline replaces the everyday copy (§6's landing
+ * screen, docs/onboarding/01-onboarding-spec.md).
  *
  * Purely presentational — `Shell` owns the `useLifeOS` hook so History and
  * Settings can share the same live state without a second store read.
@@ -29,12 +30,14 @@ import {
   isActiveOn,
   isHabitTicked,
   type HabitPatch,
+  type WrittenHabitFields,
 } from '../core/habits';
 import { atRiskItems, type RiskItem } from '../core/atRisk';
 import { Avatar } from '../visual/Avatar';
 import { scene as buildScene } from '../visual/scene';
 import { Celebration } from './Celebration';
 import { catalogById } from '../core/catalog';
+import { HISTORY_DAYS } from './history';
 import { DomainCatalog, WriteHabitForm } from './DomainCatalog';
 import type { NewHabitSource } from './useLifeOS';
 import { Button } from '../ui/Button';
@@ -106,7 +109,7 @@ export function MainScreen({
   const [editing, setEditing] = useState<DateKey>(today);
   const editingLog = state.logs.find((l) => l.date === editing) ?? null;
   const avatarScene = buildScene(showBest ? BEST_STEPS : projection.preview, state.profile);
-  const strip = fullDayStrip(state.logs, state.habits, today, 30);
+  const strip = fullDayStrip(state.logs, state.habits, today, HISTORY_DAYS);
   const groups = groupHabits(state.habits, today, state.profile?.domainOrder);
 
   const allDone = dailyTasksDone(state.logs, state.habits, today);
@@ -142,29 +145,41 @@ export function MainScreen({
       </div>
 
       <div className="below">
-        {showBest ? (
-          <>
-            <h1 className="headline">{en['main.bestVersion.headline']}</h1>
-            <Note variant="subhead">{en['main.bestVersion.subhead']}</Note>
-          </>
-        ) : landingDailyCount !== undefined ? (
-          <>
-            <h1 className="headline">{en['main.landing.headline']}</h1>
-            <Note variant="subhead">
-              {en[(LANDING_COUNT_KEY[Math.min(landingDailyCount, 4)] ?? 'main.landing.count.0') as I18nKey]}
-            </Note>
-          </>
-        ) : (
-          <>
-            <h1 className="headline">{en['main.headline']}</h1>
-            <Note variant="subhead">{en['main.subhead']}</Note>
-            {projection.fullDay && <p className="fullday">{en['main.fullDay']}</p>}
-          </>
-        )}
+        <div className="below-head">
+          <div className="below-copy">
+            {showBest ? (
+              <>
+                <h1 className="headline">{en['main.bestVersion.headline']}</h1>
+                <Note variant="subhead">{en['main.bestVersion.subhead']}</Note>
+              </>
+            ) : landingDailyCount !== undefined ? (
+              <>
+                <h1 className="headline">{en['main.landing.headline']}</h1>
+                <Note variant="subhead">
+                  {en[(LANDING_COUNT_KEY[Math.min(landingDailyCount, 4)] ?? 'main.landing.count.0') as I18nKey]}
+                </Note>
+              </>
+            ) : (
+              <>
+                <h1 className="headline">{en['main.headline']}</h1>
+                <Note variant="subhead">{en['main.subhead']}</Note>
+                {projection.fullDay && <p className="fullday">{en['main.fullDay']}</p>}
+              </>
+            )}
+          </div>
 
-        <Button className="best-version-toggle" onClick={() => setShowBest((v) => !v)}>
-          {showBest ? en['main.bestVersion.hide'] : en['main.bestVersion.show']}
-        </Button>
+          {/* One glyph, one place: the full-width labelled button it replaces
+              was the widest thing on the screen for a view most sessions
+              never open. */}
+          <Button
+            className="best-version-toggle"
+            aria-label={showBest ? en['main.bestVersion.hide'] : en['main.bestVersion.show']}
+            aria-pressed={showBest}
+            onClick={() => setShowBest((v) => !v)}
+          >
+            {showBest ? '↺' : '★'}
+          </Button>
+        </div>
 
         {!showBest && (
           <>
@@ -173,6 +188,10 @@ export function MainScreen({
             <RiskWarning state={state} today={today} />
 
             <DayPicker today={today} editing={editing} onPick={setEditing} />
+
+            {editing !== today && (
+              <Note className="editing-past">{t('main.editingPast', { day: dayLabel(editing, today) })}</Note>
+            )}
 
             {groups.length === 0 && <Note>{en['settings.habits.empty']}</Note>}
 
@@ -194,16 +213,10 @@ export function MainScreen({
                   )}
                 </div>
                 {habits.map((habit) =>
-                  editingId === habit.id && habit.domain !== undefined ? (
+                  editingId === habit.id ? (
                     <WriteHabitForm
                       key={habit.id}
-                      domain={habit.domain}
-                      initial={{
-                        title: habit.title,
-                        importance: habit.importance,
-                        cadence: habit.cadence,
-                        ...(habit.emoji ? { emoji: habit.emoji } : {}),
-                      }}
+                      initial={editableFields(habit)}
                       onCancel={() => setEditingId(null)}
                       onSave={(input) => {
                         onUpdateHabit(habit.id, {
@@ -211,6 +224,7 @@ export function MainScreen({
                           importance: input.importance,
                           cadence: input.cadence,
                           emoji: input.emoji ?? null,
+                          note: input.note ?? null,
                         });
                         setEditingId(null);
                       }}
@@ -223,20 +237,13 @@ export function MainScreen({
                       today={today}
                       editingLog={editingLog}
                       onToggle={() => toggleHabit(habit.id, editing)}
-                      onEdit={
-                        habit.catalogId === undefined && habit.domain !== undefined
-                          ? () => setEditingId(habit.id)
-                          : undefined
-                      }
+                      onEdit={() => setEditingId(habit.id)}
                       onRemove={() => onRemoveHabit(habit.id)}
                     />
                   ),
                 )}
               </div>
             ))}
-
-            {editing !== today && <Note className="editing-past">{t('main.editingPast', { day: dayLabel(editing, today) })}</Note>}
-            <Note className="next-move">{nextMove(projection)}</Note>
           </>
         )}
       </div>
@@ -258,7 +265,7 @@ function HabitRow({
   today: DateKey;
   editingLog: AppState['logs'][number] | null;
   onToggle: () => void;
-  onEdit: (() => void) | undefined;
+  onEdit: () => void;
   onRemove: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -276,7 +283,7 @@ function HabitRow({
   // Two tap targets, not one (docs/onboarding/05-revisions.md §3): the box
   // ticks, the title expands. The same split DomainCatalog's rows use, so a
   // row reads the same in both places.
-  const note = habit.catalogId === undefined ? undefined : catalogById(habit.catalogId)?.note;
+  const note = habitNote(habit);
 
   return (
     <Card className={[due ? 'checkin' : 'checkin collapsed', expanded ? 'expanded' : ''].join(' ').trim()}>
@@ -301,11 +308,9 @@ function HabitRow({
 
       {expanded && (
         <div className="habit-menu">
-          {onEdit && (
-            <Button small onClick={onEdit}>
-              {en['habits.menu.edit']}
-            </Button>
-          )}
+          <Button small className="icon-action" aria-label={en['habits.menu.edit']} onClick={onEdit}>
+            ✎
+          </Button>
           <Button
             small
             variant="danger"
@@ -321,12 +326,38 @@ function HabitRow({
   );
 }
 
+/**
+ * The line a row expands to: the user's own if they have written one,
+ * otherwise the catalogue's. Editing a catalogue habit copies the catalogue
+ * note into the form, so clearing the field is how you get back to no line
+ * at all rather than silently restoring the original.
+ */
+function habitNote(habit: UserHabit): string | undefined {
+  if (habit.note !== undefined) return habit.note;
+  return habit.catalogId === undefined ? undefined : catalogById(habit.catalogId)?.note;
+}
+
+function editableFields(habit: UserHabit): WrittenHabitFields {
+  const fields: WrittenHabitFields = {
+    title: habit.title,
+    importance: habit.importance,
+    cadence: habit.cadence,
+  };
+  if (habit.emoji !== undefined) fields.emoji = habit.emoji;
+  const note = habitNote(habit);
+  if (note !== undefined) fields.note = note;
+  return fields;
+}
+
 /** Relative names for the near past, for prose. */
 function dayLabel(date: DateKey, today: DateKey): string {
   const age = diffDays(today, date);
   if (age === 0) return en['main.day.today'];
   if (age === 1) return en['main.day.yesterday'];
-  return new Date(date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long' });
+  // Pinned to en-GB rather than the device locale: every other string in the
+  // app is English, and a Dutch phone was rendering "zondag" inside an
+  // English sentence.
+  return new Date(date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long' });
 }
 
 /**
@@ -367,17 +398,6 @@ function DayPicker({
       ))}
     </ChipRow>
   );
-}
-
-/**
- * With five states, most days change nothing on screen. Naming how many of
- * the five panels today's ticks have already moved up keeps the daily
- * action worth taking.
- */
-function nextMove(projection: Projection): string {
-  const climbing = PANEL_KEYS.filter((p) => projection.preview[p] > projection.steps[p]).length;
-  if (climbing > 0) return t('main.nextMove.gained', { count: climbing });
-  return en['main.nextMove.waiting'];
 }
 
 /**

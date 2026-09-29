@@ -163,7 +163,19 @@ describe('the copy — pinned verbatim against docs/onboarding/04-revisions.md, 
     const original = (await import('../../docs/onboarding/onboarding-tree.json')) as unknown as {
       default: { nodes: Record<string, TreeNodeJson> };
     };
-    const revisedOrRemoved = new Set(['S0', 'Q1', 'Q2N', 'Q3Ny', 'QMORE', 'SIT', 'SIT_partner', 'SIT_children']);
+    // LAND's headline was rewritten by docs/onboarding/06-revisions.md §4;
+    // its count line is unchanged and still pinned above.
+    const revisedOrRemoved = new Set([
+      'S0',
+      'Q1',
+      'Q2N',
+      'Q3Ny',
+      'QMORE',
+      'SIT',
+      'SIT_partner',
+      'SIT_children',
+      'LAND',
+    ]);
     for (const [id, sourceNode] of Object.entries(original.default.nodes)) {
       if (revisedOrRemoved.has(id)) continue;
       const shipped = NODES[id];

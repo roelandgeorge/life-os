@@ -440,7 +440,7 @@
     },
     "LAND": {
       "kind": "screen",
-      "text": "Fifteen years out. Everything in the middle.\n{countLine}",
+      "text": "This is you in fifteen years.\n{countLine}",
       "countLine": {
         "0": "Nothing due today.",
         "1": "One box today.",
