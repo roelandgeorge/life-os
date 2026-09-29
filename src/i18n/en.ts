@@ -92,7 +92,7 @@ export const en = {
   'habits.cadence.everyTwoWeeks': 'Every 2 weeks',
   'habits.cadence.monthly': 'Monthly',
   'settings.habits.remove': 'Remove',
-  'settings.habits.empty': 'No habits yet. Add one from a domain above, or redo what you work on in Settings.',
+  'settings.habits.empty': 'No habits yet. Add one from a domain above, or add life domains in Settings.',
 
   'settings.notifications': 'Daily reminder',
   'settings.notifications.enable': 'Remind me each evening, give or take an hour',
@@ -114,7 +114,7 @@ export const en = {
   // §5, §10) — each re-runs one independent half of onboarding and writes only
   // its own fields.
   'settings.figure.redo': 'Change the figure',
-  'settings.workOn.redo': 'Redo what you work on',
+  'settings.workOn.redo': 'Add life domains',
 
   // A domain group's own catalogue (docs/onboarding/04-revisions.md §6) — the
   // only way into the catalogue, replacing the old cross-domain Discover.

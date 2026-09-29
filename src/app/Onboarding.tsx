@@ -12,7 +12,7 @@
  *
  * `start`/`terminal` let the same component serve three independent entries
  * (docs/onboarding/04-revisions.md §5): the full run (`App.tsx`, Q1 to LAND),
- * "Redo what you work on" (Q1 to FIG_gender, the figure untouched) and "Redo
+ * "Add life domains" (Q1 to FIG_gender, the figure untouched) and "Change
  * the figure" (FIG_gender to LAND, the work-on panels untouched) — Settings
  * holds both. `onComplete` fires the moment the chosen option's own
  * resolution reaches `terminal`, before that node is ever rendered: LAND and
@@ -75,7 +75,7 @@ export function Onboarding({
 
   function advance(result: Advance) {
     // The terminal node is a hand-off, never rendered — LAND is the app's
-    // real main screen and FIG_gender is where "redo what you work on" stops
+    // real main screen and FIG_gender is where "Add life domains" stops
     // short of touching the figure.
     if (result.nextId === terminal) {
       onComplete(result.answers);
