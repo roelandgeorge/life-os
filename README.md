@@ -226,14 +226,16 @@ end, after every panel is settled.
 (gender, hair — the whole reason it moved to last, so the questions that
 pick habits never wait on it) and "what you work on" (the Q1 loop). A first
 run does both, work-on first, figure last. Settings keeps exactly the two
-buttons for this — Change the figure, Redo what you work on — plus the daily
+buttons for this — Change the figure, Add life domains — plus the daily
 reminder and data (§10); everything else the old Settings held (Appearance,
 Domain order, the habit editor, "Add from the catalogue") is gone, because
 profile fields are onboarding's alone now and a habit is edited from its own
 row on Home. Each redo runs `<Onboarding>` between a different
 `(start, terminal)` node pair and merges the result into the live state
 (`useLifeOS.completeFigureRedo`/`completeWorkOnRedo`) instead of replacing
-it. Redoing "what you work on" also replaces `Profile.domainOrder` with that
+it. Neither button resets anything, which is why neither says "redo": the
+figure run rewrites gender and hair, and "Add life domains" only adds, skipping
+a habit that is already active and removing none. Redoing "what you work on" also replaces `Profile.domainOrder` with that
 run's own seed order — the order a domain's habits' domains first appear,
 repeats dropped, not the order panels were chosen, since one domain can feed
 more than one panel. Changing the order is running the part again, on
