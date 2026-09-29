@@ -81,3 +81,18 @@ describe('catalogFor filtering', () => {
     expect(withIt).toContain(requiring.id);
   });
 });
+
+describe('the note every row expands to', () => {
+  // A row's only expanded content is its note. An item without one expands
+  // to nothing, which reads as a broken tap rather than as an empty field,
+  // so every item carries one.
+  it('every item has a note', () => {
+    const empty = CATALOG.filter((i) => i.note.trim() === '').map((i) => i.id);
+    expect(empty).toEqual([]);
+  });
+
+  it('no note merely repeats the title', () => {
+    const echoes = CATALOG.filter((i) => i.note.trim().toLowerCase() === i.title.trim().toLowerCase());
+    expect(echoes.map((i) => i.id)).toEqual([]);
+  });
+});

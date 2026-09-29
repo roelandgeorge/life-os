@@ -185,6 +185,7 @@ export function MainScreen({
                   {domain && (
                     <Button
                       small
+                      className="icon-action"
                       aria-label={t('main.domain.browse', { domain: en[domain.label as I18nKey] })}
                       onClick={() => setCatalogDomain(domain.key)}
                     >
@@ -308,7 +309,7 @@ function HabitRow({
           <Button
             small
             variant="danger"
-            className="habit-remove"
+            className="icon-action"
             aria-label={en['settings.habits.remove']}
             onClick={onRemove}
           >
