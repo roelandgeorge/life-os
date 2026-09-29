@@ -117,7 +117,7 @@
      compete with the title for the one row and squeeze it to a few characters
      wide, so each takes its own line and the title never moves. */
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   background-color: var(--surface);
@@ -139,21 +139,18 @@
   min-width: 0;
 }
 
-/* Once a row wraps — a two-line title, the note, the cadence chips — centring
-   every child on the whole row drops the tick box and the actions half a line
-   below the title they belong to. They centre on the title's first line
-   instead, which is what "on the same line" has to mean for a row that can
-   be three lines tall. */
-.checkin.expanded,
-.checkin.editing {
-  align-items: flex-start;
-}
+/* The tick box and the actions centre on the title's first line, not on the
+   whole row. Centring on the row drops them half a line whenever it wraps (a
+   two-line title, the note, the cadence chips), and a row that is centred
+   closed and top-aligned open moves its tick box on every tap of the title.
+   One rule for every state is what keeps the box still.
 
-.checkin.expanded .checkin-box,
-.checkin.editing .checkin-box,
-.checkin.expanded .habit-menu,
-.checkin.editing .habit-menu {
-  min-height: calc(var(--space-2) * 2 + var(--text-base) * var(--leading-base));
+   Both sides measure from the same `--tap` band: the box and the actions
+   centre in it, and the title's padding puts its first line at that band's
+   middle, so the centres agree to the pixel however many lines follow. */
+.checkin .checkin-box,
+.checkin .habit-menu {
+  min-height: var(--tap);
   align-items: center;
   margin-top: 0;
   margin-bottom: 0;
@@ -167,6 +164,14 @@
 .checkin.collapsed .label {
   font-weight: 400;
   font-size: var(--text-sm);
+}
+
+.checkin.collapsed .checkin-main {
+  padding-top: calc((var(--tap) - var(--text-sm) * var(--leading-base)) / 2);
+}
+
+.checkin-main .label {
+  align-self: flex-start;
 }
 
 .checkin .lastHit {
@@ -201,7 +206,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  padding: var(--space-2) 0 var(--space-2) var(--space-3);
+  padding: calc((var(--tap) - var(--text-base) * var(--leading-base)) / 2) 0 var(--space-2) var(--space-3);
   background: none;
   border: 0;
   color: inherit;
@@ -287,71 +292,7 @@
   margin-top: var(--space-4);
 }
 
-.checkins:first-of-type /* ---- a row being edited (docs/onboarding/07-revisions.md §3) ----------- */
-
-/* The row keeps its surface, its border and its typography. Every field is
-   the text it replaces, in the place that text was, so the only thing that
-   changes on tapping edit is that a caret appears. The dark form panel this
-   replaces changed everything about the row except the thing being edited. */
-.checkin.editing input,
-.checkin.editing textarea {
-  background: none;
-  border: 0;
-  border-bottom: var(--hairline) dashed var(--rule-strong);
-  border-radius: 0;
-  padding: 0 0 var(--space-1);
-  margin: 0;
-  color: inherit;
-  font: inherit;
-  width: 100%;
-  min-width: 0;
-  resize: none;
-  overflow: hidden;
-}
-
-.checkin.editing input:focus,
-.checkin.editing textarea:focus {
-  outline: none;
-  border-bottom-style: solid;
-  border-bottom-color: var(--bronze);
-}
-
-/* The title field stands exactly where the title stood: same weight, same
-   leading, and it wraps at the same place, so committing the edit moves
-   nothing. */
-.checkin.editing .title-field {
-  font-weight: 600;
-  line-height: var(--leading-base);
-  display: block;
-}
-
-.checkin.editing .note-field {
-  width: 100%;
-  font-size: var(--text-sm);
-  line-height: var(--leading-base);
-  color: var(--paper-dim);
-  display: block;
-}
-
-/* Where the tick box is on every other row, so the row's left edge does not
-   shift between reading it and editing it. The dashed rule is what says it
-   is a field at all, an empty one being otherwise invisible. */
-.checkin.editing .emoji-field {
-  width: 18px;
-  text-align: center;
-  padding: 0;
-  /* The checkbox it stands in for carries the browser's own default margin
-     on a tick box. Matching it is what keeps the title at the same x between
-     reading the row and editing it. */
-  margin: 0 3px 0 4px;
-}
-
-.checkin.editing .chips.cadence {
-  width: 100%;
-  padding-left: 0;
-}
-
-.domain-heading-row {
+.checkins:first-of-type .domain-heading-row {
   margin-top: 0;
 }
 
