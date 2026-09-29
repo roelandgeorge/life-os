@@ -226,7 +226,7 @@ end, after every panel is settled.
 (gender, hair — the whole reason it moved to last, so the questions that
 pick habits never wait on it) and "what you work on" (the Q1 loop). A first
 run does both, work-on first, figure last. Settings keeps exactly the two
-buttons for this — Redo the figure, Redo what you work on — plus the daily
+buttons for this — Change the figure, Redo what you work on — plus the daily
 reminder and data (§10); everything else the old Settings held (Appearance,
 Domain order, the habit editor, "Add from the catalogue") is gone, because
 profile fields are onboarding's alone now and a habit is edited from its own

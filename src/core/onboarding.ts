@@ -66,9 +66,9 @@ const TREE = treeJson as TreeJson;
 export const START_NODE = TREE.start;
 /** Entry point for Settings' "Redo what you work on" (docs/onboarding/04-revisions.md §5) — the figure is a separate, independent part. */
 export const WORK_ON_START_NODE = 'Q1';
-/** Entry point for Settings' "Redo the figure". */
+/** Entry point for Settings' "Change the figure". */
 export const FIGURE_START_NODE = 'FIG_gender';
-/** The terminal hand-off for a full run and for "Redo the figure" — never rendered, see `app/Onboarding.tsx`. */
+/** The terminal hand-off for a full run and for "Change the figure" — never rendered, see `app/Onboarding.tsx`. */
 export const LANDING_NODE = 'LAND';
 
 type LandingData = { seeds: readonly string[]; offers: readonly string[]; dailyAnchor: string | null };

@@ -113,7 +113,7 @@ export const en = {
   // Settings' two remaining onboarding controls (docs/onboarding/04-revisions.md
   // §5, §10) — each re-runs one independent half of onboarding and writes only
   // its own fields.
-  'settings.figure.redo': 'Redo the figure',
+  'settings.figure.redo': 'Change the figure',
   'settings.workOn.redo': 'Redo what you work on',
 
   // A domain group's own catalogue (docs/onboarding/04-revisions.md §6) — the

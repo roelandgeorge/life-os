@@ -51,7 +51,7 @@ export type LifeOS = {
    * seed order — the same way reordering Home is meant to work.
    */
   completeWorkOnRedo: (answers: Answers) => void;
-  /** Settings' "Redo the figure" — writes only gender/hair. */
+  /** Settings' "Change the figure" — writes only gender/hair. */
   completeFigureRedo: (answers: Answers) => void;
 };
 
