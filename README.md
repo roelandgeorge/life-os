@@ -166,6 +166,18 @@ precache entry are all gone — a second voice for three headlines was paying a
 webfont and a block of metric-override descriptors for a distinction nothing
 else rested on.
 
+**A deploy lands on one refresh** (`src/app/swUpdate.ts`).
+`vite-plugin-pwa`'s `autoUpdate` puts `skipWaiting` and `clientsClaim` in
+the generated worker, so a new worker installs and claims the page as soon
+as it asks for `/sw.js` — but the page that asked was already served from
+the old precache, so it keeps showing the old build and the update surfaces
+only on the *next* load. On a site that is one tab among many nobody
+notices; on a phone home screen it means refreshing, seeing nothing change,
+and concluding the deploy failed. So the page reloads itself when a new
+worker claims it, guarded twice: `hadController`, because `clientsClaim`
+fires `controllerchange` on every first install too, and a `reloading` flag,
+because firing twice is how this becomes a loop.
+
 **Grain, one `feTurbulence` SVG, tiled as a background image.** On `body`
 and on the `.checkin` card, never on `.portrait` or `.avatar` — the drawings
 are already grainy editorial illustration, and a second layer over them
