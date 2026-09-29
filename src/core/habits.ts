@@ -224,11 +224,6 @@ export function newHabitFromCatalog(item: CatalogItem, id: string, startDate: Da
  * The three choices a user-written habit's weight offers on screen
  * (docs/onboarding/04-revisions.md §9) — never a free 1-5 number.
  */
-export const CUSTOM_IMPORTANCE: readonly { value: number; key: 'important' | 'medium' | 'notImportant' }[] = [
-  { value: 5, key: 'important' },
-  { value: 3, key: 'medium' },
-  { value: 1, key: 'notImportant' },
-];
 
 /** Everything the write-a-habit form collects. Editing an existing habit writes the same set. */
 export type WrittenHabitFields = {
@@ -267,6 +262,37 @@ export function newCustomHabit(id: string, input: NewCustomHabitInput, startDate
 export function canAddCustomHabit(habits: readonly UserHabit[]): boolean {
   const activeCustom = habits.filter((h) => h.catalogId === undefined && h.removedDate === undefined);
   return activeCustom.length < MAX_CUSTOM_HABITS;
+}
+
+/**
+ * The cadences the habit editor offers. `{ everyDays }` was always in the
+ * model (`cadencePeriodDays`, `serialize`, `migrate`) but never on screen,
+ * so a habit like "train full body 3-4x a week" had to be filed as weekly,
+ * where one tick satisfied the whole week.
+ *
+ * Data rather than a branch, and compared with `sameCadence` rather than
+ * `===`, since two of them are objects.
+ */
+/**
+ * What a habit the user writes weighs. The editor no longer asks
+ * (docs/onboarding/07-revisions.md §2): a weight is what the panel engine
+ * reads, not something a person holding a phone has an opinion about, and
+ * the three-choice picker was the last piece of machinery left on that
+ * screen. A catalogue habit keeps the catalogue's own value.
+ */
+export const DEFAULT_IMPORTANCE = 3;
+
+export const CADENCE_CHOICES: readonly { key: string; cadence: Cadence }[] = [
+  { key: 'daily', cadence: 'daily' },
+  { key: 'everyOtherDay', cadence: { everyDays: 2 } },
+  { key: 'weekly', cadence: 'weekly' },
+  { key: 'everyTwoWeeks', cadence: { everyDays: 14 } },
+  { key: 'monthly', cadence: 'monthly' },
+];
+
+export function sameCadence(a: Cadence, b: Cadence): boolean {
+  if (typeof a === 'string' || typeof b === 'string') return a === b;
+  return a.everyDays === b.everyDays;
 }
 
 export type HabitPatch = {

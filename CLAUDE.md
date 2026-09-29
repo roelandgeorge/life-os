@@ -99,7 +99,7 @@ is gone, and with it `offeredCatalogItems()` and `Shell`'s `landingOffers`;
 `CatalogItem.starter`, so check who reads it before building on it.
 
 **A third round then reversed two earlier decisions**
-(`docs/onboarding/06-revisions.md`, now the last word in that folder). Every
+(`docs/onboarding/06-revisions.md`). Every
 habit's row menu offers Edit as well as Remove, catalogue or not, reversing
 `04-revisions.md` §9: the catalogue is one person's wording of a habit.
 `WriteHabitForm` is the one form for both writing and editing and no longer
@@ -112,6 +112,24 @@ the only family token, there is no `@font-face` and no `public/fonts/`.
 `app/history.ts`'s `HISTORY_DAYS = 28` is now the one window every track on
 History and Home's Full Day strip reads.
 
+**A fourth round** (`docs/onboarding/07-revisions.md`, now the last word in
+that folder) replaced that round's edit form with editing **in the row**:
+`HabitEditor` (was `WriteHabitForm`) renders a `.checkin` card whose title
+and note are `<textarea>`s that wrap and grow exactly as the text they stand
+in for, carrying the row's own colour, weight and x position — measured
+identical reading and editing. `.write-habit-form` is gone, and the
+catalogue's "Write your own" is the same component with empty fields.
+`core/habits.ts`'s `CADENCE_CHOICES` finally puts `{ everyDays }` on screen
+(Every other day, Every 2 weeks), compared with `sameCadence()` rather than
+`===`; H019 moved to `{ everyDays: 2 }`, the only catalogue item whose title
+stated a frequency its cadence did not keep. **Importance left the editor
+entirely** (`DEFAULT_IMPORTANCE` for a written habit, the catalogue's value
+otherwise): it is the weight the panel engine reads, which is machinery.
+Row actions sit on the title's first line in `--paper-dim`, remove is a
+trash can, and all five are drawn in `src/ui/Glyph.tsx` rather than typed as
+`✎`/`✕`/`🗑`. The rule is `button.icon-action`, not `.icon-action` —
+`button.small` outranks a bare class and silently ate `padding: 0`.
+
 **Do not offer to export before a destructive step during development.** The
 user is testing and is content to lose the data. `settings.reset.note`, which
 said "Export first if you want to keep it", is gone for the same reason. This
@@ -123,12 +141,13 @@ Export is still in Settings.
 once the rebuild landed. `app/DomainCatalog.tsx` replaces Discover: opened
 from a domain's own group on Home, the only route into the catalogue now (a
 domain never chosen has no group and so no way in), a row collapsed to its
-title and an effort marker, its own "Write your own" form shared with
+title and an effort marker, its own "Write your own" row shared with
 `MainScreen`'s habit-row Edit. Settings holds exactly four things now — the
 two redo buttons, the daily reminder, data — the old habit editor and
 catalogue button gone with it, since a habit is edited from its own row on
-Home and profile fields are onboarding's alone. It carries no title and no
-rules between sections (`06-revisions.md` §7). Home itself (§4.8's one-line
+Home and profile fields are onboarding's alone. No rules between sections
+and no heading over the redo buttons, but it keeps its title, and Export,
+Import and Reset share one row (`07-revisions.md` §6). Home itself (§4.8's one-line
 `groupHabits` edit aside) and the gamification layer are still ahead.
 
 Live on the user's Vercel deployment, which builds from `main` on GitHub.
@@ -214,7 +233,8 @@ src/app/        history.ts (HISTORY_DAYS + cellsForPeriod — the one window
                 thin wiring around core/habits.ts), push.ts, warmArtwork.ts,
                 Celebration
 src/ui/         Button, Chip/ChipRow, Checkbox, Card, SectionHeading, Note,
-                FullDayStrip — thin components over components.css; tokens.ts
+                FullDayStrip, Glyph (the five drawn row actions) — thin
+                components over components.css; tokens.ts
                 (parser + contrast helper), tokens.test.ts, chrome.test.ts
 src/content/    catalog.json (137 items, docs/onboarding/02-catalog-changes.md),
                 onboarding-tree.json + landings.json (docs/onboarding/,

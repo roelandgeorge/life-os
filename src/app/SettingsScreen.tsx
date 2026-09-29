@@ -7,9 +7,9 @@
  * a habit is edited from its own row on Home, and the catalogue is reached
  * per domain from there too.
  *
- * No title and no rules between the sections: with four sections whose
- * buttons name themselves, a heading and a divider above each was more
- * furniture than content.
+ * No rules between the sections and no heading over the two redo buttons,
+ * which name themselves. Export, Import and Reset sit on one row: all three
+ * act on the same thing, and Reset below them read as a separate warning.
  */
 
 import { useRef, useState } from 'react';
@@ -137,6 +137,8 @@ export function SettingsScreen({
 
   return (
     <div className="settings-screen">
+      <h1 className="headline">{en['settings.title']}</h1>
+
       <section className="redo">
         <Button onClick={() => setRedo('figure')}>{en['settings.figure.redo']}</Button>
         <Button onClick={() => setRedo('workOn')}>{en['settings.workOn.redo']}</Button>
@@ -144,7 +146,6 @@ export function SettingsScreen({
 
       <section>
         <SectionHeading>{en['settings.notifications']}</SectionHeading>
-        <Note>{en['settings.notifications.note']}</Note>
         <label className="notification-row">
           <Checkbox
             disabled={busy}
@@ -173,6 +174,9 @@ export function SettingsScreen({
         <div className="row">
           <Button onClick={() => void handleExport()}>{en['settings.export']}</Button>
           <Button onClick={() => fileInput.current?.click()}>{en['settings.import']}</Button>
+          <Button variant="danger" onClick={() => void handleReset()}>
+            {en['settings.reset']}
+          </Button>
           <input
             ref={fileInput}
             type="file"
@@ -186,10 +190,6 @@ export function SettingsScreen({
           />
         </div>
         {message && <Note variant="error">{message}</Note>}
-
-        <Button variant="danger" onClick={() => void handleReset()}>
-          {en['settings.reset']}
-        </Button>
       </section>
     </div>
   );

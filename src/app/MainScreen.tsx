@@ -38,7 +38,7 @@ import { scene as buildScene } from '../visual/scene';
 import { Celebration } from './Celebration';
 import { catalogById } from '../core/catalog';
 import { HISTORY_DAYS } from './history';
-import { DomainCatalog, WriteHabitForm } from './DomainCatalog';
+import { DomainCatalog, HabitEditor } from './DomainCatalog';
 import type { NewHabitSource } from './useLifeOS';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -47,6 +47,7 @@ import { Chip, ChipRow } from '../ui/Chip';
 import { FullDayStrip } from '../ui/FullDayStrip';
 import { Note } from '../ui/Note';
 import { SectionHeading } from '../ui/SectionHeading';
+import { PencilGlyph, PlusGlyph, TrashGlyph } from '../ui/Glyph';
 
 /** How long the confetti stays up once every box for today is ticked. */
 const CELEBRATION_MS = 3000;
@@ -195,15 +196,16 @@ export function MainScreen({
                       aria-label={t('main.domain.browse', { domain: en[domain.label as I18nKey] })}
                       onClick={() => setCatalogDomain(domain.key)}
                     >
-                      +
+                      <PlusGlyph />
                     </Button>
                   )}
                 </div>
                 {habits.map((habit) =>
                   editingId === habit.id ? (
-                    <WriteHabitForm
+                    <HabitEditor
                       key={habit.id}
                       initial={editableFields(habit)}
+                      {...(effectiveColor(habit) === undefined ? {} : { color: effectiveColor(habit) as string })}
                       onCancel={() => setEditingId(null)}
                       onSave={(input) => {
                         onUpdateHabit(habit.id, {
@@ -283,32 +285,30 @@ function HabitRow({
           {habit.emoji ? `${habit.emoji} ` : ''}
           {habitTitle(habit, en['settings.habits.title.placeholder'])}
         </span>
-        {!due && (
+        {!expanded && !due && (
           <span className={rest ? 'lastHit rest' : 'lastHit'}>
             {rest ? en['main.restDay'] : last ? t('main.lastHit', { date: last }) : en['main.neverHit']}
           </span>
         )}
-        {due && streak > 1 && <span className="lastHit">{t('habits.streak', { count: streak })}</span>}
+        {!expanded && due && streak > 1 && <span className="lastHit">{t('habits.streak', { count: streak })}</span>}
       </button>
 
-      {expanded && note && <Note>{note}</Note>}
-
+      {/* On the row's own line, where the streak was: the two actions are
+          what the row was opened for, and the streak is decoration. Putting
+          them beside it instead would squeeze the title, which is the one
+          thing expanding must not move. */}
       {expanded && (
         <div className="habit-menu">
           <Button small className="icon-action" aria-label={en['habits.menu.edit']} onClick={onEdit}>
-            ✎
+            <PencilGlyph />
           </Button>
-          <Button
-            small
-            variant="danger"
-            className="icon-action"
-            aria-label={en['settings.habits.remove']}
-            onClick={onRemove}
-          >
-            ✕
+          <Button small className="icon-action" aria-label={en['settings.habits.remove']} onClick={onRemove}>
+            <TrashGlyph />
           </Button>
         </div>
       )}
+
+      {expanded && note && <Note>{note}</Note>}
     </Card>
   );
 }

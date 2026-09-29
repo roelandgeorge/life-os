@@ -64,8 +64,9 @@ export const en = {
   // One window for every track on the screen (app/history.ts), so no row
   // states its own span.
   'history.title': 'History',
-  'history.subhead': 'Last {days} days.',
   'history.fullDay': 'Full Day density',
+
+  'settings.title': 'Settings',
 
   // Profile fields — the figure's gender and hair, asked by onboarding
   // (app/Onboarding.tsx's drawing pickers) and nowhere else, per
@@ -82,15 +83,19 @@ export const en = {
 
   'settings.habits': 'Your habits',
   'settings.habits.title.placeholder': 'Habit name',
-  'settings.habits.cadence.daily': 'Daily',
-  'settings.habits.cadence.weekly': 'Weekly',
-  'settings.habits.cadence.monthly': 'Monthly',
+  // The cadences the habit editor offers (core/habits.ts's CADENCE_CHOICES).
+  // Two of them are `{ everyDays }`, which the model always had and the
+  // screen never offered.
+  'habits.cadence.daily': 'Daily',
+  'habits.cadence.everyOtherDay': 'Every other day',
+  'habits.cadence.weekly': 'Weekly',
+  'habits.cadence.everyTwoWeeks': 'Every 2 weeks',
+  'habits.cadence.monthly': 'Monthly',
   'settings.habits.remove': 'Remove',
   'settings.habits.empty': 'No habits yet. Add one from a domain above, or redo what you work on in Settings.',
 
   'settings.notifications': 'Daily reminder',
-  'settings.notifications.note': 'One a day, in the evening, within the hour.',
-  'settings.notifications.enable': 'Remind me each evening',
+  'settings.notifications.enable': 'Remind me each evening, give or take an hour',
   'settings.notifications.on': 'On. A reminder arrives each evening.',
   'settings.notifications.working': 'Setting up…',
   'settings.notifications.error.unsupported': 'This browser cannot do push notifications.',
@@ -116,15 +121,14 @@ export const en = {
   'domainCatalog.back': 'Back',
   'domainCatalog.add': 'Add {title}',
   'domainCatalog.write.open': 'Write your own',
-  'domainCatalog.write.title.placeholder': 'Habit name',
-  'domainCatalog.write.note.placeholder': 'One line under it (optional)',
-  'domainCatalog.write.importance.important': 'Important',
-  'domainCatalog.write.importance.medium': 'Medium',
-  'domainCatalog.write.importance.notImportant': 'Not important',
-  'domainCatalog.write.emoji.placeholder': 'Emoji (optional)',
-  'domainCatalog.write.save': 'Add',
-  'domainCatalog.edit.save': 'Save',
   'action.cancel': 'Cancel',
+
+  // The habit editor (docs/onboarding/07-revisions.md §3) — an editable row,
+  // so these are the fields' accessible names as much as their placeholders.
+  'habits.edit.title.placeholder': 'Habit name',
+  'habits.edit.note.placeholder': 'One line under it (optional)',
+  'habits.edit.emoji': 'Emoji',
+  'habits.edit.save': 'Save',
 
   // A habit row's menu — Edit and Remove for every habit, catalogue or not
   // (docs/onboarding/06-revisions.md §2). Remove reuses settings.habits.remove.

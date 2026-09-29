@@ -312,7 +312,8 @@ changes nothing anyway. Derived from period length (< 7 days), the same
 threshold the weekly warning uses, rather than a flag on the domain.
 
 **Every habit is editable, including one from the catalogue**
-(`docs/onboarding/06-revisions.md` §2), reversing `04-revisions.md` §9 —
+(`docs/onboarding/06-revisions.md` §2, the editing itself reworked by
+`07-revisions.md` §3), reversing `04-revisions.md` §9 —
 which had said a catalogue habit's wording is not the user's to change,
 because showing those controls exposes the machinery. Using it argued the
 other way: the catalogue is one person's wording of a habit, and a habit you
@@ -322,7 +323,14 @@ with. The **domain** stays out of that form: it decides which panel the habit
 moves, which is a different decision from wording it. `UserHabit.note` carries
 an edited subtitle and falls back to the catalogue item's own when absent, so
 an untouched row still reads as `catalog.json` wrote it and a later catalogue
-edit still reaches it.
+edit still reaches it. **Importance is not editable either** and left the
+form entirely: it is the weight the panel engine reads.
+
+Editing happens **in the row** rather than in a form under it: the card keeps
+its surface, its position and its typography, and the title and the note
+become `<textarea>`s that wrap and grow exactly as the text they replace,
+measured to the same x and width in both states. Writing a new habit is the
+same component with empty fields, so the two cannot drift apart.
 
 **The "see your best version" toggle** reverses §3's "do not render an
 idealised self for comparison. There is one figure on screen." The stated

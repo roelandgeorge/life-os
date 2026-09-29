@@ -1,8 +1,12 @@
 # Revisions, third round
 
+> **Partly superseded.** `07-revisions.md` is a later round and the last word in
+> this folder. It replaces §2's edit form with in-place editing, moves §1's row
+> actions onto the row, restores Settings' title and drops History's subhead.
+
 Remarks from using the built app. This document **overrides**
 `01-onboarding-spec.md`, `04-revisions.md` and `05-revisions.md` wherever they
-disagree, and it is now the last word in this folder.
+disagree.
 
 Nothing here touches the engine, the panel step logic, the catalogue data or
 the tree's questions and landings. Two of the eight sections reverse a

@@ -18,9 +18,8 @@ import { PANEL_KEYS } from '../core/domains';
 import { fullDayStrip } from '../core/scoring';
 import { MAX_STEP, panelSteps } from '../core/steps';
 import type { AppState, UserHabit } from '../core/types';
-import { en, t, type I18nKey } from '../i18n/en';
+import { en, type I18nKey } from '../i18n/en';
 import { FullDayStrip } from '../ui/FullDayStrip';
-import { Note } from '../ui/Note';
 import { SectionHeading } from '../ui/SectionHeading';
 import { byColor, cadencePeriodDays, effectiveColor, habitHitDates, habitTitle, isActiveOn } from '../core/habits';
 import { completedPeriods, hitInRange, periodAt } from '../core/periods';
@@ -43,7 +42,6 @@ export function HistoryScreen({ state, today }: { state: AppState; today: DateKe
   return (
     <div className="history-screen">
       <h1 className="headline">{en['history.title']}</h1>
-      <Note variant="subhead">{t('history.subhead', { days: HISTORY_DAYS })}</Note>
 
       <div className="sparklines">
         {panels.map((panel) => {

@@ -256,7 +256,9 @@
     "title": "Train full body 3–4x a week",
     "domain": "training",
     "kind": "habit",
-    "cadence": "weekly",
+    "cadence": {
+      "everyDays": 2
+    },
     "importance": 5,
     "effort": "high",
     "evidence": "strong",
