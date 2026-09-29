@@ -130,15 +130,25 @@ trash can, and all five are drawn in `src/ui/Glyph.tsx` rather than typed as
 `✎`/`✕`/`🗑`. The rule is `button.icon-action`, not `.icon-action` —
 `button.small` outranks a bare class and silently ate `padding: 0`.
 
-**Merge to `main` yourself, and always post the links.** The user does not
-want to be the one clicking Merge. Once `npm test`, `npm run typecheck` and
-`npm run build` are green and the change has been checked in a browser at
-390x844, merge the PR. Then post, in the reply, the PR, the branch and the
-Vercel deployment for that commit — the deployment URL comes from the head
-commit's `Vercel` status `target_url`, since the proxy blocks `vercel.app`
-and a guessed preview hostname cannot be verified from here. Every merge
-goes straight to the user's production deployment, so the browser check is
-not optional.
+**Merge to `main` yourself, and do not post links.** The user does not want
+to be the one clicking Merge, and a GitHub link is no use to them: `main`
+deploys to their Vercel production and they refresh the installed app.
+Once `npm test`, `npm run typecheck` and `npm run build` are green **and
+the change has been checked in a browser at 390x844**, merge the PR and say
+what shipped. There is no review step left, so that browser check is the
+only thing between a mistake and their phone. Then push the designated
+branch back to the remote at `main`: the merge deletes it and the stop hook
+reads the missing ref as unpushed work.
+
+One refresh is enough, and that took a fix (`src/app/swUpdate.ts`).
+`registerType: 'autoUpdate'` gives the worker `skipWaiting` and
+`clientsClaim`, but nothing reloads the page that triggered the update, so
+it kept rendering the old precache and the change appeared only on the next
+load. Measured both ways in Playwright against two real builds: without the
+listener one refresh shows the old build, with it the new one. Do not drop
+either guard — `hadController` stops a reload on every first install, which
+`clientsClaim` would otherwise cause, and the `reloading` flag stops a
+loop.
 
 **Do not offer to export before a destructive step during development.** The
 user is testing and is content to lose the data. `settings.reset.note`, which
