@@ -136,9 +136,30 @@ deploys to their Vercel production and they refresh the installed app.
 Once `npm test`, `npm run typecheck` and `npm run build` are green **and
 the change has been checked in a browser at 390x844**, merge the PR and say
 what shipped. There is no review step left, so that browser check is the
-only thing between a mistake and their phone. Then push the designated
-branch back to the remote at `main`: the merge deletes it and the stop hook
-reads the missing ref as unpushed work.
+only thing between a mistake and their phone.
+
+**After merging, prune. Do not push the branch back.** The repository has
+"Automatically delete head branches" on, so the merge deletes the branch and
+it should stay deleted. What makes the stop hook complain is not the missing
+remote branch but the *stale local remote-tracking ref*: the hook resolves
+`origin/<current branch>`, finds the ref git never pruned, and counts the
+merge commit against it. So:
+
+```bash
+git fetch --prune origin && git checkout -B main origin/main
+```
+
+Pushing the branch back also silences the hook, and that is what was done
+twice before the cause was understood. It leaves a branch on GitHub that
+the user configured to be deleted, and they cannot be removed from here:
+`git push origin --delete` is stripped by the push proxy ("Everything
+up-to-date", exit 1, on every retry) and the GitHub MCP has `create_branch`
+and `list_branches` but no delete. Only the user can clear one up.
+
+Local `main` is not updated by merging through the API, so reset it to
+`origin/main` rather than checking it out and trusting it — checking out a
+stale local `main` silently reverts the working tree to the pre-merge state.
+Branch off it again before the next commit; never commit on `main`.
 
 One refresh is enough, and that took a fix (`src/app/swUpdate.ts`).
 `registerType: 'autoUpdate'` gives the worker `skipWaiting` and
