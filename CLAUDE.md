@@ -71,7 +71,7 @@ gates correctly even though hair is asked last. `app/Onboarding.tsx` is now a
 plain `(nodeId, Answers)` renderer with no back/next chrome — every option
 both answers and advances in one tap — run three ways: the full Q1-to-LAND
 path (`App.tsx`, before the store holds any state) and Settings' two
-independent redos, "Redo the figure" and "Redo what you work on"
+independent redos, "Change the figure" and "Redo what you work on"
 (`docs/onboarding/04-revisions.md` §5), each between a different
 `(start, terminal)` node pair, merging into the live state instead of
 replacing it.
