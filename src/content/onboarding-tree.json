@@ -440,15 +440,8 @@
     },
     "LAND": {
       "kind": "screen",
-      "text": "This is you in fifteen years.\n{countLine}",
-      "countLine": {
-        "0": "Nothing due today.",
-        "1": "One box today.",
-        "2": "Two boxes today.",
-        "3": "Three boxes today.",
-        "4": "Four boxes today."
-      },
-      "_note": "{n} counts the seeded habits across every landing reached this run that are tickable today (daily cadence). If none are daily, the line is 'Nothing due today.' and the weekly seeds are listed under it. Shows the personalised figure, all five panels at step 2, the seeded habits switched on, the offers switched off with a one-tap add. No tour, no tips, no next button — this is the app's main screen."
+      "text": "This is you in fifteen years.",
+      "_note": "The landing is the app's main screen: the personalised figure, all five panels at step 2, and the seeded habits switched on. No tour, no tips, no next button, and no count line (docs/onboarding/06-revisions.md §4)."
     }
   }
 }

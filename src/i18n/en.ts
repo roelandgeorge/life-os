@@ -132,14 +132,11 @@ export const en = {
 
   // The landing screen (docs/onboarding/01-onboarding-spec.md §6) — shown
   // once, right after onboarding, as MainScreen's own headline for that
-  // session. Copy pinned verbatim against src/content/onboarding-tree.json's
-  // LAND node, which App.tsx/Onboarding.tsx never render directly.
+  // session, and nothing else: the count line under it is gone
+  // (docs/onboarding/06-revisions.md §4). Copy pinned verbatim against
+  // src/content/onboarding-tree.json's LAND node, which App.tsx and
+  // Onboarding.tsx never render directly.
   'main.landing.headline': 'This is you in fifteen years.',
-  'main.landing.count.0': 'Nothing due today.',
-  'main.landing.count.1': 'One box today.',
-  'main.landing.count.2': 'Two boxes today.',
-  'main.landing.count.3': 'Three boxes today.',
-  'main.landing.count.4': 'Four boxes today.',
 } as const;
 
 export type I18nKey = keyof typeof en;

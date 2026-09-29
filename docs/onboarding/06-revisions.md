@@ -79,10 +79,39 @@ both still read. `store/serialize.ts` parses it.
 | "Filling in Sunday. The picture still shows today's standing." | **Moves above the habit list**, directly under the day picker that caused it. It is an instruction about what the next tap will do, so it has to be read before the taps, not after them. |
 | the day name inside it | **Pinned to `en-GB`.** `toLocaleDateString(undefined, …)` used the device locale, so a Dutch phone rendered "zondag" inside an English sentence. |
 | "Fifteen years out. Everything in the middle." | **Replaced by "This is you in fifteen years."** It was two sentences doing one job badly: the first half is the only part the user needs, and the second half — that every panel starts at the middle step — is something one tick demonstrates better than a line of copy can explain. This is the line `05-revisions.md` §1 deleted with S0; it works here because on the landing there is a real figure under it. |
-| "Three boxes today." | **Kept.** It is the only line that says what today asks of you, on the one screen where the list is brand new and nothing about it is habit yet. |
+| "Three boxes today." | **Removed, and the whole count line with it**, zero included. See below. |
 
-LAND's `text` in `onboarding-tree.json` changes with it, so the copy-parity
-test still compares the shipped tree against the source doc.
+### The count line goes entirely
+
+Two separate reasons, and the second is the one that settles it.
+
+**The count was never a target.** `dailyTasksDone()` asks whether
+*everything* due today is ticked, and that is what the celebration and the
+Full Day marker answer to. There is no partial goal. So "Three boxes today."
+named nothing but the length of the list three centimetres below it, which
+the list already states.
+
+**And "Nothing due today." was never true.** `01-onboarding-spec.md` §6
+defined the count as seeded habits with cadence `daily`, but Home decides
+what to show with `isDueToday()`, and a freshly seeded weekly or monthly
+habit is due in its first open period. Measured across all 40 landings:
+
+| | |
+|---|---|
+| landings with no `daily` seed | 21 |
+| of those, landings with nothing actually due on day one | **0** |
+
+So the zero line was shown on 21 of 40 landings and was wrong on all 21. The
+"seed few, so Home looks empty" worry it existed for does not occur.
+
+What goes with it: `main.landing.count.*`, LAND's `countLine` map in
+`onboarding-tree.json`, `Step.countLine` (which had no reader anyway, LAND
+being a terminal hand-off the renderer never reaches), `dailySeedCount()` and
+its test. `JustOnboarded` was only ever carrying that count, so it collapses
+to a bare `justOnboarded?: true` flag on the ready phase, which is all the
+landing headline needs.
+
+The landing keeps the headline and nothing under it.
 
 ## 5. See your best version is a glyph
 
@@ -156,8 +185,8 @@ on.
 - No line on Home reads "Today's ticks moved …".
 - With the day picker on a past day, the "Filling in …" line is above the
   first habit row, and the day is named in English on a non-English device.
-- The landing headline reads "This is you in fifteen years." and the count
-  line is unchanged.
+- The landing headline reads "This is you in fifteen years." and carries no
+  line under it, on any landing. No screen counts boxes.
 - See your best version is a square glyph button beside the headline, ★ and ↺,
   each with the old label as its accessible name.
 - History's subhead says 28 days, no habit row states its own span, and a

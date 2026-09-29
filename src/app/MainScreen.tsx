@@ -54,14 +54,6 @@ const CELEBRATION_MS = 3000;
 /** Every panel at its ceiling — the same scene, maximally adherent. */
 const BEST_STEPS: PanelSteps = Object.fromEntries(PANEL_KEYS.map((k) => [k, MAX_STEP])) as PanelSteps;
 
-const LANDING_COUNT_KEY: readonly I18nKey[] = [
-  'main.landing.count.0',
-  'main.landing.count.1',
-  'main.landing.count.2',
-  'main.landing.count.3',
-  'main.landing.count.4',
-];
-
 type Group = { domain: DomainConfig | null; habits: UserHabit[] };
 
 function groupHabits(
@@ -88,7 +80,7 @@ export function MainScreen({
   onAddHabit,
   onUpdateHabit,
   onRemoveHabit,
-  landingDailyCount,
+  justOnboarded,
 }: {
   state: AppState;
   projection: Projection;
@@ -97,8 +89,8 @@ export function MainScreen({
   onAddHabit: (source: NewHabitSource) => void;
   onUpdateHabit: (id: string, patch: HabitPatch) => void;
   onRemoveHabit: (id: string) => void;
-  /** Set only for the session right after onboarding — see App.tsx's `JustOnboarded`. */
-  landingDailyCount?: number;
+  /** Set only for the session right after onboarding, which gets the landing's headline instead of the everyday one. */
+  justOnboarded?: true;
 }) {
   const [showBest, setShowBest] = useState(false);
   const [catalogDomain, setCatalogDomain] = useState<DomainKey | null>(null);
@@ -152,13 +144,8 @@ export function MainScreen({
                 <h1 className="headline">{en['main.bestVersion.headline']}</h1>
                 <Note variant="subhead">{en['main.bestVersion.subhead']}</Note>
               </>
-            ) : landingDailyCount !== undefined ? (
-              <>
-                <h1 className="headline">{en['main.landing.headline']}</h1>
-                <Note variant="subhead">
-                  {en[(LANDING_COUNT_KEY[Math.min(landingDailyCount, 4)] ?? 'main.landing.count.0') as I18nKey]}
-                </Note>
-              </>
+            ) : justOnboarded ? (
+              <h1 className="headline">{en['main.landing.headline']}</h1>
             ) : (
               <>
                 <h1 className="headline">{en['main.headline']}</h1>
