@@ -227,8 +227,10 @@ the first. Everything else is per-device and already works for any number of
 users. Fix this before the app is shared: one blob per subscription, and a
 cron that walks them all.
 
-History shows step tracks per panel plus a per-period strip for every habit
-on a periodic cadence. It still does not show *which* day a panel was missed.
+History shows a step track per panel, a dot on each day that closed below
+the threshold, and under it the latest three of those days with the habits
+missed in them (`core/steps.panelClosings`, the same loop `panelSteps`
+settles with), then a per-period strip for every habit in the user's order.
 
 ## Commands
 

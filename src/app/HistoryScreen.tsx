@@ -11,17 +11,22 @@
  *
  * Every track on this screen covers the same window (`HISTORY_DAYS`), so a
  * row's width is the only scale the screen needs and no row carries its own.
+ *
+ * Under each panel's track, the days in that window whose periods closed
+ * below the threshold, newest first, each with the habits missed in it: the
+ * track says that a panel fell, this says when and why. A dot on the track
+ * marks the same days.
  */
 
-import { addDays, rangeDates, type DateKey } from '../core/dates';
+import { addDays, diffDays, rangeDates, type DateKey } from '../core/dates';
 import { PANEL_KEYS } from '../core/domains';
 import { fullDayStrip } from '../core/scoring';
-import { MAX_STEP, panelSteps } from '../core/steps';
+import { MAX_STEP, panelClosings, panelSteps, type PanelClosing } from '../core/steps';
 import type { AppState, UserHabit } from '../core/types';
-import { en, type I18nKey } from '../i18n/en';
+import { en, t, type I18nKey } from '../i18n/en';
 import { FullDayStrip } from '../ui/FullDayStrip';
 import { SectionHeading } from '../ui/SectionHeading';
-import { byColor, cadencePeriodDays, effectiveColor, habitHitDates, habitTitle, isActiveOn } from '../core/habits';
+import { activeInOrder, cadencePeriodDays, effectiveColor, habitHitDates, habitTitle } from '../core/habits';
 import { completedPeriods, hitInRange, periodAt } from '../core/periods';
 import { cellsForPeriod, HISTORY_DAYS } from './history';
 
@@ -33,11 +38,8 @@ export function HistoryScreen({ state, today }: { state: AppState; today: DateKe
   // shown while it hasn't said — the picture and the history should never disagree.
   const panels = PANEL_KEYS.filter((p) => p !== 'partner' || state.profile?.partner?.wanted !== false);
 
-  const tracked = state.habits.filter(
-    (h) => h.removedDate === undefined && isActiveOn(h, today) && cadencePeriodDays(h.cadence) !== null,
-  );
-  const domainHabits = tracked.filter((h) => h.domain !== undefined);
-  const ownHabits = byColor(tracked.filter((h) => h.domain === undefined));
+  const tracked = activeInOrder(state.habits, today).filter((h) => cadencePeriodDays(h.cadence) !== null);
+  const windowStart = days[0] ?? today;
 
   return (
     <div className="history-screen">
@@ -47,6 +49,11 @@ export function HistoryScreen({ state, today }: { state: AppState; today: DateKe
         {panels.map((panel) => {
           const values = perDay.map((s) => s[panel]);
           const current = values[values.length - 1] ?? 0;
+          // A closing on day D settles periods that ended on D - 1: that is
+          // the day the miss belongs to, and the one the window must contain.
+          const misses = panelClosings(state.logs, state.habits, panel, today)
+            .filter((c) => !c.cleared && addDays(c.date, -1) >= windowStart)
+            .reverse();
           return (
             <div className="sparkline-row" key={panel}>
               <div className="sparkline-header">
@@ -55,7 +62,11 @@ export function HistoryScreen({ state, today }: { state: AppState; today: DateKe
                   {current + 1}/{MAX_STEP + 1}
                 </span>
               </div>
-              <StepTrack values={values} color="var(--accent)" />
+              <StepTrack
+                values={values}
+                marks={misses.map((c) => diffDays(c.date, windowStart)).filter((i) => i < values.length)}
+              />
+              {misses.length > 0 && <MissList misses={misses.slice(0, MAX_MISSES)} state={state} />}
             </div>
           );
         })}
@@ -64,11 +75,11 @@ export function HistoryScreen({ state, today }: { state: AppState; today: DateKe
       <SectionHeading>{en['history.fullDay']}</SectionHeading>
       <FullDayStrip strip={strip} />
 
-      {(domainHabits.length > 0 || ownHabits.length > 0) && (
+      {tracked.length > 0 && (
         <>
-          <SectionHeading>{en['habits.own']}</SectionHeading>
+          <SectionHeading>{en['history.habits']}</SectionHeading>
           <div className="sparklines">
-            {[...domainHabits, ...ownHabits].map((habit) => (
+            {tracked.map((habit) => (
               <HabitTrack key={habit.id} habit={habit} state={state} today={today} />
             ))}
           </div>
@@ -78,7 +89,39 @@ export function HistoryScreen({ state, today }: { state: AppState; today: DateKe
   );
 }
 
-function StepTrack({ values, color }: { values: number[]; color: string }) {
+/** How many missed days a panel lists. The dots on the track still mark every one in the window. */
+const MAX_MISSES = 3;
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * "Mon 28 Sep". Spelled out rather than through `toLocaleDateString`, whose
+ * en-GB output ("Mon, 28 Sept") varies with the browser's ICU data.
+ */
+function shortDate(date: DateKey): string {
+  const d = new Date(date + 'T12:00:00');
+  return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+}
+
+function MissList({ misses, state }: { misses: readonly PanelClosing[]; state: AppState }) {
+  const titleOf = (id: string) => {
+    const habit = state.habits.find((h) => h.id === id);
+    return habit ? habitTitle(habit, en['settings.habits.title.placeholder']) : '';
+  };
+  return (
+    <ul className="panel-misses">
+      {misses.map((c) => (
+        <li key={c.date}>
+          <span className="date">{shortDate(addDays(c.date, -1))}</span>
+          <span>{t('history.missed', { habits: c.missed.map(titleOf).join(', ') })}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function StepTrack({ values, marks }: { values: number[]; marks: readonly number[] }) {
   const w = 300;
   const h = 36;
   const step = values.length > 1 ? w / (values.length - 1) : 0;
@@ -90,7 +133,10 @@ function StepTrack({ values, color }: { values: number[]; color: string }) {
 
   return (
     <svg className="sparkline" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-      <path d={d} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="miter" />
+      <path d={d} fill="none" stroke="var(--bronze)" strokeWidth={2} strokeLinejoin="miter" />
+      {marks.map((i) => (
+        <circle key={i} className="miss-mark" cx={i * step} cy={y(values[i] ?? 0)} r={2.5} />
+      ))}
     </svg>
   );
 }

@@ -325,6 +325,18 @@ offer is left out of the lapse warning on Home.
 attributes on every row, gap days included as `opened = 0`, so it loads into
 Power BI as a single fact table. The JSON export is still the backup.
 
+## History
+
+One window, `HISTORY_DAYS` (28), for every track. Each panel gets a step
+track, with a dot on every day whose closing periods scored under the
+threshold, and under it the latest three of those days with the habits
+missed in them. A closing on day D settles periods that ended on D - 1, so
+the list names D - 1: the day the miss happened, not the morning it landed.
+Both read `core/steps.panelClosings`, the loop `panelSteps` itself settles
+with, so the list can never disagree with the picture. Below the panels,
+the Full Day strip and one per-period strip for every habit in the user's
+order.
+
 ## Departures from the spec
 
 This section documents what v1 changed from `life-os-spec.md`. Where a

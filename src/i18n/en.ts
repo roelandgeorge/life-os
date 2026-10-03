@@ -32,7 +32,6 @@ export const en = {
   'main.subhead': 'If today holds.',
   'main.day.today': 'Today',
   'main.day.yesterday': 'Yesterday',
-  'habits.own': 'Your own habits',
   /** Opens a domain group's own catalogue (docs/onboarding/04-revisions.md §6) — the only route in. */
   'main.add': 'Add a habit',
   'habits.streak': '{count}× streak',
@@ -73,6 +72,8 @@ export const en = {
   // states its own span.
   'history.title': 'History',
   'history.fullDay': 'Full Day density',
+  'history.habits': 'Habits',
+  'history.missed': 'missed {habits}',
 
   'settings.title': 'Settings',
 

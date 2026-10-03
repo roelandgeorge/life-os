@@ -40,15 +40,7 @@ Two consequences:
 `npm run slice` cuts a contact sheet, `npm run manifest` regenerates
 `src/content/artwork.json`.
 
-## 3. History does not show which day a panel was missed
-
-It shows a step track per panel and a per-period strip per habit. Neither
-answers "which day did this drop, and what did I miss". Known since the
-step model replaced the EWMA engine.
-
-`src/app/HistoryScreen.tsx`.
-
-## 4. Catalogue thin spots
+## 3. Catalogue thin spots
 
 Recorded in `docs/onboarding/02-catalog-changes.md` and
 `docs/plan/phase-4.md`, repeated here so they are not rediscovered:
@@ -64,7 +56,7 @@ Recorded in `docs/onboarding/02-catalog-changes.md` and
 So `network` and `partner` move slowly for those users. Filling it is content
 work, not code.
 
-## 5. Not yet tested on a real phone keyboard
+## 4. Not yet tested on a real phone keyboard
 
 The in-row habit editor (`docs/onboarding/07-revisions.md` §3) was verified
 headless at 390x844. What a headless browser cannot show:

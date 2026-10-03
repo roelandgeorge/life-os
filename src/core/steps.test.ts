@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addDays } from './dates';
-import { MAX_STEP, START_STEP, panelSteps } from './steps';
+import { MAX_STEP, START_STEP, panelClosings, panelSteps } from './steps';
 import type { DayLog, UserHabit } from './types';
 
 const START = '2026-01-01';
@@ -153,5 +153,34 @@ describe('panelSteps — the preview, per habit', () => {
   it('the settled score still asks the threshold of a closed day', () => {
     // Day 0 had one of the two ticked: 50% < 70%, so day 1 opens a step down.
     expect(panelSteps(ticked('sleep'), [sleep, steps], addDays(today, 1)).body).toBe(START_STEP - 1);
+  });
+});
+
+describe('panelClosings', () => {
+  const sleep: UserHabit = { id: 'sleep', title: 'Sleep', domain: 'training', cadence: 'daily', importance: 5, order: 0, startDate: START };
+  const steps: UserHabit = { id: 'steps', title: 'Steps', domain: 'training', cadence: 'daily', importance: 5, order: 1, startDate: START };
+  const day = (n: number, ...ids: string[]) => ({
+    date: addDays(START, n),
+    opened: true,
+    ticks: Object.fromEntries(ids.map((id) => [id, true as const])),
+  });
+
+  it('names the day each step was settled and the habits missed in it', () => {
+    const logs = [day(0, 'sleep', 'steps'), day(1, 'sleep'), day(2)];
+    expect(panelClosings(logs, [sleep, steps], 'body', addDays(START, 3))).toEqual([
+      { date: addDays(START, 1), step: START_STEP + 1, cleared: true, missed: [] },
+      { date: addDays(START, 2), step: START_STEP, cleared: false, missed: ['steps'] },
+      { date: addDays(START, 3), step: START_STEP - 1, cleared: false, missed: ['sleep', 'steps'] },
+    ]);
+  });
+
+  it('agrees with panelSteps on the settled step', () => {
+    const logs = [day(0, 'sleep'), day(1), day(2, 'sleep', 'steps')];
+    const closings = panelClosings(logs, [sleep, steps], 'body', addDays(START, 3));
+    expect(closings[closings.length - 1]?.step).toBe(panelSteps(logs, [sleep, steps], addDays(START, 3)).body);
+  });
+
+  it('is empty for a panel nothing feeds', () => {
+    expect(panelClosings([], [sleep], 'wealth', addDays(START, 3))).toEqual([]);
   });
 });
