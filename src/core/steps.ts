@@ -41,8 +41,12 @@ export const PANEL_THRESHOLD = 0.7;
 export type StepOptions = {
   /**
    * Count the period(s) in progress too — the §2.7-style preview: ticking a
-   * box has to move the picture within the same second. Only ever adds a
-   * step, never subtracts: an unfinished period has not been missed yet.
+   * box has to move the picture within the same second. One hit in a
+   * habit's current period is enough for one step, however many habits
+   * feed the panel: the preview is the reward for a tick, not a forecast of
+   * the settled score, which still asks `PANEL_THRESHOLD` of every closing
+   * period. Only ever adds a step, never subtracts: an unfinished period has
+   * not been missed yet.
    */
   includeCurrentPeriod?: boolean;
 };
@@ -67,27 +71,81 @@ function currentPeriodOf(habit: UserHabit, today: DateKey, period: number): Peri
 }
 
 /**
- * `periodFor` is where eligibility lives, and deliberately not a single
- * "active on this date" check: a settled closure credits a period that
- * *ended* before today, so what must still have been true is that the habit
- * was active through the end of *that* period — not that it still is today.
- * The preview's in-progress period is the one case where "active today" is
- * exactly the right question, so its own `periodFor` checks that directly.
+ * One day on which at least one period feeding the panel closed: the step it
+ * left the panel on, whether the weighted score cleared the threshold, and
+ * the habits whose closing period had no hit. History reads this to say
+ * which day a panel dropped and what was missed.
  */
-function weightedScore(
-  habits: readonly UserHabit[],
-  period: (h: UserHabit) => Period | null,
-  hitsOf: (h: UserHabit, p: Period) => boolean,
-): number | null {
-  let weight = 0;
-  let hitWeight = 0;
-  for (const habit of habits) {
-    const p = period(habit);
-    if (p === null) continue;
-    weight += habit.importance;
-    if (hitsOf(habit, p)) hitWeight += habit.importance;
+export type PanelClosing = {
+  /** The day the periods closed, which is the day after their last day. */
+  date: DateKey;
+  step: number;
+  cleared: boolean;
+  /** Habit ids whose period closed on `date` without a hit. */
+  missed: string[];
+};
+
+/**
+ * Eligibility is checked against the period being credited, not against
+ * today: a settled closure credits a period that *ended* before today, so
+ * what must still have been true is that the habit was active through the
+ * end of *that* period, not that it still is today.
+ */
+function closingsFor(
+  relevant: readonly UserHabit[],
+  hitsInPeriod: (h: UserHabit, p: Period) => boolean,
+  today: DateKey,
+): PanelClosing[] {
+  const out: PanelClosing[] = [];
+  const first = relevant[0];
+  if (!first) return out;
+  const earliestStart = relevant.reduce((min, h) => (h.startDate < min ? h.startDate : min), first.startDate);
+  if (diffDays(today, earliestStart) < 0) return out;
+
+  let step = START_STEP;
+  for (const day of rangeDates(earliestStart, today)) {
+    let weight = 0;
+    let hitWeight = 0;
+    const missed: string[] = [];
+    for (const h of relevant) {
+      const period = cadencePeriodDays(h.cadence);
+      if (period === null) continue;
+      const p = closedPeriodEndingBefore(h, day, period);
+      if (p === null) continue;
+      // The period this closure credits must have ended before removal —
+      // not the closing day itself, which can land on or after it.
+      if (h.removedDate !== undefined && p.to >= h.removedDate) continue;
+      weight += h.importance;
+      if (hitsInPeriod(h, p)) hitWeight += h.importance;
+      else missed.push(h.id);
+    }
+    if (weight === 0) continue; // nothing closed for this panel today
+    const cleared = hitWeight / weight >= PANEL_THRESHOLD;
+    step = clamp(step + (cleared ? 1 : -1), 0, MAX_STEP);
+    out.push({ date: day, step, cleared, missed });
   }
-  return weight > 0 ? hitWeight / weight : null;
+  return out;
+}
+
+function hitsFor(logs: readonly DayLog[], relevant: readonly UserHabit[], today: DateKey) {
+  const hits = new Map<string, Set<DateKey>>();
+  for (const h of relevant) {
+    const set = new Set<DateKey>();
+    for (const log of logs) if (log.ticks[h.id]) set.add(log.date);
+    hits.set(h.id, set);
+  }
+  return (h: UserHabit, p: Period) => hitInRange(hits.get(h.id) ?? new Set(), p, today);
+}
+
+/** Every closing day for one panel, oldest first, up to and including `today`. */
+export function panelClosings(
+  logs: readonly DayLog[],
+  habits: readonly UserHabit[],
+  panel: PanelKey,
+  today: DateKey,
+): PanelClosing[] {
+  const relevant = habitsForPanel(habits, panel);
+  return closingsFor(relevant, hitsFor(logs, relevant, today), today);
 }
 
 function panelStep(
@@ -100,52 +158,20 @@ function panelStep(
   const relevant = habitsForPanel(habits, panel);
   if (relevant.length === 0) return START_STEP;
 
-  const hits = new Map<string, Set<DateKey>>();
-  for (const h of relevant) {
-    const set = new Set<DateKey>();
-    for (const log of logs) if (log.ticks[h.id]) set.add(log.date);
-    hits.set(h.id, set);
-  }
-  const hitsInPeriod = (h: UserHabit, p: Period) => hitInRange(hits.get(h.id) ?? new Set(), p, today);
-
-  const earliestStart = relevant.reduce(
-    (min, h) => (h.startDate < min ? h.startDate : min),
-    relevant[0]!.startDate,
-  );
-
-  let step = START_STEP;
-  if (diffDays(today, earliestStart) >= 0) {
-    for (const day of rangeDates(earliestStart, today)) {
-      const score = weightedScore(
-        relevant,
-        (h) => {
-          const period = cadencePeriodDays(h.cadence);
-          if (period === null) return null;
-          const p = closedPeriodEndingBefore(h, day, period);
-          if (p === null) return null;
-          // The period this closure credits must have ended before removal —
-          // not the closing day itself, which can land on or after it.
-          if (h.removedDate !== undefined && p.to >= h.removedDate) return null;
-          return p;
-        },
-        hitsInPeriod,
-      );
-      if (score === null) continue; // nothing closed for this panel today
-      step = clamp(step + (score >= PANEL_THRESHOLD ? 1 : -1), 0, MAX_STEP);
-    }
-  }
+  const hitsInPeriod = hitsFor(logs, relevant, today);
+  const closings = closingsFor(relevant, hitsInPeriod, today);
+  let step = closings[closings.length - 1]?.step ?? START_STEP;
 
   if (includeCurrentPeriod) {
-    const score = weightedScore(
-      relevant,
-      (h) => {
-        if (!isActiveOn(h, today)) return null;
-        const period = cadencePeriodDays(h.cadence);
-        return period === null ? null : currentPeriodOf(h, today, period);
-      },
-      hitsInPeriod,
-    );
-    if (score !== null && score >= PANEL_THRESHOLD) step = clamp(step + 1, 0, MAX_STEP);
+    // Scored per habit rather than as a weighted sum: two equal habits on a
+    // panel would otherwise need both ticks to clear the threshold, so the
+    // first tick of the day would change nothing on screen.
+    const ticked = relevant.some((h) => {
+      if (!isActiveOn(h, today)) return false;
+      const period = cadencePeriodDays(h.cadence);
+      return period !== null && hitsInPeriod(h, currentPeriodOf(h, today, period));
+    });
+    if (ticked) step = clamp(step + 1, 0, MAX_STEP);
   }
 
   return step;

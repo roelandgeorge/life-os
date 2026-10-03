@@ -597,6 +597,28 @@ button.primary.icon-action {
   margin-top: var(--space-5);
 }
 
+/* The dot on a track where a day closed below the threshold, the same day
+   the list under it names. */
+.sparkline .miss-mark {
+  fill: var(--danger);
+}
+
+.panel-misses {
+  list-style: none;
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-base);
+  color: var(--paper-dim);
+}
+
+.panel-misses .date {
+  display: inline-block;
+  min-width: 6.5em;
+  color: var(--paper);
+  font-variant-numeric: var(--tabular);
+}
+
 /* ---- settings (§6.3) ------------------------------------------------------ */
 
 .settings-screen {

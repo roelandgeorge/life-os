@@ -33,7 +33,7 @@ function node(id: string): TreeNodeJson {
   if (!n) throw new Error(`Unknown node ${id}`);
   return n;
 }
-type LandingJson = { seeds: readonly string[]; offers: readonly string[] };
+type LandingJson = { seeds: readonly string[] };
 const LANDINGS: Record<string, LandingJson> = Object.fromEntries(
   Object.entries(landingsJson as Record<string, unknown>).filter(
     (entry): entry is [string, LandingJson] => typeof entry[1] === 'object' && entry[1] !== null && Array.isArray((entry[1] as LandingJson).seeds),

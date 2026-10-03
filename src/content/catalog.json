@@ -10,8 +10,7 @@
     "evidence": "strong",
     "note": "The one that moves everything else. Under seven hours, the rest of this list gets harder.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H002",
@@ -24,8 +23,7 @@
     "evidence": "moderate",
     "note": "Same time every night, early enough to get your hours. The consistency matters more than the hour.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H003",
@@ -38,8 +36,7 @@
     "evidence": "strong",
     "note": "From a fixed hour each evening. The point is that it is not within reach when you wake.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H004",
@@ -52,8 +49,7 @@
     "evidence": "anecdotal",
     "note": "Two to three hours. Digestion competes with falling asleep.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H005",
@@ -66,8 +62,7 @@
     "evidence": "anecdotal",
     "note": "Five minutes is enough. It is a signal to wind down as much as it is a stretch.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H006",
@@ -80,8 +75,7 @@
     "evidence": "anecdotal",
     "note": "One worry, three things that went well. Short enough to do tired.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H007",
@@ -94,8 +88,7 @@
     "evidence": "moderate",
     "note": "Magnesium, optionally L-theanine or glycine. Same time each evening.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H008",
@@ -108,8 +101,7 @@
     "evidence": "anecdotal",
     "note": "Family time, alone time, doing nothing. Unscheduled rest does not happen.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H009",
@@ -122,8 +114,7 @@
     "evidence": "strong",
     "note": "The best-supported rule here. Per kilo, so it fits you rather than a 100kg man.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H010",
@@ -136,8 +127,7 @@
     "evidence": "moderate",
     "note": "Thirty-five to forty grams. It is the meal most people skip protein at.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H011",
@@ -150,8 +140,7 @@
     "evidence": "strong",
     "note": "Creatine, zinc, D3, omega-3, magnesium. Creatine dosing is debated, 5g is the common figure.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H012",
@@ -164,8 +153,7 @@
     "evidence": "moderate",
     "note": "More if you train or it is hot. Thirst is a late signal.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H013",
@@ -178,8 +166,7 @@
     "evidence": "strong",
     "note": "One session covers several days. What you cook matters less than not deciding while hungry.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H014",
@@ -192,8 +179,7 @@
     "evidence": "moderate",
     "note": "Eighty to ninety per cent of it. The rest is deliberate, not accidental.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H015",
@@ -206,8 +192,7 @@
     "evidence": "moderate",
     "note": "Did you hit eighty per cent clean. A number, not a verdict.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H016",
@@ -220,8 +205,7 @@
     "evidence": "strong",
     "note": "Zero to one drink a week. It costs sleep, training and skin at once.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H017",
@@ -234,8 +218,7 @@
     "evidence": "anecdotal",
     "note": "Only while losing weight is the goal. Portions drift without it.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H018",
@@ -248,8 +231,7 @@
     "evidence": "anecdotal",
     "note": "Dull or puffy is the signal. A short cut, not a permanent rule.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H019",
@@ -264,8 +246,7 @@
     "evidence": "strong",
     "note": "Three or four. Six is more than you can recover from, under two is not enough to adapt.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H020",
@@ -278,8 +259,7 @@
     "evidence": "strong",
     "note": "The best-supported rule in the whole catalogue, and the cheapest one to start.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H021",
@@ -292,8 +272,7 @@
     "evidence": "anecdotal",
     "note": "Booked before the rest of the week fills. Training that moves is training that gets dropped.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H022",
@@ -308,8 +287,7 @@
     "audience": "all",
     "requires": [
       "gym"
-    ],
-    "starter": false
+    ]
   },
   {
     "id": "H023",
@@ -322,8 +300,7 @@
     "evidence": "strong",
     "note": "One more rep or a little more weight than last time. Small and relentless beats big and occasional.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H024",
@@ -336,8 +313,7 @@
     "evidence": "moderate",
     "note": "Reps, weight, time. Without it you cannot tell progress from memory.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H025",
@@ -350,8 +326,7 @@
     "evidence": "moderate",
     "note": "About ninety minutes a week, at a pace you could hold a conversation through.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H026",
@@ -364,8 +339,7 @@
     "evidence": "anecdotal",
     "note": "Six times thirty seconds, once a week. Short, unpleasant, over quickly.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H027",
@@ -378,8 +352,7 @@
     "evidence": "anecdotal",
     "note": "Equal attention to both. The half you skip is the half that shows.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H028",
@@ -392,8 +365,7 @@
     "evidence": "anecdotal",
     "note": "A seven-step flow, about ten minutes, aimed at what sitting costs you.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H029",
@@ -406,8 +378,7 @@
     "evidence": "anecdotal",
     "note": "Three sets of a minute, or three sets of eight. For the glutes that sitting switches off.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H030",
@@ -420,8 +391,7 @@
     "evidence": "moderate",
     "note": "A measurement moment, not a habit. Repeat it later to see the difference.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H031",
@@ -434,8 +404,7 @@
     "evidence": "anecdotal",
     "note": "A six-pack, double bodyweight deadlift, ten pull-ups. Pick one and name it.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H032",
@@ -448,8 +417,7 @@
     "evidence": "strong",
     "note": "Shoulders back, chin up. Free, and the most repeated signal of confidence there is.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H033",
@@ -466,8 +434,7 @@
     "audience": "all",
     "requires": [
       "hair"
-    ],
-    "starter": true
+    ]
   },
   {
     "id": "H034",
@@ -480,8 +447,7 @@
     "evidence": "moderate",
     "note": "The detail people notice without knowing they noticed.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H035",
@@ -494,8 +460,7 @@
     "evidence": "strong",
     "note": "One you stick with. Recognisable beats expensive.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H036",
@@ -508,8 +473,7 @@
     "evidence": "anecdotal",
     "note": "Cleanser, moisturiser, SPF. Three steps, morning and evening.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H037",
@@ -522,8 +486,7 @@
     "evidence": "anecdotal",
     "note": "Morning, under the sunscreen.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H038",
@@ -536,8 +499,7 @@
     "evidence": "anecdotal",
     "note": "Evening only. Start slow, and give it months.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H039",
@@ -550,8 +512,7 @@
     "evidence": "anecdotal",
     "note": "Once or twice a week. More often does damage rather than good.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H040",
@@ -564,8 +525,7 @@
     "evidence": "anecdotal",
     "note": "Tongue to the roof of the mouth, lips closed. Affects sleep and the jawline both.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H041",
@@ -578,8 +538,7 @@
     "evidence": "strong",
     "note": "The last thirty seconds of a normal shower is enough. Mostly a discipline rep.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H042",
@@ -592,8 +551,7 @@
     "evidence": "anecdotal",
     "note": "A baseline. You cannot fix what you have never measured.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H043",
@@ -606,8 +564,7 @@
     "evidence": "strong",
     "note": "Fewer pieces, better ones, that go together. Fit before brand.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H044",
@@ -620,8 +577,7 @@
     "evidence": "anecdotal",
     "note": "A spoonful on an empty stomach, coffee after.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H045",
@@ -634,8 +590,7 @@
     "evidence": "anecdotal",
     "note": "Less friction on skin and hair overnight. Bought once, then forgotten.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H046",
@@ -648,8 +603,7 @@
     "evidence": "anecdotal",
     "note": "After seven, instead of bright white. Your eyes set your body clock.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H047",
@@ -662,8 +616,7 @@
     "evidence": "strong",
     "note": "Winter and cloud included. The single largest factor in how skin ages.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H048",
@@ -676,8 +629,7 @@
     "evidence": "strong",
     "note": "Non-fiction, every day. Ten is small enough to leave no excuse.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H049",
@@ -690,8 +642,7 @@
     "evidence": "moderate",
     "note": "Sunday. What worked, what did not, and what changes because of it.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H050",
@@ -704,8 +655,7 @@
     "evidence": "anecdotal",
     "note": "A few lines on who you are becoming, not a log of what you did.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H051",
@@ -718,8 +668,7 @@
     "evidence": "anecdotal",
     "note": "Track whether you did what you said you would. The count is the point.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H052",
@@ -732,8 +681,7 @@
     "evidence": "strong",
     "note": "Once a week, mildly. The tolerance is what you are training.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H053",
@@ -746,8 +694,7 @@
     "evidence": "strong",
     "note": "The skill or habit you picked for the next six to twelve months.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H054",
@@ -760,8 +707,7 @@
     "evidence": "moderate",
     "note": "On purpose, once. Every yes is a no to something else.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H055",
@@ -774,8 +720,7 @@
     "evidence": "anecdotal",
     "note": "A small, deliberate break from routine. The challenges list holds the options.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H056",
@@ -788,8 +733,7 @@
     "evidence": "anecdotal",
     "note": "One question at the end of the day. The gap between the two is the whole skill.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H057",
@@ -802,8 +746,7 @@
     "evidence": "strong",
     "note": "The schedule and the one task that matters. The best-supported rule here.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H058",
@@ -816,8 +759,7 @@
     "evidence": "moderate",
     "note": "Fixed wake-up, first hour yours. Whoever gets it first gets your day.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H059",
@@ -830,8 +772,7 @@
     "evidence": "anecdotal",
     "note": "Small and fixed. The day is mostly decided before it starts.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H060",
@@ -844,8 +785,7 @@
     "evidence": "moderate",
     "note": "One sitting to review the week behind you and plan the one ahead.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H061",
@@ -858,8 +798,7 @@
     "evidence": "anecdotal",
     "note": "To empty, not to read. An inbox is a list of other people's priorities.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H062",
@@ -872,8 +811,7 @@
     "evidence": "anecdotal",
     "note": "Once a month, against what you said you wanted. Adjust it or drop it.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H063",
@@ -886,8 +824,7 @@
     "evidence": "anecdotal",
     "note": "Both, explicitly. Whatever is not booked goes to whoever asks last.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H064",
@@ -900,8 +837,7 @@
     "evidence": "anecdotal",
     "note": "A full day, every week. You notice what it was replacing.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H065",
@@ -914,8 +850,7 @@
     "evidence": "moderate",
     "note": "Out of sight, not face down. Its presence alone costs the conversation.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H066",
@@ -928,8 +863,7 @@
     "evidence": "strong",
     "note": "One check at the end of the evening. An honest answer or it is worthless.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H067",
@@ -942,8 +876,7 @@
     "evidence": "anecdotal",
     "note": "Nothing in it. Booked in advance or it fills by itself.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H068",
@@ -956,8 +889,7 @@
     "evidence": "strong",
     "note": "Smile first, three to five seconds. Half the time while speaking, most of it while listening.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H069",
@@ -970,8 +902,7 @@
     "evidence": "moderate",
     "note": "One beat before answering. It reads as considered, and it usually is.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H070",
@@ -984,8 +915,7 @@
     "evidence": "anecdotal",
     "note": "Once a week, on purpose. The explanation is what turns a no into a negotiation.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H071",
@@ -998,8 +928,7 @@
     "evidence": "anecdotal",
     "note": "A raise, a deal, a yes. Once, out loud, to the person who can actually give it.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H072",
@@ -1012,8 +941,7 @@
     "evidence": "strong",
     "note": "The ones you leave better than you arrived. That time is not leisure.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H073",
@@ -1026,8 +954,7 @@
     "evidence": "anecdotal",
     "note": "Or a family dinner. The window is smaller than it feels.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H074",
@@ -1042,8 +969,7 @@
     "audience": "all",
     "requires": [
       "children"
-    ],
-    "starter": false
+    ]
   },
   {
     "id": "H075",
@@ -1058,8 +984,7 @@
     "audience": "all",
     "requires": [
       "partner"
-    ],
-    "starter": true
+    ]
   },
   {
     "id": "H076",
@@ -1074,8 +999,7 @@
     "audience": "all",
     "requires": [
       "children"
-    ],
-    "starter": false
+    ]
   },
   {
     "id": "H077",
@@ -1090,8 +1014,7 @@
     "audience": "all",
     "requires": [
       "partner"
-    ],
-    "starter": true
+    ]
   },
   {
     "id": "H078",
@@ -1106,8 +1029,7 @@
     "audience": "all",
     "requires": [
       "partner"
-    ],
-    "starter": true
+    ]
   },
   {
     "id": "H079",
@@ -1120,8 +1042,7 @@
     "evidence": "strong",
     "note": "Drop in, not a dinner party. The best-supported lesson here, from three separate sources.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H080",
@@ -1134,8 +1055,7 @@
     "evidence": "strong",
     "note": "Perfect hosting keeps people at arm's length. Handing over a task does the opposite.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H081",
@@ -1148,8 +1068,7 @@
     "evidence": "strong",
     "note": "Lower the bar for someone dropping by. Most friendships die of scheduling.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H082",
@@ -1162,8 +1081,7 @@
     "evidence": "moderate",
     "note": "It leaves on payday, not out of what is left. Willpower is not a plan.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H083",
@@ -1176,8 +1094,7 @@
     "evidence": "anecdotal",
     "note": "One view of the lot. You cannot steer what you cannot see.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H084",
@@ -1192,8 +1109,7 @@
     "audience": "all",
     "requires": [
       "self-employed"
-    ],
-    "starter": false
+    ]
   },
   {
     "id": "H085",
@@ -1208,8 +1124,7 @@
     "audience": "all",
     "requires": [
       "self-employed"
-    ],
-    "starter": false
+    ]
   },
   {
     "id": "H086",
@@ -1226,8 +1141,7 @@
     "audience": "all",
     "requires": [
       "self-employed"
-    ],
-    "starter": false
+    ]
   },
   {
     "id": "H087",
@@ -1242,8 +1156,7 @@
     "audience": "all",
     "requires": [
       "self-employed"
-    ],
-    "starter": true
+    ]
   },
   {
     "id": "H088",
@@ -1256,8 +1169,7 @@
     "evidence": "anecdotal",
     "note": "No conversation, no credit. The point is that nobody thanks you.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H089",
@@ -1270,8 +1182,7 @@
     "evidence": "anecdotal",
     "note": "You are not buying. You are practising belonging.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H090",
@@ -1284,8 +1195,7 @@
     "evidence": "anecdotal",
     "note": "Visible, unhurried, no screen. Notice how badly you want your phone.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H091",
@@ -1298,8 +1208,7 @@
     "evidence": "anecdotal",
     "note": "One conversation with someone you will never see again.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H092",
@@ -1312,8 +1221,7 @@
     "evidence": "anecdotal",
     "note": "Order, sit, leave. An hour of your own company.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H093",
@@ -1326,8 +1234,7 @@
     "evidence": "anecdotal",
     "note": "Slowly. Look at what you actually want, against what you assumed you did.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H094",
@@ -1340,8 +1247,7 @@
     "evidence": "anecdotal",
     "note": "Observing, silent. A room running on entirely different rules to yours.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H095",
@@ -1354,8 +1260,7 @@
     "evidence": "anecdotal",
     "note": "Friday into Saturday. The first four hours are the hard ones.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H096",
@@ -1368,8 +1273,7 @@
     "evidence": "anecdotal",
     "note": "The ones giving you that behind feeling. All of them, in one go.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H097",
@@ -1382,8 +1286,7 @@
     "evidence": "anecdotal",
     "note": "Buy something you cannot identify and work it out.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H098",
@@ -1396,8 +1299,7 @@
     "evidence": "anecdotal",
     "note": "No phone, no book. Just the coffee and the window.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H099",
@@ -1410,8 +1312,7 @@
     "evidence": "anecdotal",
     "note": "A bookshop shelf you would never choose for yourself.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H100",
@@ -1424,8 +1325,7 @@
     "evidence": "anecdotal",
     "note": "Twenty minutes away, no map. Get slightly lost on purpose.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H101",
@@ -1438,8 +1338,7 @@
     "evidence": "anecdotal",
     "note": "Move the furniture. You stop seeing a room you never change.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H102",
@@ -1452,8 +1351,7 @@
     "evidence": "anecdotal",
     "note": "All the way through, not the photograph of it.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H103",
@@ -1466,8 +1364,7 @@
     "evidence": "anecdotal",
     "note": "Thirty minutes of it. No justification required.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H104",
@@ -1480,8 +1377,7 @@
     "evidence": "anecdotal",
     "note": "On paper, by post, to someone out of your past.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H105",
@@ -1494,8 +1390,7 @@
     "evidence": "anecdotal",
     "note": "Leave it in the car. Not in your pocket.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H106",
@@ -1508,8 +1403,7 @@
     "evidence": "anecdotal",
     "note": "No career benefit, no side income. That is the requirement, not the flaw.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H107",
@@ -1522,8 +1416,7 @@
     "evidence": "anecdotal",
     "note": "One afternoon of lofi or jazz instead of more input.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H108",
@@ -1536,8 +1429,7 @@
     "evidence": "anecdotal",
     "note": "Badly. The making is the point, not the object.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H109",
@@ -1550,8 +1442,7 @@
     "evidence": "anecdotal",
     "note": "Name it once, deliberately, and then stop.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H110",
@@ -1564,8 +1455,7 @@
     "evidence": "anecdotal",
     "note": "Whatever it turns out to be. No research beforehand.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H111",
@@ -1578,8 +1468,7 @@
     "evidence": "anecdotal",
     "note": "Genuine ones, out loud, and keep walking.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H112",
@@ -1592,8 +1481,7 @@
     "evidence": "anecdotal",
     "note": "Three days. Reinstalling early answers a different question.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H113",
@@ -1606,8 +1494,7 @@
     "evidence": "anecdotal",
     "note": "Until your head is empty. Then look at whose they actually are.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H114",
@@ -1620,8 +1507,7 @@
     "evidence": "anecdotal",
     "note": "And the expensive coffee. Saving them for later is the mistake.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H115",
@@ -1634,8 +1520,7 @@
     "evidence": "anecdotal",
     "note": "Immediately, without negotiating. It is their face.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H116",
@@ -1648,8 +1533,7 @@
     "evidence": "anecdotal",
     "note": "Always. It costs you ten seconds.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H117",
@@ -1662,8 +1546,7 @@
     "evidence": "anecdotal",
     "note": "Not as a joke, not as advice. They already know.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H118",
@@ -1676,8 +1559,7 @@
     "evidence": "anecdotal",
     "note": "Take it elsewhere. Nobody needs to hear the room being divided.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H119",
@@ -1690,8 +1572,7 @@
     "evidence": "anecdotal",
     "note": "Santa, the tooth fairy, any of it. Not yours to end.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H120",
@@ -1704,8 +1585,7 @@
     "evidence": "anecdotal",
     "note": "Clothes, shoes, house, car. Praise included.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H121",
@@ -1718,8 +1598,7 @@
     "evidence": "anecdotal",
     "note": "Answer if you are asked. Otherwise leave it alone.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H122",
@@ -1732,8 +1611,7 @@
     "evidence": "anecdotal",
     "note": "Without making a thing of it.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H123",
@@ -1746,8 +1624,7 @@
     "evidence": "anecdotal",
     "note": "Headphones exist.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H124",
@@ -1760,8 +1637,7 @@
     "evidence": "strong",
     "note": "Squats, push-ups, rows, twenty minutes. Three times a week, progress by reps.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H125",
@@ -1774,8 +1650,7 @@
     "evidence": "anecdotal",
     "note": "Nails, brows, beard or a clean shave. Weekly, before it becomes noticeable.",
     "audience": "all",
-    "requires": [],
-    "starter": false
+    "requires": []
   },
   {
     "id": "H126",
@@ -1788,8 +1663,7 @@
     "evidence": "moderate",
     "note": "No podcast, no music, no destination. The only daily calm habit in here.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H127",
@@ -1802,8 +1676,7 @@
     "evidence": "anecdotal",
     "note": "For the next six to twelve months. One, named, written down.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H128",
@@ -1816,8 +1689,7 @@
     "evidence": "moderate",
     "note": "A message, not a call. The lower bar is exactly why it gets done.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H129",
@@ -1830,8 +1702,7 @@
     "evidence": "strong",
     "note": "A club, a class, a team, a game. Same people, every week.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H130",
@@ -1846,8 +1717,7 @@
     "audience": "all",
     "requires": [
       "H129"
-    ],
-    "starter": true
+    ]
   },
   {
     "id": "H131",
@@ -1860,8 +1730,7 @@
     "evidence": "moderate",
     "note": "Making the plan counts. Whether it happens is a separate problem.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H132",
@@ -1876,8 +1745,7 @@
     "audience": "all",
     "requires": [
       "single"
-    ],
-    "starter": true
+    ]
   },
   {
     "id": "H133",
@@ -1892,8 +1760,7 @@
     "audience": "all",
     "requires": [
       "partner"
-    ],
-    "starter": true
+    ]
   },
   {
     "id": "H134",
@@ -1906,8 +1773,7 @@
     "evidence": "moderate",
     "note": "Every account, every week. Short enough that you actually do it.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H135",
@@ -1922,8 +1788,7 @@
     "audience": "all",
     "requires": [
       "employed"
-    ],
-    "starter": true
+    ]
   },
   {
     "id": "H136",
@@ -1936,8 +1801,7 @@
     "evidence": "strong",
     "note": "All of it, one page, with the real numbers. Uncomfortable once.",
     "audience": "all",
-    "requires": [],
-    "starter": true
+    "requires": []
   },
   {
     "id": "H137",
@@ -1952,7 +1816,6 @@
     "audience": "all",
     "requires": [
       "H136"
-    ],
-    "starter": true
+    ]
   }
 ]

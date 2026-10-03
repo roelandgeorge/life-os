@@ -17,9 +17,8 @@ Binary daily checks in, a scene at age +15 out.
    locked in. Check it before assuming a v1 concept (a fixed domain, a
    `CustomTask`) is still how something works — phase 1 already replaced it.
 4. **`docs/open-punten.md`** — what is known to be unfinished or wrong, with
-   how each is known and where the code is. Read it before reporting a bug:
-   the big one is that ticking one box does not move the picture when a panel
-   has two habits, which is most landings on day one.
+   how each is known and where the code is. Read it before reporting a
+   bug.
 
 ## Where the build is
 
@@ -98,9 +97,8 @@ hand-off the renderer never reaches. Q1's five cards lost their panel art.
 A habit row on Home has two tap targets rather than one: the checkbox ticks,
 the title expands to the catalogue `note` and the row's own menu, which does
 not exist in the DOM while collapsed. The landing's row of unseeded offers
-is gone, and with it `offeredCatalogItems()` and `Shell`'s `landingOffers`;
-`landings.json`'s `offers` is now unused metadata exactly like
-`CatalogItem.starter`, so check who reads it before building on it.
+is gone, and with it `offeredCatalogItems()`, `Shell`'s `landingOffers` and
+`landings.json`'s `offers` list.
 
 **A third round then reversed two earlier decisions**
 (`docs/onboarding/06-revisions.md`). Every
@@ -229,8 +227,10 @@ the first. Everything else is per-device and already works for any number of
 users. Fix this before the app is shared: one blob per subscription, and a
 cron that walks them all.
 
-History shows step tracks per panel plus a per-period strip for every habit
-on a periodic cadence. It still does not show *which* day a panel was missed.
+History shows a step track per panel, a dot on each day that closed below
+the threshold, and under it the latest three of those days with the habits
+missed in them (`core/steps.panelClosings`, the same loop `panelSteps`
+settles with), then a per-period strip for every habit in the user's order.
 
 ## Commands
 
@@ -381,12 +381,11 @@ instead of a colour picker) is the same promise: nothing may ever map it
 back to a domain or a panel either. `UserHabit.note` is the same again: it
 is the line a row expands to and nothing reads it but the row.
 
-`CatalogItem.starter` is unused metadata since the onboarding rebuild — the
-tree in `docs/onboarding/` seeds by landing, not by this flag. It survives
-in `catalog.json` only because that file is taken as a full replacement and
-re-deriving the flag for 137 items would be churn; `catalog.test.ts`'s only
-remaining check on it is that a `starter: true` item is a real catalogue
-entry. Do not build new logic on it without checking who else reads it first.
+The onboarding seeds by landing (`landings.json`'s `seeds`), not by a flag
+on the catalogue item: `CatalogItem.starter` is gone, like `effort`, and
+`catalog.test.ts` fails if either key returns with a full replacement of
+`catalog.json`. `scripts/import-catalog.mjs` still writes both, which is
+why that test exists: the script is archive, not a build input.
 
 ## House style
 
