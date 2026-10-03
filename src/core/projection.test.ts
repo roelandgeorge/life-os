@@ -7,8 +7,8 @@ import type { AppState, DayLog, UserHabit } from './types';
 
 const START = '2026-01-01';
 
-const SLEEP: UserHabit = { id: 'sleep', title: 'Sleep', domain: 'sleep', cadence: 'daily', importance: 5, startDate: START };
-const TRAINING: UserHabit = { id: 'training', title: 'Train', domain: 'training', cadence: 'daily', importance: 5, startDate: START };
+const SLEEP: UserHabit = { id: 'sleep', title: 'Sleep', domain: 'sleep', cadence: 'daily', importance: 5, order: 0, startDate: START };
+const TRAINING: UserHabit = { id: 'training', title: 'Train', domain: 'training', cadence: 'daily', importance: 5, order: 0, startDate: START };
 
 function stateWith(habits: UserHabit[], days: number, hits: (i: number) => string[]): AppState {
   const logs: DayLog[] = Array.from({ length: days }, (_, i) => {
@@ -49,7 +49,7 @@ describe('buildProjection', () => {
   });
 
   it('a rest day (every-2-days habit) does not block a Full Day', () => {
-    const sport: UserHabit = { id: 'sport', title: 'Sport', domain: 'training', cadence: { everyDays: 2 }, importance: 4, startDate: START };
+    const sport: UserHabit = { id: 'sport', title: 'Sport', domain: 'training', cadence: { everyDays: 2 }, importance: 4, order: 0, startDate: START };
     const today = addDays(START, 1);
     // SPORT is not daily, so it plays no part in Full Day at all.
     const state = stateWith([SLEEP, sport], 2, () => ['sleep']);
@@ -59,7 +59,7 @@ describe('buildProjection', () => {
   it('feeds the panels: a neglected habit sinks the panel it shares with a perfect one', () => {
     // SLEEP (domain sleep, feeds body+head) ticked daily; nutrition (also
     // body+head) never ticked — body and head both sink to the neglected one.
-    const nutrition: UserHabit = { id: 'nutrition', title: 'Eat well', domain: 'nutrition', cadence: 'daily', importance: 5, startDate: START };
+    const nutrition: UserHabit = { id: 'nutrition', title: 'Eat well', domain: 'nutrition', cadence: 'daily', importance: 5, order: 0, startDate: START };
     const state = stateWith([SLEEP, nutrition], 5, () => ['sleep']);
     const p = buildProjection(state, addDays(START, 5));
     expect(p.preview.body).toBe(0);

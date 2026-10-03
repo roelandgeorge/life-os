@@ -319,7 +319,12 @@ export function domainOrderFromSeeds(items: readonly CatalogItem[]): DomainKey[]
 /** Seeded and ready to save — the first, full onboarding run. */
 export function buildInitialState(answers: Answers, newId: () => string, today: DateKey): AppState {
   const items = resolveSeeds(answers);
-  const habits = items.map((item) => newHabitFromCatalog(item, newId(), today));
+  const byMoment = [...items].sort((a, b) => a.dayPosition - b.dayPosition || a.id.localeCompare(b.id));
+  const rank = new Map(byMoment.map((item, i) => [item.id, i]));
+  const habits = items.map((item) => ({
+    ...newHabitFromCatalog(item, newId(), today),
+    order: rank.get(item.id) as number,
+  }));
   const state: AppState = { schemaVersion: 2, logs: [], habits, notificationTime: null };
 
   const profile = profileFrom(answers);

@@ -4,12 +4,13 @@ import type { DayLog, UserHabit } from './types';
 
 const START = '2026-01-01';
 
-const SLEEP: UserHabit = { id: 'sleep', title: 'Sleep', cadence: 'daily', importance: 5, startDate: START };
+const SLEEP: UserHabit = { id: 'sleep', title: 'Sleep', cadence: 'daily', importance: 5, order: 0, startDate: START };
 const RELATIONSHIP: UserHabit = {
   id: 'relationship',
   title: 'Relationship',
   cadence: 'weekly',
   importance: 4,
+  order: 0,
   startDate: START,
 };
 const SPORT: UserHabit = {
@@ -17,6 +18,7 @@ const SPORT: UserHabit = {
   title: 'Sport',
   cadence: { everyDays: 2 },
   importance: 4,
+  order: 0,
   startDate: START,
 };
 
@@ -144,7 +146,7 @@ describe('dailyTasksDone', () => {
   });
 
   it('waits for every short-cadence habit regardless of whether it has a domain', () => {
-    const noAlcohol: UserHabit = { id: 'alcohol', title: 'No alcohol', cadence: 'daily', importance: 3, startDate: START };
+    const noAlcohol: UserHabit = { id: 'alcohol', title: 'No alcohol', cadence: 'daily', importance: 3, order: 0, startDate: START };
     const withCustom = [...habits, noAlcohol];
     const logs = [log('2026-01-10', ['sleep', 'sport'])];
     expect(dailyTasksDone(logs, withCustom, '2026-01-10')).toBe(false);

@@ -34,6 +34,13 @@ export type UserHabit = {
    * habit simply stops asking anything of the user from here on.
    */
   removedDate?: DateKey;
+  /**
+   * The user's own position for this habit on Home, unique across
+   * `AppState.habits` and dense (0..n-1) after every write that places a
+   * habit. Seeded from the catalogue's `dayPosition` when a habit is added,
+   * then only ever changed by the user moving it.
+   */
+  order: number;
   /** A filing colour, `#rrggbb`. For a domain habit this defaults to the domain's own. Kept for habits migrated from v1 and the domain default — the write-a-habit form offers no colour picker. */
   color?: string;
   /** A filing mark the write-a-habit form offers instead of a colour (docs/onboarding/04-revisions.md §9). Filing only — nothing maps it back to a domain or a panel. */
@@ -44,6 +51,12 @@ export type UserHabit = {
    * catalogue wrote it and a later catalogue edit reaches it.
    */
   note?: string;
+  /**
+   * The day the user answered a pruning suggestion with "Keep"
+   * (`core/prune.ts`), which silences it for one more window. Nothing else
+   * reads it.
+   */
+  pruneKeptOn?: DateKey;
 };
 
 export type DayLog = {

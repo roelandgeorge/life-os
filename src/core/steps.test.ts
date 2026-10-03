@@ -31,6 +31,7 @@ const TRAINING_HABIT: UserHabit = {
   domain: 'training', // feeds only `body`
   cadence: 'daily',
   importance: 5,
+  order: 0,
   startDate: START,
 };
 
@@ -75,19 +76,19 @@ describe('panelSteps — a single daily habit', () => {
 
 describe('panelSteps — cadence and anchoring', () => {
   it('a weekly habit steps once per week, not per day', () => {
-    const family: UserHabit = { id: 'fam', title: 'Family', domain: 'family', cadence: 'weekly', importance: 4, startDate: START };
+    const family: UserHabit = { id: 'fam', title: 'Family', domain: 'family', cadence: 'weekly', importance: 4, order: 0, startDate: START };
     const l = logsFor(21, 'fam', (i) => i % 7 === 0);
     expect(panelSteps(l, [family], addDays(START, 21)).partner).toBe(MAX_STEP);
   });
 
   it('a monthly habit steps its panel on the closing day, hit anywhere inside the month', () => {
-    const finance: UserHabit = { id: 'fin', title: 'Finance', domain: 'finance', cadence: 'monthly', importance: 5, startDate: START };
+    const finance: UserHabit = { id: 'fin', title: 'Finance', domain: 'finance', cadence: 'monthly', importance: 5, order: 0, startDate: START };
     const l = logsFor(30, 'fin', (i) => i === 3); // one hit, early in the month
     expect(panelSteps(l, [finance], addDays(START, 30)).wealth).toBe(START_STEP + 1);
   });
 
   it("a monthly habit's mid-period hit shows in the preview before the period closes", () => {
-    const finance: UserHabit = { id: 'fin', title: 'Finance', domain: 'finance', cadence: 'monthly', importance: 5, startDate: START };
+    const finance: UserHabit = { id: 'fin', title: 'Finance', domain: 'finance', cadence: 'monthly', importance: 5, order: 0, startDate: START };
     const l = logsFor(4, 'fin', (i) => i === 3);
     const today = addDays(START, 3);
     expect(panelSteps(l, [finance], today).wealth).toBe(START_STEP);
@@ -114,8 +115,8 @@ describe('panelSteps — cadence and anchoring', () => {
 });
 
 describe('panelSteps — weighting', () => {
-  const heavy: UserHabit = { id: 'heavy', title: 'Heavy', domain: 'training', cadence: 'daily', importance: 5, startDate: START };
-  const light: UserHabit = { id: 'light', title: 'Light', domain: 'training', cadence: 'daily', importance: 1, startDate: START };
+  const heavy: UserHabit = { id: 'heavy', title: 'Heavy', domain: 'training', cadence: 'daily', importance: 5, order: 0, startDate: START };
+  const light: UserHabit = { id: 'light', title: 'Light', domain: 'training', cadence: 'daily', importance: 1, order: 0, startDate: START };
 
   it('hitting the heavily-weighted habit alone clears the 70% threshold', () => {
     const l = mergeLogs(logsFor(3, 'heavy', () => true), logsFor(3, 'light', () => false));

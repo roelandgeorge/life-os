@@ -10,13 +10,14 @@ const RELATIONSHIP: UserHabit = {
   title: 'Relationship',
   cadence: 'weekly',
   importance: 4,
+  order: 0,
   startDate: START,
 };
-const SLEEP: UserHabit = { id: 'sleep', title: 'Sleep', cadence: 'daily', importance: 5, startDate: START };
-const FOOD: UserHabit = { id: 'food', title: 'Food', cadence: 'daily', importance: 5, startDate: START };
-const SPORT: UserHabit = { id: 'sport', title: 'Sport', cadence: { everyDays: 2 }, importance: 4, startDate: START };
-const WEEKLY_TASK: UserHabit = { id: 'w', title: 'Call mum', cadence: 'weekly', importance: 3, startDate: START };
-const DAILY_TASK: UserHabit = { id: 'd', title: 'Read', cadence: 'daily', importance: 3, startDate: START };
+const SLEEP: UserHabit = { id: 'sleep', title: 'Sleep', cadence: 'daily', importance: 5, order: 0, startDate: START };
+const FOOD: UserHabit = { id: 'food', title: 'Food', cadence: 'daily', importance: 5, order: 0, startDate: START };
+const SPORT: UserHabit = { id: 'sport', title: 'Sport', cadence: { everyDays: 2 }, importance: 4, order: 0, startDate: START };
+const WEEKLY_TASK: UserHabit = { id: 'w', title: 'Call mum', cadence: 'weekly', importance: 3, order: 0, startDate: START };
+const DAILY_TASK: UserHabit = { id: 'd', title: 'Read', cadence: 'daily', importance: 3, order: 0, startDate: START };
 
 /** `days` long from START; `hits(i)` lists the habit ids ticked on day i. */
 function logs(days: number, hits: (i: number) => string[]): DayLog[] {

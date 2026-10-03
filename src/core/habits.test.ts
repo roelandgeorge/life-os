@@ -13,7 +13,11 @@ import {
   habitStreak,
   isActiveOn,
   isHabitTicked,
+  activeInOrder,
+  moveHabit,
   newCustomHabit,
+  placeHabit,
+  withOrder,
   newHabitFromCatalog,
   removeHabit,
   toggleHabitTick,
@@ -26,7 +30,7 @@ import type { DayLog, UserHabit } from './types';
 const START = '2026-01-01';
 
 function habit(overrides: Partial<UserHabit> = {}): UserHabit {
-  return { id: 'h1', title: 'Read', cadence: 'daily', importance: 3, startDate: START, ...overrides };
+  return { id: 'h1', title: 'Read', cadence: 'daily', importance: 3, order: 0, startDate: START, ...overrides };
 }
 
 function day(date: string, ticked: string[] = []): DayLog {
@@ -267,5 +271,86 @@ describe('removeHabit', () => {
     const removed = removeHabit(habits, 'h1', '2026-01-05');
     expect(removed).toHaveLength(1);
     expect(removed[0]?.removedDate).toBe('2026-01-05');
+  });
+});
+
+describe('order', () => {
+  const fromCatalog = (id: string, catalogId: string, order?: number) => {
+    const h: { id: string; catalogId: string; title: string; cadence: 'daily'; importance: number; startDate: string; order?: number } =
+      { id, catalogId, title: id, cadence: 'daily', importance: 3, startDate: START };
+    if (order !== undefined) h.order = order;
+    return h;
+  };
+  const sequence = (habits: readonly UserHabit[]) => activeInOrder(habits, START).map((h) => h.id);
+
+  it('withOrder returns the same array when every habit already has a unique order', () => {
+    const habits = [habit({ id: 'a', order: 1 }), habit({ id: 'b', order: 0 })];
+    expect(withOrder(habits)).toBe(habits);
+  });
+
+  it('withOrder sorts a record with no orders by dayPosition, written habits last', () => {
+    const habits = withOrder([
+      { id: 'mine', title: 'Mine', cadence: 'daily', importance: 3, startDate: START },
+      fromCatalog('retinol', 'H038'),
+      fromCatalog('sleep', 'H001'),
+      fromCatalog('steps', 'H020'),
+    ]);
+    expect(sequence(habits)).toEqual(['sleep', 'steps', 'retinol', 'mine']);
+    expect(habits.map((h) => h.order).sort()).toEqual([0, 1, 2, 3]);
+  });
+
+  it('withOrder treats a duplicated order as missing', () => {
+    const habits = withOrder([fromCatalog('a', 'H038', 0), fromCatalog('b', 'H001', 0)]);
+    expect(sequence(habits)).toEqual(['b', 'a']);
+  });
+
+  it('placeHabit puts a catalogue habit before the first later one, past a user-moved list', () => {
+    // The user moved retinol to the top; supplements (12) still lands before steps (65).
+    const habits = withOrder([fromCatalog('retinol', 'H038', 0), fromCatalog('sleep', 'H001', 1), fromCatalog('steps', 'H020', 2)]);
+    const placed = placeHabit(habits, fromCatalog('supps', 'H011'));
+    expect(sequence(placed)).toEqual(['retinol', 'sleep', 'supps', 'steps']);
+    expect(placed.map((h) => h.order).sort()).toEqual([0, 1, 2, 3]);
+  });
+
+  it('placeHabit puts a written habit at the end', () => {
+    const habits = withOrder([fromCatalog('sleep', 'H001', 0), fromCatalog('retinol', 'H038', 1)]);
+    const placed = placeHabit(habits, { id: 'mine', title: 'Mine', cadence: 'daily', importance: 3, startDate: START });
+    expect(sequence(placed)).toEqual(['sleep', 'retinol', 'mine']);
+  });
+
+  it('placeHabit keeps a late catalogue habit ahead of written habits at the end', () => {
+    const habits = withOrder([
+      fromCatalog('sleep', 'H001', 0),
+      fromCatalog('retinol', 'H038', 1),
+      { id: 'mine', title: 'Mine', cadence: 'daily', importance: 3, startDate: START, order: 2 },
+    ]);
+    expect(sequence(placeHabit(habits, fromCatalog('bed', 'H002')))).toEqual(['sleep', 'retinol', 'bed', 'mine']);
+  });
+
+  it('placeHabit ignores a removed habit when finding the place', () => {
+    const habits = withOrder([
+      { ...fromCatalog('sleep', 'H001', 0) },
+      { ...fromCatalog('old', 'H011', 1), removedDate: START },
+      { ...fromCatalog('retinol', 'H038', 2) },
+    ]);
+    const placed = placeHabit(habits, fromCatalog('steps', 'H020'));
+    expect(sequence(placed)).toEqual(['sleep', 'steps', 'retinol']);
+  });
+
+  it('moveHabit swaps with the neighbour and stops at either end', () => {
+    const habits = withOrder([fromCatalog('a', 'H001', 0), fromCatalog('b', 'H020', 1), fromCatalog('c', 'H038', 2)]);
+    expect(sequence(moveHabit(habits, 'b', -1, START))).toEqual(['b', 'a', 'c']);
+    expect(sequence(moveHabit(habits, 'b', 1, START))).toEqual(['a', 'c', 'b']);
+    expect(moveHabit(habits, 'a', -1, START)).toBe(habits);
+    expect(moveHabit(habits, 'c', 1, START)).toBe(habits);
+  });
+
+  it('moveHabit skips a removed habit between two active ones', () => {
+    const habits: UserHabit[] = [
+      habit({ id: 'a', order: 0 }),
+      habit({ id: 'gone', order: 1, removedDate: START }),
+      habit({ id: 'c', order: 2 }),
+    ];
+    expect(sequence(moveHabit(habits, 'c', -1, START))).toEqual(['c', 'a']);
   });
 });

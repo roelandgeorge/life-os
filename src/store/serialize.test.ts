@@ -7,12 +7,13 @@ import { deserialize, ImportError, serialize } from './serialize';
 const START = '2026-01-01';
 
 const HABITS: UserHabit[] = [
-  { id: 'sleep', title: 'Slept 8 hours', domain: 'sleep', cadence: 'daily', importance: 5, startDate: START },
+  { id: 'sleep', title: 'Slept 8 hours', domain: 'sleep', cadence: 'daily', importance: 5, order: 0, startDate: START },
   {
     id: 'alcohol',
     title: 'No alcohol',
     cadence: 'weekly',
     importance: 4,
+    order: 1,
     startDate: START,
     color: '#B85C38',
   },
@@ -86,6 +87,28 @@ describe('export/import', () => {
     raw.state.habits = [...raw.state.habits, { id: 42 }, { name: 'no id' }, 'junk'];
     const restored = deserialize(JSON.stringify(raw));
     expect(restored.habits.map((h) => h.id).sort()).toEqual(['alcohol', 'sleep']);
+  });
+
+  it('orders a record written before order existed by moment of the day, written habits last', () => {
+    const raw = JSON.parse(serialize(sampleState()));
+    raw.state.habits = [
+      { id: 'mine', title: 'My own', cadence: 'daily', importance: 3, startDate: START },
+      { id: 'bed', catalogId: 'H002', title: 'Bedtime', cadence: 'daily', importance: 4, startDate: START },
+      { id: 'wake', catalogId: 'H001', title: 'Sleep', cadence: 'daily', importance: 5, startDate: START },
+    ];
+    const restored = deserialize(JSON.stringify(raw));
+    const byOrder = [...restored.habits].sort((a, b) => a.order - b.order).map((h) => h.id);
+    expect(byOrder).toEqual(['wake', 'bed', 'mine']);
+  });
+
+  it('keeps a stored order and a pruneKeptOn date through an import', () => {
+    const raw = JSON.parse(serialize(sampleState()));
+    raw.state.habits[0].order = 1;
+    raw.state.habits[0].pruneKeptOn = '2026-02-01';
+    raw.state.habits[1].order = 0;
+    const restored = deserialize(JSON.stringify(raw));
+    expect(restored.habits.map((h) => h.order)).toEqual([1, 0]);
+    expect(restored.habits[0]?.pruneKeptOn).toBe('2026-02-01');
   });
 
   it('drops an unknown domain rather than failing the import', () => {
