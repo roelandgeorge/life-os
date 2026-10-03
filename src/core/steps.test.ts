@@ -136,23 +136,25 @@ describe('panelSteps — weighting', () => {
   });
 });
 
-describe('panelSteps — the preview, per habit', () => {
+describe('panelSteps — the preview asks the threshold too', () => {
   const sleep: UserHabit = { id: 'sleep', title: 'Sleep', domain: 'training', cadence: 'daily', importance: 5, order: 0, startDate: START };
   const steps: UserHabit = { id: 'steps', title: 'Steps', domain: 'training', cadence: 'daily', importance: 5, order: 1, startDate: START };
+  const light: UserHabit = { id: 'light', title: 'Light', domain: 'training', cadence: 'daily', importance: 1, order: 2, startDate: START };
   const today = START;
   const ticked = (...ids: string[]) => [{ date: today, opened: true, ticks: Object.fromEntries(ids.map((id) => [id, true as const])) }];
+  const preview = (logs: DayLog[], habits: UserHabit[]) => panelSteps(logs, habits, today, { includeCurrentPeriod: true }).body;
 
-  it('one tick of two equal habits moves the picture on day one', () => {
-    expect(panelSteps(ticked('sleep'), [sleep, steps], today, { includeCurrentPeriod: true }).body).toBe(START_STEP + 1);
+  it('one tick of two equal habits is 50% and moves nothing', () => {
+    expect(preview(ticked('sleep'), [sleep, steps])).toBe(START_STEP);
   });
 
-  it('a second tick adds no second step', () => {
-    expect(panelSteps(ticked('sleep', 'steps'), [sleep, steps], today, { includeCurrentPeriod: true }).body).toBe(START_STEP + 1);
+  it('both ticked clears 70% and moves one step, no more', () => {
+    expect(preview(ticked('sleep', 'steps'), [sleep, steps])).toBe(START_STEP + 1);
   });
 
-  it('the settled score still asks the threshold of a closed day', () => {
-    // Day 0 had one of the two ticked: 50% < 70%, so day 1 opens a step down.
-    expect(panelSteps(ticked('sleep'), [sleep, steps], addDays(today, 1)).body).toBe(START_STEP - 1);
+  it('weight decides: the heavy habit alone clears it, the light one alone does not', () => {
+    expect(preview(ticked('sleep'), [sleep, light])).toBe(START_STEP + 1);
+    expect(preview(ticked('light'), [sleep, light])).toBe(START_STEP);
   });
 });
 

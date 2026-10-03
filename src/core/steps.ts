@@ -41,12 +41,10 @@ export const PANEL_THRESHOLD = 0.7;
 export type StepOptions = {
   /**
    * Count the period(s) in progress too — the §2.7-style preview: ticking a
-   * box has to move the picture within the same second. One hit in a
-   * habit's current period is enough for one step, however many habits
-   * feed the panel: the preview is the reward for a tick, not a forecast of
-   * the settled score, which still asks `PANEL_THRESHOLD` of every closing
-   * period. Only ever adds a step, never subtracts: an unfinished period has
-   * not been missed yet.
+   * box has to move the picture within the same second, once the periods in
+   * progress clear `PANEL_THRESHOLD` by weight, exactly as a closing period
+   * must. One step at most. Only ever adds a step, never subtracts: an
+   * unfinished period has not been missed yet.
    */
   includeCurrentPeriod?: boolean;
 };
@@ -163,15 +161,19 @@ function panelStep(
   let step = closings[closings.length - 1]?.step ?? START_STEP;
 
   if (includeCurrentPeriod) {
-    // Scored per habit rather than as a weighted sum: two equal habits on a
-    // panel would otherwise need both ticks to clear the threshold, so the
-    // first tick of the day would change nothing on screen.
-    const ticked = relevant.some((h) => {
-      if (!isActiveOn(h, today)) return false;
+    // The same weighted threshold the settled score uses, applied to the
+    // periods in progress: the picture moves only once today's ticks reach
+    // 70% of the panel's weight, and by one step at most.
+    let weight = 0;
+    let hitWeight = 0;
+    for (const h of relevant) {
+      if (!isActiveOn(h, today)) continue;
       const period = cadencePeriodDays(h.cadence);
-      return period !== null && hitsInPeriod(h, currentPeriodOf(h, today, period));
-    });
-    if (ticked) step = clamp(step + 1, 0, MAX_STEP);
+      if (period === null) continue;
+      weight += h.importance;
+      if (hitsInPeriod(h, currentPeriodOf(h, today, period))) hitWeight += h.importance;
+    }
+    if (weight > 0 && hitWeight / weight >= PANEL_THRESHOLD) step = clamp(step + 1, 0, MAX_STEP);
   }
 
   return step;
