@@ -13,7 +13,7 @@ earlier rule, the rule is named so it can be updated in the same build.
 | 5.2 | Every habit carries its own `order`, seeded from a catalogue `dayPosition` | nothing (new field) |
 | 5.3 | The in-row editor moves a habit up or down | nothing |
 | 5.4 | A `+` row at the bottom of Home opens a domain picker, then that domain's catalogue | CLAUDE.md house style and `04-revisions.md` §6: "reachable only from that domain's own group" |
-| 5.5 | The catalogue lists the most important habits first, and says in words what the bars mean | nothing |
+| 5.5 | The catalogue lists the most important habits first. The effort bars and the `effort` field go entirely | `05-revisions.md` §4's effort marker |
 | 5.6 | "Never miss twice" on the row itself | nothing |
 | 5.7 | Pruning suggestions for habits that have gone silent | nothing |
 | 5.8 | CSV export of the log, flat, for Power BI | nothing |
@@ -37,7 +37,8 @@ else reads it.
 `CatalogItem` already has `importance` (1-5) and `effort`
 (`low`/`medium`/`high`). `DomainCatalog` shows `effort` as one to three bars
 (`EffortMarker`) with the meaning only in a `title` attribute, which a phone
-never shows. The catalogue is listed in id order.
+never shows. Nothing else in the app reads `effort`. The catalogue is listed
+in id order.
 
 ## 5.1 Home is one list
 
@@ -290,9 +291,7 @@ from Home's `+` through a picker of all ten domains, the user's own first.
 
 1. `importance`, high first.
 2. `evidence`: `strong`, then `moderate`, then `anecdotal`.
-3. `effort`: `low` first. Of two equally important, equally proven habits,
-   the easier one is the better first pick.
-4. `id`, so the order is fully determined.
+3. `id`, so the order is fully determined.
 
 `DomainCatalog` applies it after its own filtering. Do not put it inside
 `catalogFor()`: onboarding calls `catalogFor` too and its order there is not
@@ -302,13 +301,33 @@ Nutrition then opens with H009 "Hit 1.6–2g protein" (5), ahead of H011
 "Take your base supplements" (4), which is the user's own example.
 `catalog.test.ts` pins the first three ids of nutrition and of sleep.
 
-### The bars
+### The effort bars go, and so does `effort`
 
-The bars are effort: one bar low, two medium, three high. More bars means
-harder to keep up, not more important. The meaning lives only in a `title`
-tooltip today, which a phone never shows. When a catalogue row is expanded,
-show the effort label in words under the note (`catalog.effort.*`, the
-strings already exist). Keep the bars on the collapsed row.
+The user's call: effort is not something they choose a habit by, so the
+bars are noise on every row. Remove them and the data behind them, not only
+the markup:
+
+- `DomainCatalog.tsx`: `EffortMarker`, `EFFORT_LEVEL`, `EFFORT_LABEL`, the
+  `Effort` import and the `<EffortMarker>` in `CatalogRow`. The collapsed
+  catalogue row is then the add button and the title only. Update the file's
+  header comment, which names the marker.
+- `screens.css`: `.effort-marker` and every `.effort-bar` rule, and the
+  comment above them that mentions the marker.
+- `i18n/en.ts`: `catalog.effort.low`, `.medium`, `.high`.
+- `core/catalog.ts`: the `Effort` type and `CatalogItem.effort`.
+- `src/content/catalog.json`: the `effort` key on all 137 items. Do it with
+  a one-off script, not by hand, and check the diff touches nothing else.
+- `catalog.test.ts`: `EFFORTS` and the `effort` assertion. Add one that no
+  item carries an `effort` key, so a later full replacement of the JSON
+  cannot quietly bring it back.
+- `scripts/import-catalog.mjs` is archive, not a build input (see the header
+  of `core/catalog.ts`). Leave it alone: its own starter tie-break reads the
+  CSV's effort column, and the CSV is the historical source.
+- README (the catalogue line listing the fields, and the line describing
+  a catalogue row "collapsed to its title and an effort marker") and
+  CLAUDE.md (the same phrase in "Where the build is") lose the marker.
+
+`evidence` stays: it is the tie-break above and costs nothing on screen.
 
 ## 5.6 Never miss twice
 
@@ -464,8 +483,8 @@ onto it so it loads without a second file.
 | File | Change |
 |---|---|
 | `src/core/types.ts` | `UserHabit.order`, `UserHabit.pruneKeptOn` |
-| `src/core/catalog.ts` | `CatalogItem.dayPosition`, `byImportance` |
-| `src/content/catalog.json` | `dayPosition` on all 137 items |
+| `src/core/catalog.ts` | `CatalogItem.dayPosition`, `byImportance`, `Effort` and `CatalogItem.effort` removed |
+| `src/content/catalog.json` | `dayPosition` added and `effort` removed on all 137 items |
 | `src/core/habits.ts` | `dayPositionOf`, `activeInOrder`, `placeHabit`, `withOrder`, `moveHabit`, `HabitPatch.pruneKeptOn` |
 | `src/core/due.ts` | `missedOnce` |
 | `src/core/prune.ts` | new |
@@ -474,21 +493,21 @@ onto it so it loads without a second file.
 | `src/store/indexeddb.ts`, `memory.ts`, `serialize.ts`, `migrate.ts` | fill `order` on the way in |
 | `src/app/useLifeOS.ts` | `placeHabit` on add and redo, `moveHabit` |
 | `src/app/MainScreen.tsx` | one list, `+` row, picker state, recovery marker, `PruneSuggestion` |
-| `src/app/DomainCatalog.tsx` | move row in `HabitEditor`, `byImportance`, effort label, picker (or a new `DomainPicker.tsx`) |
+| `src/app/DomainCatalog.tsx` | move row in `HabitEditor`, `byImportance`, `EffortMarker` removed, picker (or a new `DomainPicker.tsx`) |
 | `src/app/SettingsScreen.tsx` | Export CSV |
 | `src/ui/Glyph.tsx` | two chevrons |
-| `src/i18n/en.ts` | the keys named above |
-| `src/styles/screens.css` | `.habit-move`, the `+` row, picker rows, prune card. No colour literal outside `tokens.css`. |
+| `src/i18n/en.ts` | the keys named above, `catalog.effort.*` removed |
+| `src/styles/screens.css` | `.habit-move`, the `+` row, picker rows, prune card, `.effort-*` removed. No colour literal outside `tokens.css`. |
 
 ## Build order
 
 Commit per step, each green on `npm test` and `npm run typecheck`.
 
-1. `dayPosition` in the catalogue, `byImportance`, their tests.
+1. `dayPosition` in the catalogue, `effort` and the bars removed, `byImportance`, their tests.
 2. `order`: type, helpers, every write and read path in the table, tests
    (including a v2 record without `order` loading sorted by `dayPosition`).
 3. Home as one list, the move row in the editor, the chevrons.
-4. The `+` row and the picker. Catalogue order and the effort label.
+4. The `+` row and the picker. Catalogue order.
 5. `missedOnce` and the row marker.
 6. `prune.ts`, `pruneKeptOn`, the card.
 7. `exportCsv.ts` and the Settings button.
@@ -509,8 +528,8 @@ Commit per step, each green on `npm test` and `npm run typecheck`.
 - `+` row, picker with the user's domains first and counts, a domain the
   user has no habits in opens its catalogue too, Back walks back one screen
   at a time.
-- Nutrition's catalogue opens on the protein habit. Expanding a row shows
-  "Low effort" (or medium, high) in words.
+- Nutrition's catalogue opens on the protein habit. No catalogue row shows
+  bars, collapsed or expanded.
 - With the clock or the log arranged for it: the recovery marker on a daily
   habit missed yesterday, gone after ticking, absent after two misses.
 - A habit with 28 silent days shows the prune card, Keep hides it, Rewrite
