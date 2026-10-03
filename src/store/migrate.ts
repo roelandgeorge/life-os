@@ -15,6 +15,7 @@
 
 import type { DateKey } from '../core/dates';
 import type { DomainKey } from '../core/domains';
+import { withOrder, type UnorderedHabit } from '../core/habits';
 import type { AppState, DayLog, UserHabit } from '../core/types';
 
 export const V1_DOMAIN_KEYS = ['SLEEP', 'FOOD', 'SPORT', 'ORDER', 'RELATIONSHIP', 'MIND', 'INCOME'] as const;
@@ -82,7 +83,7 @@ const FALLBACK_START_DATE: DateKey = '1970-01-01';
 export function migrateV1ToV2(v1: V1AppState): AppState {
   const startDate: DateKey = v1.logs[0]?.date ?? FALLBACK_START_DATE;
 
-  const habits: UserHabit[] = [];
+  const habits: UnorderedHabit[] = [];
   for (const key of MIGRATED_DOMAIN_KEYS) {
     const def = MIGRATED_DOMAIN[key];
     const label = v1.taskLabels?.[key]?.trim();
@@ -97,7 +98,7 @@ export function migrateV1ToV2(v1: V1AppState): AppState {
   }
 
   for (const task of v1.customTasks ?? []) {
-    const habit: UserHabit = {
+    const habit: UnorderedHabit = {
       id: task.id,
       title: task.name,
       cadence: task.cadence ?? 'daily',
@@ -122,7 +123,7 @@ export function migrateV1ToV2(v1: V1AppState): AppState {
   return {
     schemaVersion: 2,
     logs,
-    habits,
+    habits: withOrder(habits),
     notificationTime: v1.notificationTime ?? null,
   };
 }

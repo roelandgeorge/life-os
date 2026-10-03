@@ -14,8 +14,10 @@ import { dateKeyFor, type DateKey } from '../core/dates';
 import { isEditable } from '../core/due';
 import {
   canAddCustomHabit,
+  moveHabit as moveHabitPure,
   newCustomHabit,
   newHabitFromCatalog,
+  placeHabit,
   removeHabit as removeHabitPure,
   toggleHabitTick,
   updateHabit as updateHabitPure,
@@ -39,6 +41,8 @@ export type LifeOS = {
   toggleHabit: (id: string, on?: DateKey) => void;
   addHabit: (source: NewHabitSource) => void;
   updateHabit: (id: string, patch: HabitPatch) => void;
+  /** One place up (-1) or down (1) among today's active habits. */
+  moveHabit: (id: string, direction: -1 | 1) => void;
   /** A soft delete — see `core/habits.ts`. */
   removeHabit: (id: string) => void;
   updateNotificationTime: (value: string | null) => void;
@@ -120,16 +124,20 @@ export function useLifeOS(store: Store): LifeOS {
     if ('catalogId' in source) {
       const item = catalogById(source.catalogId);
       if (!item) return;
-      mutateHabits((habits) => [...habits, newHabitFromCatalog(item, crypto.randomUUID(), today)]);
+      mutateHabits((habits) => placeHabit(habits, newHabitFromCatalog(item, crypto.randomUUID(), today)));
       return;
     }
     mutateHabits((habits) =>
-      canAddCustomHabit(habits) ? [...habits, newCustomHabit(crypto.randomUUID(), source, today)] : habits,
+      canAddCustomHabit(habits) ? placeHabit(habits, newCustomHabit(crypto.randomUUID(), source, today)) : habits,
     );
   }
 
   function updateHabit(id: string, patch: HabitPatch) {
     mutateHabits((habits) => updateHabitPure(habits, id, patch));
+  }
+
+  function moveHabit(id: string, direction: -1 | 1) {
+    mutateHabits((habits) => moveHabitPure(habits, id, direction, today));
   }
 
   function removeHabit(id: string) {
@@ -167,7 +175,7 @@ export function useLifeOS(store: Store): LifeOS {
       const order = domainOrderFromSeeds(items);
       const next: AppState = {
         ...prev,
-        habits: [...prev.habits, ...additions],
+        habits: additions.reduce(placeHabit, prev.habits),
         profile: { ...prev.profile, ...(order.length > 0 ? { domainOrder: order } : {}) },
       };
       void store.save(next);
@@ -187,6 +195,7 @@ export function useLifeOS(store: Store): LifeOS {
     toggleHabit,
     addHabit,
     updateHabit,
+    moveHabit,
     removeHabit,
     updateNotificationTime,
     updateProfile,

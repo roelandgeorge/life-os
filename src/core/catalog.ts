@@ -56,7 +56,6 @@ export type Cadence =
   | 'situational'
   | 'once';
 
-export type Effort = 'low' | 'medium' | 'high';
 export type Evidence = 'strong' | 'moderate' | 'anecdotal';
 export type Audience = 'all' | 'male' | 'female';
 
@@ -89,7 +88,13 @@ export type CatalogItem = {
   cadence: Cadence;
   /** 1-5, per-habit adjustable once added; the catalogue value is the default. */
   importance: number;
-  effort: Effort;
+  /**
+   * When in the day this is naturally done or ticked, 0 (on waking) to 100
+   * (last thing before sleep), 50 for anything with no natural moment. Only
+   * seeds where a newly added habit lands in the user's order
+   * (`core/habits.placeHabit`), never the order itself.
+   */
+  dayPosition: number;
   evidence: Evidence;
   note: string;
   audience: Audience;
@@ -138,4 +143,20 @@ export function catalogFor(domain: DomainKey, filter: CatalogFilter = {}): Catal
         item.audience === 'all' || filter.audience === undefined || item.audience === filter.audience,
     )
     .filter((item) => requirementsMet(item, filter));
+}
+
+const EVIDENCE_RANK: Record<Evidence, number> = { strong: 0, moderate: 1, anecdotal: 2 };
+
+/**
+ * The order a domain's catalogue is browsed in: the most important first,
+ * then the better proven, then by id so the order is fully determined. Kept
+ * out of `catalogFor`, which onboarding also reads.
+ */
+export function byImportance(items: readonly CatalogItem[]): CatalogItem[] {
+  return [...items].sort(
+    (a, b) =>
+      b.importance - a.importance ||
+      EVIDENCE_RANK[a.evidence] - EVIDENCE_RANK[b.evidence] ||
+      a.id.localeCompare(b.id),
+  );
 }

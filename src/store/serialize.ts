@@ -11,6 +11,7 @@
 
 import { isDateKey } from '../core/dates';
 import { DOMAIN_KEYS, type DomainKey } from '../core/domains';
+import { withOrder, type UnorderedHabit } from '../core/habits';
 import { isHexColor } from '../core/types';
 import type { AppState, Cadence, DayLog, Profile, UserHabit } from '../core/types';
 import { migrateV1ToV2, V1_DOMAIN_KEYS, type V1AppState, type V1CustomTask, type V1DayLog } from './migrate';
@@ -58,12 +59,12 @@ function parseImportance(v: unknown): number {
 }
 
 /** Malformed habits are dropped rather than rejected: losing 400 days of history over one bad row is a bad trade. */
-function parseHabit(v: unknown): UserHabit | null {
+function parseHabit(v: unknown): UnorderedHabit | null {
   if (!isRecord(v)) return null;
   if (typeof v.id !== 'string' || v.id.length === 0) return null;
   if (typeof v.title !== 'string') return null;
 
-  const habit: UserHabit = {
+  const habit: UnorderedHabit = {
     id: v.id,
     title: v.title.trim().slice(0, MAX_HABIT_TITLE_LENGTH),
     cadence: parseCadence(v.cadence),
@@ -78,12 +79,14 @@ function parseHabit(v: unknown): UserHabit | null {
   if (isHexColor(v.color)) habit.color = v.color;
   if (typeof v.emoji === 'string' && v.emoji.length > 0) habit.emoji = v.emoji;
   if (typeof v.note === 'string' && v.note.length > 0) habit.note = v.note;
+  if (typeof v.order === 'number' && Number.isInteger(v.order)) habit.order = v.order;
+  if (typeof v.pruneKeptOn === 'string' && isDateKey(v.pruneKeptOn)) habit.pruneKeptOn = v.pruneKeptOn;
   return habit;
 }
 
 function parseHabits(v: unknown): UserHabit[] {
   if (!Array.isArray(v)) return [];
-  const out: UserHabit[] = [];
+  const out: UnorderedHabit[] = [];
   const seen = new Set<string>();
   for (const entry of v) {
     const habit = parseHabit(entry);
@@ -91,7 +94,7 @@ function parseHabits(v: unknown): UserHabit[] {
     seen.add(habit.id);
     out.push(habit);
   }
-  return out;
+  return withOrder(out);
 }
 
 function parseDayLogV2(v: unknown, i: number, knownHabitIds: ReadonlySet<string>): DayLog {

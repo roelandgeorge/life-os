@@ -7,6 +7,7 @@
  */
 
 import type { AppState } from '../core/types';
+import { withOrder } from '../core/habits';
 import { migrateV1ToV2, type V1AppState } from './migrate';
 import { deserialize, serialize } from './serialize';
 import type { Store } from './types';
@@ -74,7 +75,17 @@ export class IndexedDBStore implements Store {
     // §1.4 — a record written before schema 2 has no `schemaVersion` field at
     // all. Migrate once, then write the result straight back so this branch
     // is never taken again for this install.
-    if ((raw as { schemaVersion?: unknown }).schemaVersion === 2) return raw as AppState;
+    if ((raw as { schemaVersion?: unknown }).schemaVersion === 2) {
+      // A record written before `UserHabit.order` existed gets its order
+      // once, sorted by moment of the day, and is written back so this
+      // fill never runs again for this install.
+      const stored = raw as AppState;
+      const habits = withOrder(stored.habits);
+      if (habits === stored.habits) return stored;
+      const ordered: AppState = { ...stored, habits };
+      await this.save(ordered);
+      return ordered;
+    }
     const migrated = migrateV1ToV2(raw as V1AppState);
     await this.save(migrated);
     return migrated;

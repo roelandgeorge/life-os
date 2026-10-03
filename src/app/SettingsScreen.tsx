@@ -15,6 +15,7 @@
 import { useRef, useState } from 'react';
 import { disablePush, enablePush, testPush, type PushResult } from './push';
 import { weeklyDigest } from '../core/atRisk';
+import { logCsv } from '../core/exportCsv';
 import type { DateKey } from '../core/dates';
 import { FIGURE_START_NODE, LANDING_NODE, WORK_ON_START_NODE, type Answers } from '../core/onboarding';
 import type { AppState } from '../core/types';
@@ -79,15 +80,14 @@ export function SettingsScreen({
     setTesting(false);
   }
 
+  const lastDate = state.logs[state.logs.length - 1]?.date ?? 'empty';
+
   async function handleExport() {
-    const json = await store.export();
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `life-os-export-${state.logs[state.logs.length - 1]?.date ?? 'empty'}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    download(await store.export(), 'application/json', `life-os-export-${lastDate}.json`);
+  }
+
+  function handleExportCsv() {
+    download(logCsv(state), 'text/csv', `life-os-log-${lastDate}.csv`);
   }
 
   async function handleImportFile(file: File) {
@@ -173,6 +173,7 @@ export function SettingsScreen({
         <SectionHeading>{en['settings.data']}</SectionHeading>
         <div className="row">
           <Button onClick={() => void handleExport()}>{en['settings.export']}</Button>
+          <Button onClick={handleExportCsv}>{en['settings.exportCsv']}</Button>
           <Button onClick={() => fileInput.current?.click()}>{en['settings.import']}</Button>
           <Button variant="danger" onClick={() => void handleReset()}>
             {en['settings.reset']}
@@ -193,6 +194,15 @@ export function SettingsScreen({
       </section>
     </div>
   );
+}
+
+function download(content: string, type: string, filename: string) {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function describe(result: Extract<PushResult, { ok: false }>): string {

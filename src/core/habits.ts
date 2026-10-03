@@ -8,7 +8,7 @@
  */
 
 import { diffDays, type DateKey } from './dates';
-import type { CatalogFilter, CatalogItem, Cadence, Requirement } from './catalog';
+import { catalogById, type CatalogFilter, type CatalogItem, type Cadence, type Requirement } from './catalog';
 import { DOMAINS, getDomain, type DomainKey } from './domains';
 import { completedPeriods, currentPeriod, hitInRange, periodAt } from './periods';
 import type { DayLog, Profile, UserHabit } from './types';
@@ -136,6 +136,112 @@ export function habitDoneThisPeriod(logs: readonly DayLog[], habit: UserHabit, t
 }
 
 // ---------------------------------------------------------------------------
+// Order — Home lists active habits by `UserHabit.order`, one list in the
+// order of the user's day. A new habit is placed by its catalogue
+// `dayPosition`; from then on only the user moves it.
+// ---------------------------------------------------------------------------
+
+/** A habit before it has a place in the list: freshly built, or read from a record written before `order` existed. */
+export type UnorderedHabit = Omit<UserHabit, 'order'> & { order?: number };
+
+/** The catalogue's suggested moment for this habit, or undefined for one the user wrote. */
+export function dayPositionOf(habit: { catalogId?: string }): number | undefined {
+  return habit.catalogId === undefined ? undefined : catalogById(habit.catalogId)?.dayPosition;
+}
+
+/** Active today, in the user's order. Array position breaks a tie, which `withOrder` never leaves. */
+export function activeInOrder(habits: readonly UserHabit[], today: DateKey): UserHabit[] {
+  return habits
+    .map((habit, i) => ({ habit, i }))
+    .filter(({ habit }) => isActiveOn(habit, today))
+    .sort((a, b) => a.habit.order - b.habit.order || a.i - b.i)
+    .map(({ habit }) => habit);
+}
+
+/**
+ * Where a habit with this `dayPosition` goes in `sequence`. The candidates
+ * are the very start and the gap right after each active catalogue habit.
+ * Each is scored by how many of those habits it would leave on the wrong
+ * side of the new one (earlier in the day but after it, or later but before
+ * it), and the lowest score wins, the later gap on a tie. Counting rather
+ * than stopping at the first later habit keeps one habit the user moved far
+ * from its moment from dragging every new addition along with it.
+ *
+ * A written habit has no position: it neither scores a gap nor gets placed
+ * by one. It goes at the end, the one place someone looks for what they
+ * just wrote.
+ */
+function insertionIndex(sequence: readonly UnorderedHabit[], position: number | undefined): number {
+  if (position === undefined) return sequence.length;
+  const positioned = sequence
+    .map((h, i) => ({ i, p: h.removedDate === undefined ? dayPositionOf(h) : undefined }))
+    .filter((x): x is { i: number; p: number } => x.p !== undefined);
+  if (positioned.length === 0) return sequence.length;
+
+  const gaps = [0, ...positioned.map((x) => x.i + 1)];
+  let best = 0;
+  let bestCost = Infinity;
+  for (const gap of gaps) {
+    const cost = positioned.filter((x) => (x.i < gap ? x.p > position : x.p < position)).length;
+    if (cost <= bestCost) {
+      best = gap;
+      bestCost = cost;
+    }
+  }
+  return best;
+}
+
+/**
+ * Gives every habit without a usable `order` one, and leaves the rest in
+ * their relative order. A usable order is an integer no earlier habit in the
+ * array already holds. When every habit has one, the same array comes back,
+ * so a load that changes nothing writes nothing.
+ *
+ * Habits that need placing go in array order, those with a catalogue
+ * `dayPosition` first: a record with no orders at all comes out sorted by
+ * moment of the day, with written habits last.
+ */
+export function withOrder(habits: readonly UnorderedHabit[]): UserHabit[] {
+  const taken = new Set<number>();
+  const placed = new Set<UnorderedHabit>();
+  for (const h of habits) {
+    if (h.order === undefined || !Number.isInteger(h.order) || taken.has(h.order)) continue;
+    taken.add(h.order);
+    placed.add(h);
+  }
+  if (placed.size === habits.length) return habits as UserHabit[];
+
+  const sequence = habits.filter((h) => placed.has(h)).sort((a, b) => (a.order as number) - (b.order as number));
+  const unplaced = habits.filter((h) => !placed.has(h));
+  const positioned = unplaced.filter((h) => dayPositionOf(h) !== undefined);
+  const written = unplaced.filter((h) => dayPositionOf(h) === undefined);
+  for (const h of [...positioned, ...written]) sequence.splice(insertionIndex(sequence, dayPositionOf(h)), 0, h);
+
+  const rank = new Map(sequence.map((h, i) => [h, i]));
+  return habits.map((h) => ({ ...h, order: rank.get(h) as number }));
+}
+
+/** Adds `habit` to the end of the array and gives it its place in the order; every order is dense afterwards. */
+export function placeHabit(habits: readonly UserHabit[], habit: UnorderedHabit): UserHabit[] {
+  const { order: _ignored, ...rest } = habit;
+  return withOrder([...habits, rest]);
+}
+
+/** Swaps a habit with its neighbour among today's active habits. At either end, the same array comes back. */
+export function moveHabit(habits: readonly UserHabit[], id: string, direction: -1 | 1, today: DateKey): UserHabit[] {
+  const active = activeInOrder(habits, today);
+  const i = active.findIndex((h) => h.id === id);
+  const neighbour = active[i + direction];
+  const self = active[i];
+  if (i < 0 || neighbour === undefined || self === undefined) return habits as UserHabit[];
+  return habits.map((h) => {
+    if (h.id === self.id) return { ...h, order: neighbour.order };
+    if (h.id === neighbour.id) return { ...h, order: self.order };
+    return h;
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Colour — a filing label, never a link back to a domain (see README).
 // ---------------------------------------------------------------------------
 
@@ -208,7 +314,8 @@ export function catalogFilterFor(profile: Profile | undefined): CatalogFilter {
   return filter;
 }
 
-export function newHabitFromCatalog(item: CatalogItem, id: string, startDate: DateKey): UserHabit {
+/** Not yet placed: the caller passes it through `placeHabit`. */
+export function newHabitFromCatalog(item: CatalogItem, id: string, startDate: DateKey): UnorderedHabit {
   return {
     id,
     catalogId: item.id,
@@ -245,8 +352,8 @@ export type NewCustomHabitInput = WrittenHabitFields & {
  * habit of your own" field. `color` is left unset: no colour picker is
  * offered here, `emoji` is the one filing mark this form gives instead.
  */
-export function newCustomHabit(id: string, input: NewCustomHabitInput, startDate: DateKey): UserHabit {
-  const habit: UserHabit = {
+export function newCustomHabit(id: string, input: NewCustomHabitInput, startDate: DateKey): UnorderedHabit {
+  const habit: UnorderedHabit = {
     id,
     title: input.title.slice(0, MAX_HABIT_TITLE_LENGTH),
     domain: input.domain,
@@ -307,6 +414,7 @@ export type HabitPatch = {
   emoji?: string | null;
   /** `null` clears back to the catalogue item's own note. */
   note?: string | null;
+  pruneKeptOn?: DateKey;
 };
 
 export function updateHabit(habits: readonly UserHabit[], id: string, patch: HabitPatch): UserHabit[] {
@@ -332,6 +440,7 @@ export function updateHabit(habits: readonly UserHabit[], id: string, patch: Hab
       if (patch.domain === null) delete next.domain;
       else next.domain = patch.domain;
     }
+    if (patch.pruneKeptOn !== undefined) next.pruneKeptOn = patch.pruneKeptOn;
     return next;
   });
 }

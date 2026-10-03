@@ -28,6 +28,7 @@ export function Shell({ justOnboarded }: { justOnboarded?: true }) {
     toggleHabit,
     addHabit,
     updateHabit,
+    moveHabit,
     removeHabit,
     updateNotificationTime,
     completeWorkOnRedo,
@@ -77,6 +78,7 @@ export function Shell({ justOnboarded }: { justOnboarded?: true }) {
             toggleHabit={toggleHabit}
             onAddHabit={addHabit}
             onUpdateHabit={updateHabit}
+            onMoveHabit={moveHabit}
             onRemoveHabit={removeHabit}
             {...(justOnboarded ? { justOnboarded } : {})}
           />

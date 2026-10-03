@@ -11,7 +11,7 @@ fresh session. Decisions from the planning interview live in
 | 2 | Renderer: panels + overlays + variant manifest + placeholders; artwork prompt guide | **Built** — [`phase-2.md`](phase-2.md) |
 | 3 | Dark editorial design system: tokens, type, grain, base components; existing screens converted | **Built** — [`phase-3.md`](phase-3.md) |
 | 4 | Onboarding decision tree + profile + Discover/edit | **Built** — [`phase-4.md`](phase-4.md), onboarding then rebuilt entirely around [`docs/onboarding/`](../onboarding/) (final word: [`07-revisions.md`](../onboarding/07-revisions.md)) |
-| 5 | Home as one ordered day: per-habit order, move up/down, add via domain picker, catalogue by importance, never miss twice, pruning, CSV export | **Planned**: [`phase-5.md`](phase-5.md) |
+| 5 | Home as one ordered day: per-habit order, move up/down, add via domain picker, catalogue by importance, never miss twice, pruning, CSV export | **Built**: [`phase-5.md`](phase-5.md) |
 | 6 | Content layer + gamification: personas, Guide tab, side quests, milestones, badges, XP/level, weekly recap, story card | Not planned |
 | 7 | Release-ready: multi-user push, real artwork, copy pass, PWA/iOS check, docs, tester instructions | Not planned |
 

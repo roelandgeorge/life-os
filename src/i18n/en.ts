@@ -34,13 +34,21 @@ export const en = {
   'main.day.yesterday': 'Yesterday',
   'habits.own': 'Your own habits',
   /** Opens a domain group's own catalogue (docs/onboarding/04-revisions.md §6) — the only route in. */
-  'main.domain.browse': 'Add to {domain}',
+  'main.add': 'Add a habit',
   'habits.streak': '{count}× streak',
   'main.restDay': 'Rest day',
+  'main.recover.daily': 'Missed yesterday.',
+  'main.recover.other': 'Missed last time.',
+  'main.recover.twice': 'Not twice.',
   'main.risk.one': '{name} runs out {when} — that streak is about to break.',
   'main.risk.many': '{count} things are about to lapse — check them below.',
   'main.risk.today': 'today',
   'main.risk.tomorrow': 'tomorrow',
+  'main.prune.text': '{title}: not ticked in {weeks} weeks.',
+  'main.prune.weighs': 'It still counts against the picture.',
+  'main.prune.remove': 'Remove',
+  'main.prune.rewrite': 'Rewrite',
+  'main.prune.keep': 'Keep',
   'main.editingPast': "Filling in {day}. The picture still shows today's standing.",
   'main.fullDay': 'Full day. This is the trajectory.',
   'main.allDone': 'Daily tasks all done',
@@ -77,9 +85,6 @@ export const en = {
   'profile.hair.dark': 'Dark',
   'profile.hair.none': 'None',
 
-  'catalog.effort.low': 'Low effort',
-  'catalog.effort.medium': 'Medium effort',
-  'catalog.effort.high': 'High effort',
 
   'settings.habits': 'Your habits',
   'settings.habits.title.placeholder': 'Habit name',
@@ -92,7 +97,7 @@ export const en = {
   'habits.cadence.everyTwoWeeks': 'Every 2 weeks',
   'habits.cadence.monthly': 'Monthly',
   'settings.habits.remove': 'Remove',
-  'settings.habits.empty': 'No habits yet. Add one from a domain above, or add life domains in Settings.',
+  'settings.habits.empty': 'No habits yet. Tap + below to add one.',
 
   'settings.notifications': 'Daily reminder',
   'settings.notifications.enable': 'Remind me each evening, give or take an hour',
@@ -106,6 +111,7 @@ export const en = {
   'settings.notifications.testing': 'Sending…',
   'settings.data': 'Data',
   'settings.export': 'Export',
+  'settings.exportCsv': 'Export CSV',
   'settings.import': 'Import',
   'settings.reset': 'Reset',
   'settings.reset.confirm': 'Delete all Life OS data on this device? This cannot be undone.',
@@ -121,6 +127,8 @@ export const en = {
   'domainCatalog.back': 'Back',
   'domainCatalog.add': 'Add {title}',
   'domainCatalog.write.open': 'Write your own',
+  'addHabit.title': 'Add a habit',
+  'addHabit.count': '{count} on your list',
   'action.cancel': 'Cancel',
 
   // The habit editor (docs/onboarding/07-revisions.md §3) — an editable row,
@@ -129,6 +137,8 @@ export const en = {
   'habits.edit.note.placeholder': 'One line under it (optional)',
   'habits.edit.emoji': 'Emoji',
   'habits.edit.save': 'Save',
+  'habits.edit.moveUp': 'Move up',
+  'habits.edit.moveDown': 'Move down',
 
   // A habit row's menu — Edit and Remove for every habit, catalogue or not
   // (docs/onboarding/06-revisions.md §2). Remove reuses settings.habits.remove.

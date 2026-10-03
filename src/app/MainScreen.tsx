@@ -1,44 +1,47 @@
 /**
- * §6 screen 1, minimally adapted for §1.7 of docs/plan/phase-1.md: the
- * portrait fills the upper two-thirds; below it the age line, then today's
- * check-ins — the user's own habit list, grouped by domain.
+ * §6 screen 1: the portrait fills the upper two-thirds, below it the age
+ * line, then today's check-ins as one list in the user's own order of the
+ * day (`UserHabit.order`, docs/plan/phase-5.md §5.1). No domain groups: the
+ * title's colour is the only place the domain shows here.
  *
- * Reworked again for the onboarding rebuild (docs/onboarding/04-revisions.md):
- * a domain group's heading is now the only way into that domain's catalogue
- * (§6); a habit row's own menu offers Edit and Remove — every habit, from the
- * catalogue or not (docs/onboarding/06-revisions.md §2, reversing §9) — since
- * the old cross-screen habit editor is gone; and, for the one session right
- * after onboarding, the headline replaces the everyday copy (§6's landing
- * screen, docs/onboarding/01-onboarding-spec.md).
+ * A habit row's own menu offers Edit and Remove for every habit, catalogue
+ * or not (docs/onboarding/06-revisions.md §2), and the editor that opens in
+ * the row moves it up or down. The `+` row at the bottom is the way into the
+ * catalogue: a picker over all ten domains, then that domain's own list
+ * (phase-5.md §5.4). For the one session right after onboarding, the
+ * headline replaces the everyday copy (docs/onboarding/01-onboarding-spec.md).
  *
- * Purely presentational — `Shell` owns the `useLifeOS` hook so History and
+ * Purely presentational: `Shell` owns the `useLifeOS` hook so History and
  * Settings can share the same live state without a second store read.
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { orderedDomains, PANEL_KEYS, type DomainConfig, type DomainKey, type PanelSteps } from '../core/domains';
-import { dailyTasksDone, editableDays, isDueToday, isRestDay, lastHit } from '../core/due';
+import { PANEL_KEYS, type DomainKey, type PanelSteps } from '../core/domains';
+import { dailyTasksDone, editableDays, isDueToday, isRestDay, lastHit, missedOnce } from '../core/due';
 import { fullDayStrip } from '../core/scoring';
 import { MAX_STEP } from '../core/steps';
 import type { AppState, Projection, UserHabit } from '../core/types';
 import { diffDays, type DateKey } from '../core/dates';
-import { en, t, type I18nKey } from '../i18n/en';
+import { en, t } from '../i18n/en';
 import {
+  activeInOrder,
+  cadencePeriodDays,
+  drivesPanel,
   effectiveColor,
   habitStreak,
   habitTitle,
-  isActiveOn,
   isHabitTicked,
   type HabitPatch,
   type WrittenHabitFields,
 } from '../core/habits';
 import { atRiskItems, type RiskItem } from '../core/atRisk';
+import { staleHabits, type StaleItem } from '../core/prune';
 import { Avatar } from '../visual/Avatar';
 import { scene as buildScene } from '../visual/scene';
 import { Celebration } from './Celebration';
 import { catalogById } from '../core/catalog';
 import { HISTORY_DAYS } from './history';
-import { DomainCatalog, HabitEditor } from './DomainCatalog';
+import { DomainCatalog, DomainPicker, HabitEditor } from './DomainCatalog';
 import type { NewHabitSource } from './useLifeOS';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -46,7 +49,6 @@ import { Checkbox } from '../ui/Checkbox';
 import { Chip, ChipRow } from '../ui/Chip';
 import { FullDayStrip } from '../ui/FullDayStrip';
 import { Note } from '../ui/Note';
-import { SectionHeading } from '../ui/SectionHeading';
 import { PencilGlyph, PlusGlyph, TrashGlyph } from '../ui/Glyph';
 
 /** How long the confetti stays up once every box for today is ticked. */
@@ -55,24 +57,6 @@ const CELEBRATION_MS = 3000;
 /** Every panel at its ceiling — the same scene, maximally adherent. */
 const BEST_STEPS: PanelSteps = Object.fromEntries(PANEL_KEYS.map((k) => [k, MAX_STEP])) as PanelSteps;
 
-type Group = { domain: DomainConfig | null; habits: UserHabit[] };
-
-function groupHabits(
-  habits: readonly UserHabit[],
-  today: DateKey,
-  domainOrder: readonly DomainKey[] | undefined,
-): Group[] {
-  const active = habits.filter((h) => isActiveOn(h, today));
-  const groups: Group[] = [];
-  for (const domain of orderedDomains(domainOrder)) {
-    const inDomain = active.filter((h) => h.domain === domain.key);
-    if (inDomain.length > 0) groups.push({ domain, habits: inDomain });
-  }
-  const own = active.filter((h) => h.domain === undefined);
-  if (own.length > 0) groups.push({ domain: null, habits: own });
-  return groups;
-}
-
 export function MainScreen({
   state,
   projection,
@@ -80,6 +64,7 @@ export function MainScreen({
   toggleHabit,
   onAddHabit,
   onUpdateHabit,
+  onMoveHabit,
   onRemoveHabit,
   justOnboarded,
 }: {
@@ -89,12 +74,14 @@ export function MainScreen({
   toggleHabit: (id: string, on?: DateKey) => void;
   onAddHabit: (source: NewHabitSource) => void;
   onUpdateHabit: (id: string, patch: HabitPatch) => void;
+  onMoveHabit: (id: string, direction: -1 | 1) => void;
   onRemoveHabit: (id: string) => void;
   /** Set only for the session right after onboarding, which gets the landing's headline instead of the everyday one. */
   justOnboarded?: true;
 }) {
   const [showBest, setShowBest] = useState(false);
-  const [catalogDomain, setCatalogDomain] = useState<DomainKey | null>(null);
+  // The way into the catalogue: the domain picker, then one domain's own list.
+  const [adding, setAdding] = useState<'picker' | DomainKey | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   // §5.2 — which day the check-ins are writing to. The picture always shows
   // today; filling in a past day changes today's standing, it does not
@@ -103,7 +90,9 @@ export function MainScreen({
   const editingLog = state.logs.find((l) => l.date === editing) ?? null;
   const avatarScene = buildScene(showBest ? BEST_STEPS : projection.preview, state.profile);
   const strip = fullDayStrip(state.logs, state.habits, today, HISTORY_DAYS);
-  const groups = groupHabits(state.habits, today, state.profile?.domainOrder);
+  const habits = activeInOrder(state.habits, today);
+  const stale = staleHabits(state.logs, state.habits, today);
+  const firstStale = stale[0];
 
   const allDone = dailyTasksDone(state.logs, state.habits, today);
   const wasAllDone = useRef(allDone);
@@ -117,14 +106,18 @@ export function MainScreen({
     return () => clearTimeout(timer);
   }, [allDone]);
 
-  if (catalogDomain) {
+  if (adding === 'picker') {
+    return <DomainPicker state={state} today={today} onPick={setAdding} onClose={() => setAdding(null)} />;
+  }
+
+  if (adding) {
     return (
       <DomainCatalog
-        domain={catalogDomain}
+        domain={adding}
         state={state}
         onAddHabit={(catalogId) => onAddHabit({ catalogId })}
         onAddCustom={onAddHabit}
-        onClose={() => setCatalogDomain(null)}
+        onClose={() => setAdding('picker')}
       />
     );
   }
@@ -173,7 +166,22 @@ export function MainScreen({
           <>
             <FullDayStrip strip={strip} />
 
-            <RiskWarning state={state} today={today} />
+            <RiskWarning state={state} today={today} stale={stale} />
+
+            {firstStale && (
+              <PruneSuggestion
+                state={state}
+                item={firstStale}
+                onRemove={() => onRemoveHabit(firstStale.id)}
+                onRewrite={() => {
+                  // A rewrite is a fresh start, so it silences the
+                  // suggestion for a window the same way Keep does.
+                  onUpdateHabit(firstStale.id, { pruneKeptOn: today });
+                  setEditingId(firstStale.id);
+                }}
+                onKeep={() => onUpdateHabit(firstStale.id, { pruneKeptOn: today })}
+              />
+            )}
 
             <DayPicker today={today} editing={editing} onPick={setEditing} />
 
@@ -181,58 +189,55 @@ export function MainScreen({
               <Note className="editing-past">{t('main.editingPast', { day: dayLabel(editing, today) })}</Note>
             )}
 
-            {groups.length === 0 && <Note>{en['settings.habits.empty']}</Note>}
+            {habits.length === 0 && <Note>{en['settings.habits.empty']}</Note>}
 
-            {groups.map(({ domain, habits }) => (
-              <div className="checkins" key={domain?.key ?? 'own'}>
-                <div className="domain-heading-row">
-                  <SectionHeading className={domain ? 'domain-heading' : 'custom-heading'}>
-                    {domain ? en[domain.label as I18nKey] : en['habits.own']}
-                  </SectionHeading>
-                  {domain && (
-                    <Button
-                      small
-                      className="icon-action"
-                      aria-label={t('main.domain.browse', { domain: en[domain.label as I18nKey] })}
-                      onClick={() => setCatalogDomain(domain.key)}
-                    >
-                      <PlusGlyph />
-                    </Button>
-                  )}
-                </div>
-                {habits.map((habit) =>
-                  editingId === habit.id ? (
-                    <HabitEditor
-                      key={habit.id}
-                      initial={editableFields(habit)}
-                      {...(effectiveColor(habit) === undefined ? {} : { color: effectiveColor(habit) as string })}
-                      onCancel={() => setEditingId(null)}
-                      onSave={(input) => {
-                        onUpdateHabit(habit.id, {
-                          title: input.title,
-                          importance: input.importance,
-                          cadence: input.cadence,
-                          emoji: input.emoji ?? null,
-                          note: input.note ?? null,
-                        });
-                        setEditingId(null);
-                      }}
-                    />
-                  ) : (
-                    <HabitRow
-                      key={habit.id}
-                      habit={habit}
-                      state={state}
-                      today={today}
-                      editingLog={editingLog}
-                      onToggle={() => toggleHabit(habit.id, editing)}
-                      onEdit={() => setEditingId(habit.id)}
-                      onRemove={() => onRemoveHabit(habit.id)}
-                    />
-                  ),
-                )}
-              </div>
-            ))}
+            <div className="checkins">
+              {habits.map((habit, i) =>
+                editingId === habit.id ? (
+                  <HabitEditor
+                    key={habit.id}
+                    initial={editableFields(habit)}
+                    {...(effectiveColor(habit) === undefined ? {} : { color: effectiveColor(habit) as string })}
+                    move={{
+                      ...(i > 0 ? { up: () => onMoveHabit(habit.id, -1) } : {}),
+                      ...(i < habits.length - 1 ? { down: () => onMoveHabit(habit.id, 1) } : {}),
+                    }}
+                    onCancel={() => setEditingId(null)}
+                    onSave={(input) => {
+                      onUpdateHabit(habit.id, {
+                        title: input.title,
+                        importance: input.importance,
+                        cadence: input.cadence,
+                        emoji: input.emoji ?? null,
+                        note: input.note ?? null,
+                      });
+                      setEditingId(null);
+                    }}
+                  />
+                ) : (
+                  <HabitRow
+                    key={habit.id}
+                    habit={habit}
+                    state={state}
+                    today={today}
+                    editingLog={editingLog}
+                    onToday={editing === today}
+                    onToggle={() => toggleHabit(habit.id, editing)}
+                    onEdit={() => setEditingId(habit.id)}
+                    onRemove={() => onRemoveHabit(habit.id)}
+                  />
+                ),
+              )}
+
+              <button type="button" className="checkin add-habit" onClick={() => setAdding('picker')}>
+                <span className="checkin-box">
+                  <PlusGlyph />
+                </span>
+                <span className="checkin-main">
+                  <span className="label">{en['main.add']}</span>
+                </span>
+              </button>
+            </div>
           </>
         )}
       </div>
@@ -245,6 +250,7 @@ function HabitRow({
   state,
   today,
   editingLog,
+  onToday,
   onToggle,
   onEdit,
   onRemove,
@@ -253,6 +259,8 @@ function HabitRow({
   state: AppState;
   today: DateKey;
   editingLog: AppState['logs'][number] | null;
+  /** Whether the day picker is on today, the only day "never miss twice" speaks about. */
+  onToday: boolean;
   onToggle: () => void;
   onEdit: () => void;
   onRemove: () => void;
@@ -267,6 +275,9 @@ function HabitRow({
   // nothing anyway.
   const rest = !due && isRestDay(habit, state.logs, today);
   const streak = habitStreak(state.logs, habit, today);
+  // In the slot the streak would use: a missed previous period means the
+  // streak is 0, so nothing is displaced.
+  const recover = onToday && !checked && missedOnce(state.logs, habit, today);
   const color = effectiveColor(habit);
 
   // Two tap targets, not one (docs/onboarding/05-revisions.md §3): the box
@@ -290,7 +301,15 @@ function HabitRow({
             {rest ? en['main.restDay'] : last ? t('main.lastHit', { date: last }) : en['main.neverHit']}
           </span>
         )}
-        {!expanded && due && streak > 1 && <span className="lastHit">{t('habits.streak', { count: streak })}</span>}
+        {!expanded && due && recover && (
+          <span className="lastHit recover">
+            <span>{cadencePeriodDays(habit.cadence) === 1 ? en['main.recover.daily'] : en['main.recover.other']}</span>
+            <span>{en['main.recover.twice']}</span>
+          </span>
+        )}
+        {!expanded && due && !recover && streak > 1 && (
+          <span className="lastHit">{t('habits.streak', { count: streak })}</span>
+        )}
       </button>
 
       {/* On the row's own line, where the streak was: the two actions are
@@ -392,8 +411,12 @@ function DayPicker({
  * screen for days and then drops a step — the only case where the picture
  * alone is not enough feedback in time to act on.
  */
-function RiskWarning({ state, today }: { state: AppState; today: DateKey }) {
-  const risks = atRiskItems(state.logs, state.habits, today);
+function RiskWarning({ state, today, stale }: { state: AppState; today: DateKey; stale: readonly StaleItem[] }) {
+  // A habit already offered for pruning is left out: that this week of an
+  // abandoned habit is about to lapse is noise beside asking whether to keep
+  // it at all. The push digest is unaffected.
+  const silent = new Set(stale.map((s) => s.id));
+  const risks = atRiskItems(state.logs, state.habits, today).filter((r) => !silent.has(r.id));
   if (risks.length === 0) return null;
 
   const first = risks[0] as RiskItem;
@@ -412,4 +435,47 @@ function riskName(state: AppState, risk: RiskItem): string {
 
 function whenText(daysLeft: number): string {
   return daysLeft <= 1 ? en['main.risk.today'] : en['main.risk.tomorrow'];
+}
+
+/**
+ * One habit at a time that has gone silent (`core/prune.ts`), with the three
+ * things worth doing about it. Keep silences it for one more window.
+ */
+function PruneSuggestion({
+  state,
+  item,
+  onRemove,
+  onRewrite,
+  onKeep,
+}: {
+  state: AppState;
+  item: StaleItem;
+  onRemove: () => void;
+  onRewrite: () => void;
+  onKeep: () => void;
+}) {
+  const habit = state.habits.find((h) => h.id === item.id);
+  if (!habit) return null;
+  const weighs = habit.domain !== undefined && drivesPanel(habit.cadence);
+  const weeks = Math.floor(item.silentDays / 7);
+
+  return (
+    <Card className="prune-suggestion">
+      <p>
+        {t('main.prune.text', { title: habitTitle(habit, en['settings.habits.title.placeholder']), weeks })}
+        {weighs && ` ${en['main.prune.weighs']}`}
+      </p>
+      <div className="row">
+        <Button small onClick={onRemove}>
+          {en['main.prune.remove']}
+        </Button>
+        <Button small onClick={onRewrite}>
+          {en['main.prune.rewrite']}
+        </Button>
+        <Button small onClick={onKeep}>
+          {en['main.prune.keep']}
+        </Button>
+      </div>
+    </Card>
+  );
 }

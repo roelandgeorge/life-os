@@ -284,24 +284,47 @@
   padding-left: 0;
 }
 
-.domain-heading-row {
+/* The editor's last line: up and down, under the cadence chips and on their
+   left edge. Moving is its own action, saved at once, so it sits apart from
+   save and cancel on the title's line. */
+.checkin.editing .habit-move {
+  width: 100%;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
+  gap: var(--space-3);
 }
 
-.checkins:first-of-type .domain-heading-row {
-  margin-top: 0;
+button.icon-action:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
-.domain-heading-row .domain-heading,
-.domain-heading-row .custom-heading {
-  margin: 0;
+/* The way into the catalogue: a row the shape of every other, with the +
+   where the tick box sits and the label where a title does. Quieter than a
+   habit, since it asks nothing of today. */
+button.checkin.add-habit {
+  width: 100%;
+  min-height: 0;
+  border-style: dashed;
+  color: var(--paper-dim);
+  text-align: left;
 }
 
+/* As wide as a tick box with its default margins plus the box's own
+   padding, so the + centres where every other row's box does and the label
+   starts at a title's x. */
+.add-habit .checkin-box {
+  width: calc(25px + var(--space-2) * 2);
+  justify-content: center;
+}
 
+.add-habit .checkin-main {
+  padding-bottom: 0;
+  cursor: inherit;
+}
+
+.add-habit .label {
+  font-weight: 400;
+}
 
 /* ---- a habit row's own menu (docs/onboarding/04-revisions.md §9) -------- */
 
@@ -616,36 +639,8 @@ button.icon-action {
 /* ---- a domain's own catalogue (docs/onboarding/04-revisions.md §6-§9) --- */
 
 /* A catalogue row is a `.checkin`, the same shape Home uses
-   (docs/onboarding/05-revisions.md §4) — only the add button and the effort
-   marker differ from a habit row, and both sit where Home's own controls do. */
-
-.effort-marker {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  flex: none;
-}
-
-.effort-bar {
-  display: block;
-  width: 4px;
-  background: var(--rule);
-  border-radius: 1px;
-}
-
-.effort-bar:nth-child(1) {
-  height: 6px;
-}
-.effort-bar:nth-child(2) {
-  height: 10px;
-}
-.effort-bar:nth-child(3) {
-  height: 14px;
-}
-
-.effort-bar.filled {
-  background: var(--bronze);
-}
+   (docs/onboarding/05-revisions.md §4): only the add button differs from a
+   habit row, and it sits where Home's checkbox does. */
 
 .write-habit-open {
   display: block;
@@ -700,6 +695,13 @@ button.icon-action {
   margin: 0 0 var(--space-3);
 }
 
+/* Export, Export CSV, Import and Reset on one line at phone width: at the
+   default row gap Reset wrapped onto a line of its own and read as a
+   separate warning. */
+.settings-screen .row {
+  gap: var(--space-2);
+}
+
 .notification-row {
   display: flex;
   align-items: center;
@@ -713,6 +715,16 @@ button.icon-action {
   flex-direction: column;
   gap: var(--space-2);
   margin-top: var(--space-3);
+}
+
+/* One domain per row in the picker: the name in its own colour, and how many
+   of its habits are already on the list. The whole row is the tap target. */
+button.checkin.domain-pick {
+  width: 100%;
+  min-height: var(--tap);
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
 }
 
 /* ---- layered artwork ---------------------------------------------------- */
@@ -773,37 +785,24 @@ button.icon-action {
   text-align: center;
 }
 
-/* ---- user-added habits --------------------------------------------------- */
-
-.custom-heading {
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--paper-dim);
-  border: none;
-  padding: 0;
-  margin: 0 0 var(--space-2);
-}
-
-.domain-heading {
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--paper-dim);
-  border: none;
-  padding: 0;
-  margin: var(--space-4) 0 var(--space-2);
-}
-
-.checkins:first-of-type .domain-heading {
-  margin-top: 0;
-}
-
 /* The rest day is the plan working, so it says so in the same quiet voice as
    a last-hit date rather than shouting about it. */
 .checkin .lastHit.rest {
   font-style: italic;
   opacity: 0.9;
+}
+
+/* Never miss twice: the one row state worth the accent, since it is the
+   moment a run can still be saved. */
+.checkin .lastHit.recover {
+  color: var(--bronze);
+  text-align: right;
+}
+
+/* One sentence per line rather than both on one: on a single line the
+   marker squeezed a long title to three. */
+.checkin .lastHit.recover span {
+  display: block;
 }
 
 .risk-warning {
@@ -814,6 +813,26 @@ button.icon-action {
   color: var(--bronze);
   font-size: var(--text-sm);
   line-height: var(--leading-base);
+}
+
+/* Quieter than the lapse warning above it: a question about the list, not
+   a deadline. */
+.prune-suggestion {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3);
+  border: var(--hairline) solid var(--rule-strong);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+}
+
+.prune-suggestion p {
+  margin: 0;
+}
+
+.prune-suggestion .row {
+  gap: var(--space-2);
+  margin-top: var(--space-2);
 }
 
 /* Full-screen, not scoped to .main-screen's own scroll box — the payoff

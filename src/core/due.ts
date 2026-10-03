@@ -8,7 +8,8 @@
  */
 
 import { addDays, diffDays, rangeDates, type DateKey } from './dates';
-import { WEEKLY_PERIOD_DAYS, cadencePeriodDays, isActiveOn } from './habits';
+import { WEEKLY_PERIOD_DAYS, cadencePeriodDays, habitHitDates, isActiveOn } from './habits';
+import { completedPeriods, currentPeriod, hitInRange, periodAt } from './periods';
 import type { DayLog, UserHabit } from './types';
 
 /** Most recent date strictly before `before` on which `habitId` was ticked. */
@@ -82,4 +83,29 @@ export function dailyTasksDone(logs: readonly DayLog[], habits: readonly UserHab
   if (due.length === 0) return false;
 
   return due.every((h) => log.ticks[h.id] === true);
+}
+
+/**
+ * "Never miss twice": the previous period closed without a hit, the one
+ * before it was hit (or the habit is too young to have one), and the
+ * current period has no hit yet. Only for cadences under a week. Weekly and
+ * longer already get `atRisk.ts`'s warning, before the period closes.
+ *
+ * After two misses in a row this is false again on purpose: the nudge is
+ * for the one moment it can still keep a run alive, and a habit that keeps
+ * missing is `prune.ts`'s to raise. Periods are the anchored ones the panel
+ * engine uses, so the marker agrees with what the picture does.
+ */
+export function missedOnce(logs: readonly DayLog[], habit: UserHabit, today: DateKey): boolean {
+  const period = cadencePeriodDays(habit.cadence);
+  if (period === null || period >= WEEKLY_PERIOD_DAYS) return false;
+  if (!isActiveOn(habit, today)) return false;
+
+  const current = completedPeriods(habit.startDate, today, period);
+  if (current < 1) return false;
+
+  const hits = habitHitDates(logs, habit.id);
+  if (hitInRange(hits, currentPeriod(habit.startDate, today, period), today)) return false;
+  if (hitInRange(hits, periodAt(habit.startDate, current - 1, period))) return false;
+  return current < 2 || hitInRange(hits, periodAt(habit.startDate, current - 2, period));
 }

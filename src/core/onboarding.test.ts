@@ -344,6 +344,20 @@ describe('buildInitialState', () => {
     expect(state.profile?.domainOrder).toEqual(['sleep', 'finance']);
   });
 
+  it('numbers the seeded habits 0..n-1 in order of the day', () => {
+    let answers: Answers = chooseById('Q1', {}, 'money').answers;
+    answers = chooseById('Q2M', answers, 'Debt.').answers;
+    answers = choose('QMORE', answers, 0).answers;
+    answers = chooseById('Q1', answers, 'body').answers;
+    answers = chooseById('Q2B', answers, 'Tired all the time.').answers;
+
+    let n = 0;
+    const state = buildInitialState(answers, () => `id-${n++}`, TODAY);
+    const inOrder = [...state.habits].sort((a, b) => a.order - b.order).map((h) => h.catalogId);
+    expect(inOrder).toEqual(['H001', 'H136', 'H137']);
+    expect(state.habits.map((h) => h.order).sort()).toEqual([0, 1, 2]);
+  });
+
   it('drops a landing whose seed no longer exists in the catalogue rather than throwing', () => {
     const answers: Answers = { landings: ['NOT-A-LANDING'] };
     expect(() => buildInitialState(answers, () => 'id', TODAY)).not.toThrow();
