@@ -15,6 +15,9 @@ fresh session. Decisions from the planning interview live in
 | 6 | Content layer + gamification: personas, Guide tab, side quests, milestones, badges, XP/level, weekly recap, story card | Not planned |
 | 7 | Release-ready: multi-user push, real artwork, copy pass, PWA/iOS check, docs, tester instructions | Not planned |
 
+Known defects and gaps, as opposed to unbuilt phases, live in
+[`../open-punten.md`](../open-punten.md).
+
 ## How to continue
 
 - **Build a planned phase**: new session, Sonnet — "Read CLAUDE.md and
