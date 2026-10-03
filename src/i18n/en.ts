@@ -77,9 +77,6 @@ export const en = {
   'profile.hair.dark': 'Dark',
   'profile.hair.none': 'None',
 
-  'catalog.effort.low': 'Low effort',
-  'catalog.effort.medium': 'Medium effort',
-  'catalog.effort.high': 'High effort',
 
   'settings.habits': 'Your habits',
   'settings.habits.title.placeholder': 'Habit name',

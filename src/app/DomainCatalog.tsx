@@ -6,9 +6,10 @@
  *
  * A row is the same `.checkin` shape Home uses (docs/onboarding/05-revisions.md
  * §4): the add button where Home puts its checkbox, the title as the tap
- * target that expands the catalogue `note`, an effort marker where Home puts
- * its streak. Cadence, importance and evidence stay out of view entirely
- * (§7, §8). Adding is one tap regardless of whether the row is expanded.
+ * target that expands the catalogue `note`. Cadence, importance and
+ * evidence stay out of view entirely (§7, §8). Rows are listed most
+ * important first (`byImportance`). Adding is one tap regardless of whether
+ * the row is expanded.
  *
  * A habit already on the list is not shown at all, so this screen is only
  * ever what is still on offer. "Write your own" at the bottom opens
@@ -17,7 +18,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { catalogFor, type Cadence, type CatalogItem, type Effort } from '../core/catalog';
+import { byImportance, catalogFor, type Cadence, type CatalogItem } from '../core/catalog';
 import { getDomain, type DomainKey } from '../core/domains';
 import {
   CADENCE_CHOICES,
@@ -37,24 +38,6 @@ import { Card } from '../ui/Card';
 import { Chip, ChipRow } from '../ui/Chip';
 import { Note } from '../ui/Note';
 import { CheckGlyph, CrossGlyph, PlusGlyph } from '../ui/Glyph';
-
-const EFFORT_LEVEL: Record<Effort, number> = { low: 1, medium: 2, high: 3 };
-const EFFORT_LABEL: Record<Effort, I18nKey> = {
-  low: 'catalog.effort.low',
-  medium: 'catalog.effort.medium',
-  high: 'catalog.effort.high',
-};
-
-function EffortMarker({ effort }: { effort: Effort }) {
-  const level = EFFORT_LEVEL[effort];
-  return (
-    <span className="effort-marker" title={en[EFFORT_LABEL[effort]]} aria-label={en[EFFORT_LABEL[effort]]}>
-      {[1, 2, 3].map((n) => (
-        <span key={n} className={n <= level ? 'effort-bar filled' : 'effort-bar'} />
-      ))}
-    </span>
-  );
-}
 
 /**
  * Editing happens in the row, not in a panel under it
@@ -267,7 +250,6 @@ function CatalogRow({
 
       <button type="button" className="checkin-main" aria-expanded={expanded} onClick={() => setExpanded((v) => !v)}>
         <span className="label">{item.title}</span>
-        <EffortMarker effort={item.effort} />
       </button>
 
       {expanded && item.note && <Note>{item.note}</Note>}
@@ -296,8 +278,10 @@ export function DomainCatalog({
   }
 
   const filter = catalogFilterFor(state.profile);
-  const items = catalogFor(domain, { ...filter, completed: completedCatalogIds(state.habits, state.logs) }).filter(
-    (item) => item.kind === 'habit' && !addedIds.has(item.id),
+  const items = byImportance(
+    catalogFor(domain, { ...filter, completed: completedCatalogIds(state.habits, state.logs) }).filter(
+      (item) => item.kind === 'habit' && !addedIds.has(item.id),
+    ),
   );
 
   return (

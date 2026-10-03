@@ -616,36 +616,8 @@ button.icon-action {
 /* ---- a domain's own catalogue (docs/onboarding/04-revisions.md §6-§9) --- */
 
 /* A catalogue row is a `.checkin`, the same shape Home uses
-   (docs/onboarding/05-revisions.md §4) — only the add button and the effort
-   marker differ from a habit row, and both sit where Home's own controls do. */
-
-.effort-marker {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  flex: none;
-}
-
-.effort-bar {
-  display: block;
-  width: 4px;
-  background: var(--rule);
-  border-radius: 1px;
-}
-
-.effort-bar:nth-child(1) {
-  height: 6px;
-}
-.effort-bar:nth-child(2) {
-  height: 10px;
-}
-.effort-bar:nth-child(3) {
-  height: 14px;
-}
-
-.effort-bar.filled {
-  background: var(--bronze);
-}
+   (docs/onboarding/05-revisions.md §4): only the add button differs from a
+   habit row, and it sits where Home's checkbox does. */
 
 .write-habit-open {
   display: block;

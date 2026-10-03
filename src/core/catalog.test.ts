@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { CATALOG, DOMAIN_KEYS, catalogById, catalogFor } from './catalog';
-import type { Audience, CatalogKind, Cadence, Effort, Evidence } from './catalog';
+import { CATALOG, DOMAIN_KEYS, byImportance, catalogById, catalogFor } from './catalog';
+import type { Audience, CatalogKind, Cadence, Evidence } from './catalog';
 
 const KINDS: readonly CatalogKind[] = ['habit', 'milestone', 'challenge', 'reminder'];
-const EFFORTS: readonly Effort[] = ['low', 'medium', 'high'];
 const EVIDENCE: readonly Evidence[] = ['strong', 'moderate', 'anecdotal'];
 const AUDIENCES: readonly Audience[] = ['all', 'male', 'female'];
 
@@ -20,17 +19,31 @@ describe('the catalogue', () => {
     expect(new Set(CATALOG.map((i) => i.id)).size).toBe(CATALOG.length);
   });
 
-  it('every item has a valid domain, kind, cadence, effort, evidence and audience', () => {
+  it('every item has a valid domain, kind, cadence, evidence and audience', () => {
     for (const item of CATALOG) {
       expect(DOMAIN_KEYS).toContain(item.domain);
       expect(KINDS).toContain(item.kind);
       expect(isValidCadence(item.cadence)).toBe(true);
-      expect(EFFORTS).toContain(item.effort);
       expect(EVIDENCE).toContain(item.evidence);
       expect(AUDIENCES).toContain(item.audience);
       expect(item.importance).toBeGreaterThanOrEqual(1);
       expect(item.importance).toBeLessThanOrEqual(5);
     }
+  });
+
+  it('every item has an integer dayPosition in [0, 100]', () => {
+    for (const item of CATALOG) {
+      expect(Number.isInteger(item.dayPosition)).toBe(true);
+      expect(item.dayPosition).toBeGreaterThanOrEqual(0);
+      expect(item.dayPosition).toBeLessThanOrEqual(100);
+    }
+  });
+
+  // The JSON is taken as a full replacement when it changes, so pin that a
+  // field the app no longer has cannot come back with it unnoticed.
+  it('no item carries an effort key', () => {
+    const withEffort = CATALOG.filter((i) => 'effort' in i).map((i) => i.id);
+    expect(withEffort).toEqual([]);
   });
 
   it('every domain has at least one item', () => {
@@ -94,5 +107,24 @@ describe('the note every row expands to', () => {
   it('no note merely repeats the title', () => {
     const echoes = CATALOG.filter((i) => i.note.trim().toLowerCase() === i.title.trim().toLowerCase());
     expect(echoes.map((i) => i.id)).toEqual([]);
+  });
+});
+
+describe('byImportance', () => {
+  const ids = (domain: (typeof DOMAIN_KEYS)[number]) => byImportance(catalogFor(domain)).map((i) => i.id);
+
+  it('opens nutrition on protein, ahead of supplements', () => {
+    expect(ids('nutrition').slice(0, 3)).toEqual(['H009', 'H011', 'H016']);
+  });
+
+  it('breaks an importance tie on evidence', () => {
+    expect(ids('sleep').slice(0, 3)).toEqual(['H001', 'H003', 'H002']);
+  });
+
+  it('does not reorder its input', () => {
+    const items = catalogFor('sleep');
+    const before = items.map((i) => i.id);
+    byImportance(items);
+    expect(items.map((i) => i.id)).toEqual(before);
   });
 });
