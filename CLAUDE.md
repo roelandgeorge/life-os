@@ -17,9 +17,8 @@ Binary daily checks in, a scene at age +15 out.
    locked in. Check it before assuming a v1 concept (a fixed domain, a
    `CustomTask`) is still how something works — phase 1 already replaced it.
 4. **`docs/open-punten.md`** — what is known to be unfinished or wrong, with
-   how each is known and where the code is. Read it before reporting a bug:
-   the big one is that ticking one box does not move the picture when a panel
-   has two habits, which is most landings on day one.
+   how each is known and where the code is. Read it before reporting a
+   bug.
 
 ## Where the build is
 

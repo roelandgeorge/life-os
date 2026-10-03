@@ -41,8 +41,12 @@ export const PANEL_THRESHOLD = 0.7;
 export type StepOptions = {
   /**
    * Count the period(s) in progress too — the §2.7-style preview: ticking a
-   * box has to move the picture within the same second. Only ever adds a
-   * step, never subtracts: an unfinished period has not been missed yet.
+   * box has to move the picture within the same second. One hit in a
+   * habit's current period is enough for one step, however many habits
+   * feed the panel: the preview is the reward for a tick, not a forecast of
+   * the settled score, which still asks `PANEL_THRESHOLD` of every closing
+   * period. Only ever adds a step, never subtracts: an unfinished period has
+   * not been missed yet.
    */
   includeCurrentPeriod?: boolean;
 };
@@ -136,16 +140,15 @@ function panelStep(
   }
 
   if (includeCurrentPeriod) {
-    const score = weightedScore(
-      relevant,
-      (h) => {
-        if (!isActiveOn(h, today)) return null;
-        const period = cadencePeriodDays(h.cadence);
-        return period === null ? null : currentPeriodOf(h, today, period);
-      },
-      hitsInPeriod,
-    );
-    if (score !== null && score >= PANEL_THRESHOLD) step = clamp(step + 1, 0, MAX_STEP);
+    // Scored per habit rather than as a weighted sum: two equal habits on a
+    // panel would otherwise need both ticks to clear the threshold, so the
+    // first tick of the day would change nothing on screen.
+    const ticked = relevant.some((h) => {
+      if (!isActiveOn(h, today)) return false;
+      const period = cadencePeriodDays(h.cadence);
+      return period !== null && hitsInPeriod(h, currentPeriodOf(h, today, period));
+    });
+    if (ticked) step = clamp(step + 1, 0, MAX_STEP);
   }
 
   return step;

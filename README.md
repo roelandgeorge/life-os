@@ -336,6 +336,16 @@ model" section above, but the departure itself is unchanged: a domain-less
 habit still moves no panel, still gets a streak, still may carry a filing
 colour that nothing reads back.
 
+**The preview is scored per habit, not as a weighted sum.** The settled
+score is unchanged: every closing period still needs 70% of the panel's
+weight. But the preview the picture shows today (`includeCurrentPeriod`)
+adds its one step as soon as any habit feeding the panel has a hit in its
+current period. Scored as a weighted sum, two equal habits on one panel
+needed both ticks to move anything, and 24 landing/panel pairs seed exactly
+that, so on day one the first tick changed nothing on screen. The preview is
+the reward for a tick, the settled score is the judgement, and a day with
+only half ticked still lands its -1 the next morning.
+
 **Home is ordered by the day, not grouped by domain** (§6, and
 `docs/onboarding/04-revisions.md` §6). The spec's main screen and the
 onboarding rebuild both grouped check-ins by domain, and the rebuild made a

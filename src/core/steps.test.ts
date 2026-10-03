@@ -135,3 +135,23 @@ describe('panelSteps — weighting', () => {
     expect(panelSteps(l, [heavy, light], addDays(START, 2)).body).toBe(MAX_STEP);
   });
 });
+
+describe('panelSteps — the preview, per habit', () => {
+  const sleep: UserHabit = { id: 'sleep', title: 'Sleep', domain: 'training', cadence: 'daily', importance: 5, order: 0, startDate: START };
+  const steps: UserHabit = { id: 'steps', title: 'Steps', domain: 'training', cadence: 'daily', importance: 5, order: 1, startDate: START };
+  const today = START;
+  const ticked = (...ids: string[]) => [{ date: today, opened: true, ticks: Object.fromEntries(ids.map((id) => [id, true as const])) }];
+
+  it('one tick of two equal habits moves the picture on day one', () => {
+    expect(panelSteps(ticked('sleep'), [sleep, steps], today, { includeCurrentPeriod: true }).body).toBe(START_STEP + 1);
+  });
+
+  it('a second tick adds no second step', () => {
+    expect(panelSteps(ticked('sleep', 'steps'), [sleep, steps], today, { includeCurrentPeriod: true }).body).toBe(START_STEP + 1);
+  });
+
+  it('the settled score still asks the threshold of a closed day', () => {
+    // Day 0 had one of the two ticked: 50% < 70%, so day 1 opens a step down.
+    expect(panelSteps(ticked('sleep'), [sleep, steps], addDays(today, 1)).body).toBe(START_STEP - 1);
+  });
+});

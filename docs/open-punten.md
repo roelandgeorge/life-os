@@ -11,40 +11,7 @@ Last checked against `main` on 2026-10-03.
 
 ---
 
-## 1. One tick does not move the picture when a panel has two habits
-
-**The app's whole premise is that ticking a box changes the drawing.** On most
-landings, on day one, it does not.
-
-`steps.ts`'s preview scores *every* active habit feeding a panel, whatever its
-cadence, and adds a step only at `PANEL_THRESHOLD` (0.70). Two habits of equal
-weight on one panel score 0.50 for one tick. Nothing moves until both are
-ticked.
-
-Measured in a browser on landing Z, whose two seeds (H001, H020) both feed
-`body` at importance 5:
-
-| | artwork |
-|---|---|
-| nothing ticked | `body3.png` |
-| one ticked | `body3.png` |
-| both ticked | `body4.png` |
-
-It is not six landings. Counting every landing where no single seed clears the
-threshold on its own panel gives **24 landing/panel pairs**, including Z, B3,
-B3n, B5, B6, H1, H3, H6, H8, P2n, P3y, N3, Y1, Y2, Y3, Y4, M1, M2, M3s, M4,
-M5e, M5s. `docs/onboarding/03-decisions.md` records this as "six landings",
-which counted only pairs of *daily* habits against the settled score. The
-preview the user actually sees has the wider problem.
-
-Directions, none chosen: lower the threshold, seed one habit per panel, or
-score the preview per habit rather than as a weighted sum. CLAUDE.md's
-standing rule is that the engine is not to be changed to paper over a
-content problem, so this is a decision to take deliberately, not a patch.
-
-`src/core/steps.ts`, `src/content/landings.json`.
-
-## 2. Push is single-user
+## 1. Push is single-user
 
 `api/subscribe.ts` writes the one subscription to a fixed blob path
 (`SUBSCRIPTION_PATH`), so a second person switching the reminder on silently
@@ -56,7 +23,7 @@ walks them all.
 
 `api/subscribe.ts`, `api/cron.ts`.
 
-## 3. Two of the five panels have no artwork
+## 2. Two of the five panels have no artwork
 
 `public/avatar/` holds 15 drawings: `body`, `network` and `wealth`, five
 states each. `head` and `partner` have none, and `public/avatar/you/` does not
@@ -73,7 +40,7 @@ Two consequences:
 `npm run slice` cuts a contact sheet, `npm run manifest` regenerates
 `src/content/artwork.json`.
 
-## 4. History does not show which day a panel was missed
+## 3. History does not show which day a panel was missed
 
 It shows a step track per panel and a per-period strip per habit. Neither
 answers "which day did this drop, and what did I miss". Known since the
@@ -81,7 +48,7 @@ step model replaced the EWMA engine.
 
 `src/app/HistoryScreen.tsx`.
 
-## 5. Catalogue thin spots
+## 4. Catalogue thin spots
 
 Recorded in `docs/onboarding/02-catalog-changes.md` and
 `docs/plan/phase-4.md`, repeated here so they are not rediscovered:
@@ -97,7 +64,7 @@ Recorded in `docs/onboarding/02-catalog-changes.md` and
 So `network` and `partner` move slowly for those users. Filling it is content
 work, not code.
 
-## 6. Not yet tested on a real phone keyboard
+## 5. Not yet tested on a real phone keyboard
 
 The in-row habit editor (`docs/onboarding/07-revisions.md` §3) was verified
 headless at 390x844. What a headless browser cannot show:
