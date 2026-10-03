@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { dailyTasksDone, editableDays, isDueToday, isEditable, isRestDay, lastHit } from './due';
+import { addDays } from './dates';
+import { dailyTasksDone, editableDays, isDueToday, isEditable, isRestDay, lastHit, missedOnce } from './due';
 import type { DayLog, UserHabit } from './types';
 
 const START = '2026-01-01';
@@ -161,5 +162,46 @@ describe('dailyTasksDone', () => {
     const removed: UserHabit = { ...SLEEP, id: 'gone', removedDate: '2026-01-10' };
     const logs = [log('2026-01-10', ['sleep'])];
     expect(dailyTasksDone(logs, [SLEEP, removed], '2026-01-10')).toBe(true);
+  });
+});
+
+describe('missedOnce', () => {
+  const READ: UserHabit = { id: 'read', title: 'Read', cadence: 'daily', importance: 3, order: 0, startDate: START };
+  const EVERY_OTHER: UserHabit = { ...READ, id: 'gym', cadence: { everyDays: 2 } };
+  const WEEKLY: UserHabit = { ...READ, id: 'call', cadence: 'weekly' };
+  const log = (n: number, ...ids: string[]): DayLog => ({
+    date: addDays(START, n),
+    opened: true,
+    ticks: Object.fromEntries(ids.map((id) => [id, true as const])),
+  });
+
+  it('a daily habit missed yesterday after a hit the day before', () => {
+    expect(missedOnce([log(0, 'read'), log(1, 'read'), log(2)], READ, addDays(START, 3))).toBe(true);
+  });
+
+  it('goes away once today is ticked', () => {
+    expect(missedOnce([log(1, 'read'), log(2), log(3, 'read')], READ, addDays(START, 3))).toBe(false);
+  });
+
+  it('is silent after two misses in a row', () => {
+    expect(missedOnce([log(0, 'read'), log(1), log(2)], READ, addDays(START, 3))).toBe(false);
+  });
+
+  it('a habit one day old that missed its first day', () => {
+    expect(missedOnce([log(0)], READ, addDays(START, 1))).toBe(true);
+  });
+
+  it('nothing on a habit’s first day', () => {
+    expect(missedOnce([], READ, START)).toBe(false);
+  });
+
+  it('every other day, by its own two-day periods', () => {
+    // Periods: days 0-1 hit, 2-3 missed, today is day 4.
+    expect(missedOnce([log(0, 'gym'), log(2), log(3)], EVERY_OTHER, addDays(START, 4))).toBe(true);
+    expect(missedOnce([log(0, 'gym'), log(2, 'gym')], EVERY_OTHER, addDays(START, 4))).toBe(false);
+  });
+
+  it('never for weekly and longer, which atRisk covers', () => {
+    expect(missedOnce([log(0, 'call')], WEEKLY, addDays(START, 14))).toBe(false);
   });
 });

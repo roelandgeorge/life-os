@@ -785,6 +785,19 @@ button.checkin.domain-pick {
   opacity: 0.9;
 }
 
+/* Never miss twice: the one row state worth the accent, since it is the
+   moment a run can still be saved. */
+.checkin .lastHit.recover {
+  color: var(--bronze);
+  text-align: right;
+}
+
+/* One sentence per line rather than both on one: on a single line the
+   marker squeezed a long title to three. */
+.checkin .lastHit.recover span {
+  display: block;
+}
+
 .risk-warning {
   margin: var(--space-4) 0 0;
   padding: var(--space-2) var(--space-3);

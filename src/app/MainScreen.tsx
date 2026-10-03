@@ -17,7 +17,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { PANEL_KEYS, type DomainKey, type PanelSteps } from '../core/domains';
-import { dailyTasksDone, editableDays, isDueToday, isRestDay, lastHit } from '../core/due';
+import { dailyTasksDone, editableDays, isDueToday, isRestDay, lastHit, missedOnce } from '../core/due';
 import { fullDayStrip } from '../core/scoring';
 import { MAX_STEP } from '../core/steps';
 import type { AppState, Projection, UserHabit } from '../core/types';
@@ -25,6 +25,7 @@ import { diffDays, type DateKey } from '../core/dates';
 import { en, t } from '../i18n/en';
 import {
   activeInOrder,
+  cadencePeriodDays,
   effectiveColor,
   habitStreak,
   habitTitle,
@@ -201,6 +202,7 @@ export function MainScreen({
                     state={state}
                     today={today}
                     editingLog={editingLog}
+                    onToday={editing === today}
                     onToggle={() => toggleHabit(habit.id, editing)}
                     onEdit={() => setEditingId(habit.id)}
                     onRemove={() => onRemoveHabit(habit.id)}
@@ -229,6 +231,7 @@ function HabitRow({
   state,
   today,
   editingLog,
+  onToday,
   onToggle,
   onEdit,
   onRemove,
@@ -237,6 +240,8 @@ function HabitRow({
   state: AppState;
   today: DateKey;
   editingLog: AppState['logs'][number] | null;
+  /** Whether the day picker is on today, the only day "never miss twice" speaks about. */
+  onToday: boolean;
   onToggle: () => void;
   onEdit: () => void;
   onRemove: () => void;
@@ -251,6 +256,9 @@ function HabitRow({
   // nothing anyway.
   const rest = !due && isRestDay(habit, state.logs, today);
   const streak = habitStreak(state.logs, habit, today);
+  // In the slot the streak would use: a missed previous period means the
+  // streak is 0, so nothing is displaced.
+  const recover = onToday && !checked && missedOnce(state.logs, habit, today);
   const color = effectiveColor(habit);
 
   // Two tap targets, not one (docs/onboarding/05-revisions.md §3): the box
@@ -274,7 +282,15 @@ function HabitRow({
             {rest ? en['main.restDay'] : last ? t('main.lastHit', { date: last }) : en['main.neverHit']}
           </span>
         )}
-        {!expanded && due && streak > 1 && <span className="lastHit">{t('habits.streak', { count: streak })}</span>}
+        {!expanded && due && recover && (
+          <span className="lastHit recover">
+            <span>{cadencePeriodDays(habit.cadence) === 1 ? en['main.recover.daily'] : en['main.recover.other']}</span>
+            <span>{en['main.recover.twice']}</span>
+          </span>
+        )}
+        {!expanded && due && !recover && streak > 1 && (
+          <span className="lastHit">{t('habits.streak', { count: streak })}</span>
+        )}
       </button>
 
       {/* On the row's own line, where the streak was: the two actions are
