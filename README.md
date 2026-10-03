@@ -58,7 +58,8 @@ what feeds it.
 **A catalogue, not a fixed list.** `docs/habits.csv` — 123 Dutch items —
 was translated and tagged once (`scripts/import-catalog.mjs`) into
 `src/content/catalog.json`, read through `core/catalog.ts`. Each item
-carries a domain, cadence, importance (1–5), effort, evidence and — for
+carries a domain, cadence, importance (1–5), evidence, a `dayPosition`
+(0 on waking to 100 before sleep, see "Home" below) and — for
 partner/family content — an `audience`/`requires` filter. The CSV is now
 archive; the JSON is what ships. The onboarding rebuild
 (`docs/onboarding/02-catalog-changes.md`) replaced that JSON wholesale with
@@ -248,16 +249,15 @@ out. Everything in the middle.") and a count line instead of the everyday
 "This is future you.", gone the moment the app reloads (`App.tsx`'s
 `JustOnboarded`, session-only, never written to disk). `05-revisions.md` §4
 removed the row of unseeded suggestions that used to sit under it: those
-items are in their own domain's catalogue already, so the plus on a domain
-group is the single way to add anything.
+items are in their own domain's catalogue already, so the catalogue is the
+single way to add anything.
 
-**The catalogue only opens from a domain's own group on Home** — a domain
-never chosen has no group there and so no way in (§6), which is deliberate:
-reaching an off domain means running "what you work on" again.
-`app/DomainCatalog.tsx` replaces the old cross-domain Discover screen; a row
-collapses to its title and an effort marker, expanding on tap to the
-catalogue's own `note` and nothing else (§7, §8) — no cadence, importance or
-evidence line. Its "Write your own" form always carries the domain it was
+**The catalogue opens from Home's `+` row**, through a picker of all ten
+domains (phase 5, see "Home" below, reversing §6's "only from a domain's own
+group"). `app/DomainCatalog.tsx` replaces the old cross-domain Discover
+screen; a row collapses to its title alone, expanding on tap to the
+catalogue's own `note` and nothing else (§7, §8) — no cadence, importance,
+evidence or effort line. Its "Write your own" form always carries the domain it was
 opened from, so a self-written habit is no longer domain-less by default,
 and offers three importance choices (Important/Medium/Not important, storing
 5/3/1) instead of a free number, a cadence, and an optional filing emoji in
@@ -276,6 +276,53 @@ behind it. Keeping it out of onboarding also keeps it honest: a persona must
 never influence which habits get picked, or two different things would be
 deciding the same thing.
 
+## Home
+
+Phase 5 (`docs/plan/phase-5.md`) made Home one list in the order of the
+user's own day.
+
+**One list, the user's order.** `UserHabit.order` is required, unique and
+dense. Home lists today's active habits by it (`core/habits.activeInOrder`)
+with no domain groups: the title's colour is the only place the domain
+shows. A habit not due today stays in its place, dimmed, because moving it
+would break the order of the day.
+
+**Seeded by the moment of the day, then the user's.** Every catalogue item
+has a `dayPosition`, 0 (on waking) to 100 (last thing before sleep), 50 for
+anything with no natural moment. A new catalogue habit goes where it breaks
+the fewest of those positions among the habits already on the list
+(`placeHabit`), so one habit the user moved far from its moment does not
+drag every later addition along with it. A written habit goes at the end.
+Onboarding numbers its seeds the same way, and a record written before
+`order` existed is sorted by `dayPosition` once, on load or import
+(`withOrder`), then written back. After that only the user moves anything:
+the in-row editor has up and down, saved at once and kept on Cancel.
+
+**The way in is `+`.** A row at the bottom of Home opens `DomainPicker`: all
+ten domains, the ones with habits on the list first (in
+`Profile.domainOrder`) with a count. Picking one opens its catalogue, listed
+most important first, then best proven (`byImportance`). The effort marker
+and `CatalogItem.effort` are gone: effort was not something anyone picked a
+habit by.
+
+**Never miss twice.** A daily or every-other-day habit whose previous
+period closed without a tick, after one that was hit, says "Missed
+yesterday. Not twice." in its streak's slot, today only, until ticked
+(`core/due.missedOnce`). After a second miss it says nothing more: that is
+the pruning card's to raise. Weekly and longer keep the lapse warning below.
+
+**Pruning.** A periodic habit with no tick for two periods, never under four
+weeks, is offered on Home for Remove, Rewrite or Keep (`core/prune.ts`).
+The reason is the picture: an abandoned habit still adds its importance to
+its panel every time its period closes. Keep and Rewrite set
+`UserHabit.pruneKeptOn`, which silences it for one more window. A habit on
+offer is left out of the lapse warning on Home.
+
+**CSV export.** Settings → Export CSV writes `life-os-log-<date>.csv`
+(`core/exportCsv.ts`): one row per calendar day per active habit, the habit's
+attributes on every row, gap days included as `opened = 0`, so it loads into
+Power BI as a single fact table. The JSON export is still the backup.
+
 ## Departures from the spec
 
 This section documents what v1 changed from `life-os-spec.md`. Where a
@@ -286,6 +333,14 @@ is now `core/habits.ts`, `DomainTicks`/`DayLog.customTicks` are now one
 model" section above, but the departure itself is unchanged: a domain-less
 habit still moves no panel, still gets a streak, still may carry a filing
 colour that nothing reads back.
+
+**Home is ordered by the day, not grouped by domain** (§6, and
+`docs/onboarding/04-revisions.md` §6). The spec's main screen and the
+onboarding rebuild both grouped check-ins by domain, and the rebuild made a
+domain's group the only way into its catalogue. Phase 5 replaced both: a
+person goes through a day in order, not by domain, so Home follows the day
+and the catalogue is reached through `+` and a picker over every domain.
+"Add life domains" in Settings stays as the guided route.
 
 **Discrete artwork states replace the continuous parameter system** (§4).
 The spec ruled out sprite sets and required every parameter to render at any
@@ -558,7 +613,9 @@ src/core/      the model — no DOM, no clock, no storage
   domains.ts     the 10 domains and the 5 panels they feed (§1.2)
   habits.ts      cadence/streak/CRUD helpers for UserHabit (§1.5, §1.6)
   steps.ts       the weighted panel engine (§1.5)
-  due.ts         "is this habit due today"
+  due.ts         "is this habit due today", and missedOnce (never miss twice)
+  prune.ts       habits gone silent, offered for removal
+  exportCsv.ts   the log as one flat CSV table
   atRisk.ts      the lapse warning + the digest sent to the server
   projection.ts  AppState + a date -> what the screen needs
   scoring.ts     Full Day + log bookkeeping (§5)
@@ -579,10 +636,10 @@ src/app/       the shell: useLifeOS is the one place touching Store and clock;
                every screen takes state as props. Onboarding is a plain
                (nodeId, Answers) renderer over the tree, run three ways —
                the full Q1-to-LAND path, and Settings' two redos between a
-               different (start, terminal) node pair each; DomainCatalog is
-               a single domain's own catalogue, opened from that domain's
-               group on Home, sharing its WriteHabitForm with MainScreen's
-               own habit-row edit
+               different (start, terminal) node pair each; DomainCatalog
+               holds DomainPicker (Home's + row), one domain's own
+               catalogue, and HabitEditor, shared with MainScreen's own
+               habit-row edit
 src/i18n/      every fixed user-facing string, flat key map, English only —
                habit titles are data now, not i18n, and so is the tree's own copy
 src/content/   catalog.json (137 items, docs/onboarding/02-catalog-changes.md);

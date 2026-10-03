@@ -91,10 +91,12 @@ work: an optional sort key means a fallback in every sort.
   `order`, then array index. Home and the CSV export both use it.
 - `placeHabit(habits, habit): UserHabit[]`, adds `habit` and gives it an
   `order`:
-  - With a `dayPosition`: it goes directly before the first active habit
-    (in current `order`) whose `dayPosition` is greater. Habits without a
-    `dayPosition` are skipped while searching, they never stop it. If none
-    is greater, it goes at the end.
+  - With a `dayPosition`: the candidates are the very start and the gap
+    right after each active catalogue habit. Each gap is scored by how many
+    of those habits it leaves on the wrong side of the new one, and the
+    lowest score wins, the later gap on a tie. As built, this replaced
+    "directly before the first later habit", which let one habit the user
+    had moved to the top pull every new addition up with it.
   - Without one (a written habit): at the end. That is the one place the
     user will look for something they just wrote, and they can move it.
   - Then every active habit is renumbered 0..n-1 in its new sequence.
@@ -225,7 +227,9 @@ day, H082 automate saving) is 50.
 `.habit-move` row with two icon buttons, up and down.
 
 - Placement: its own line at the bottom of the editing card, under the
-  cadence chips, left edge on the title's x. Not in `.habit-menu`: four
+  cadence chips and on their left edge (as built: the chips already sit on
+  the card's left edge, and a second edge one row below them looked
+  misaligned). Not in `.habit-menu`: four
   icons on the title's first line squeeze the title at 390px, and the title
   is the one thing editing must not move (`07-revisions.md` §3).
 - A button whose move is impossible (up on the first habit, down on the
@@ -359,9 +363,10 @@ picture does.
   running (false), every-other-day with a missed previous period, a habit
   one day old (false), ticked today (false), weekly (false).
 - `MainScreen`'s `HabitRow`: when the picker is on today, the row is not
-  ticked and `missedOnce` holds, the collapsed row shows "Missed yesterday.
-  Not twice." (`main.recover.daily`) for a daily habit, or "Missed last
-  time. Not twice." (`main.recover.other`) otherwise, in the slot where
+  ticked and `missedOnce` holds, the collapsed row shows "Missed yesterday."
+  (`main.recover.daily`) for a daily habit, or "Missed last time."
+  (`main.recover.other`) otherwise, with "Not twice." (`main.recover.twice`)
+  on a second line so a long title is not squeezed, in the slot where
   the streak and "last hit" sit, coloured `--bronze`. It replaces them,
   which costs nothing: a missed previous period means the streak is 0.
 
@@ -410,7 +415,8 @@ only the first stale habit:
   panel (has a domain and `drivesPanel`), a second line: "It still counts
   against the picture."
 - Three small buttons: **Remove** (`onRemoveHabit`), **Rewrite** (opens the
-  in-row editor on that habit via `setEditingId` and scrolls to it),
+  in-row editor on that habit via `setEditingId` and also sets
+  `pruneKeptOn`, since a rewrite is a fresh start),
   **Keep** (`onUpdateHabit(id, { pruneKeptOn: today })`).
 - A stale habit is left out of `RiskWarning` on Home: warning that this
   week of an abandoned habit is about to lapse is noise next to the card
@@ -463,9 +469,9 @@ onto it so it loads without a second file.
   habit's empty `catalog_id`, the `panels` join.
 - Settings: an "Export CSV" button (`settings.exportCsv`) in the data row
   beside Export, downloading `life-os-log-<last log date>.csv` with type
-  `text/csv`, the same Blob and anchor pattern `handleExport` uses. Check at
-  390px that four buttons in that row still fit on one line. If not, let the
-  row wrap rather than shrinking the labels.
+  `text/csv`, the same Blob and anchor pattern `handleExport` uses. As
+  built, the settings row's gap went from `--space-4` to `--space-2`, which
+  keeps all four buttons on one line at 390px.
 
 ## 5.9 Docs
 

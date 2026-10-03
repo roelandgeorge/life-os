@@ -84,9 +84,9 @@ replacing it.
 back by a Settings reorder control — both are gone. It now comes from
 `core/onboarding.domainOrderFromSeeds()`: the order a "what you work on" run's
 seeded habits' domains first appear, repeats dropped. `core/domains.ts`'s
-`orderedDomains()` still reads it the same way to order Home's groups
-(`MainScreen.groupHabits`); changing the order means running "what you work
-on" again, which is the only reorder control there is now.
+`orderedDomains()` reads it to order `DomainPicker`'s rows (Home has no
+domain groups since phase 5); changing the order means running "what you
+work on" again, which is the only reorder control there is now.
 
 **A second review round then trimmed it** (`docs/onboarding/05-revisions.md`,
 now the last word in that folder). The figure is drawn only on the two
@@ -130,7 +130,8 @@ stated a frequency its cadence did not keep. **Importance left the editor
 entirely** (`DEFAULT_IMPORTANCE` for a written habit, the catalogue's value
 otherwise): it is the weight the panel engine reads, which is machinery.
 Row actions sit on the title's first line in `--paper-dim`, remove is a
-trash can, and all five are drawn in `src/ui/Glyph.tsx` rather than typed as
+trash can, and all seven (phase 5 added up and down) are drawn in
+`src/ui/Glyph.tsx` rather than typed as
 `✎`/`✕`/`🗑`. The rule is `button.icon-action`, not `.icon-action` —
 `button.small` outranks a bare class and silently ate `padding: 0`.
 
@@ -183,17 +184,32 @@ Export is still in Settings.
 
 `app/DiscoverScreen.tsx`, `app/ProfileFields.tsx`, `app/HabitPicker.tsx` and
 `src/ui/Field.tsx`/`Select.tsx` are gone — each had zero remaining callers
-once the rebuild landed. `app/DomainCatalog.tsx` replaces Discover: opened
-from a domain's own group on Home, the only route into the catalogue now (a
-domain never chosen has no group and so no way in), a row collapsed to its
-title and an effort marker, its own "Write your own" row shared with
+once the rebuild landed. `app/DomainCatalog.tsx` replaces Discover: a row
+collapsed to its title alone, its own "Write your own" row shared with
 `MainScreen`'s habit-row Edit. Settings holds exactly four things now — the
 two redo buttons, the daily reminder, data — the old habit editor and
 catalogue button gone with it, since a habit is edited from its own row on
 Home and profile fields are onboarding's alone. No rules between sections
 and no heading over the redo buttons, but it keeps its title, and Export,
-Import and Reset share one row (`07-revisions.md` §6). Home itself (§4.8's one-line
-`groupHabits` edit aside) and the gamification layer are still ahead.
+Import and Reset share one row (`07-revisions.md` §6), joined since by
+Export CSV.
+
+**Phase 5 then rebuilt Home** (`docs/plan/phase-5.md`, README's "Home").
+Home is one list in the user's own order of the day, no domain groups:
+`UserHabit.order` is required, unique and dense, seeded from the
+catalogue's new `dayPosition` (0 on waking, 100 before sleep) by
+`core/habits.placeHabit`, filled in once for an old record by `withOrder` at
+the store boundary (IndexedDB load, import, v1 migration), and moved by the
+user with up and down in the in-row editor. Every path that creates a habit
+must go through `placeHabit` or set `order` itself. The catalogue is
+reached from a `+` row at the bottom of Home through `DomainPicker`, all
+ten domains, listed by `byImportance`. `CatalogItem.effort` and its bars are
+gone, and `catalog.test.ts` fails if the key comes back. Home also shows
+"never miss twice" (`core/due.missedOnce`) on a short-cadence row and one
+pruning card (`core/prune.ts`, `UserHabit.pruneKeptOn`), and Settings
+exports the log as a flat CSV (`core/exportCsv.ts`). The gamification layer
+is still ahead, and `phase-5.md` ends with the design note it should start
+from: milestones as details in the picture, not XP.
 
 Live on the user's Vercel deployment, which builds from `main` on GitHub.
 
@@ -251,11 +267,15 @@ index.html, src/main.tsx   entry
 src/core/       the model — pure: no DOM, no clock, no storage
   catalog.ts      the habit catalogue (137 items), read from src/content/catalog.json
   domains.ts      the 10 domains as data: colour, which panel(s) they feed
-  habits.ts       UserHabit helpers: cadence/streak arithmetic, colour, CRUD
+  habits.ts       UserHabit helpers: cadence/streak arithmetic, colour, CRUD,
+                  order (placeHabit, withOrder, moveHabit, activeInOrder)
   steps.ts        the weighted panel engine: 0–4 per panel, recomputed from the log
   periods.ts      period arithmetic, anchored per habit at its own startDate
-  due.ts          due today, rest day, edit window, dailyTasksDone
+  due.ts          due today, rest day, edit window, dailyTasksDone,
+                  missedOnce (never miss twice)
   atRisk.ts       the lapse warning + the id-only digest sent to the server
+  prune.ts        habits gone silent, offered on Home for removal
+  exportCsv.ts    the log as one flat CSV table
   projection.ts   what the screen shows now; scoring.ts: Full Day, log trimming
   types.ts        AppState, DayLog, UserHabit, Profile, Projection
   onboarding.ts   the tree (docs/onboarding/): step()/choose()/chooseDrawing()
@@ -271,14 +291,14 @@ src/app/        history.ts (HISTORY_DAYS + cellsForPeriod — the one window
                 App (onboarding gate), Onboarding (a plain (nodeId, Answers)
                 renderer over the tree, run for the full first pass and for
                 Settings' two redos), Shell (tabs), Main/History/Settings
-                screens, DomainCatalog (one domain's own catalogue, opened
-                from its group on Home — the only route in — sharing its
-                WriteHabitForm with MainScreen's habit-row edit), useLifeOS
+                screens, DomainCatalog (DomainPicker for Home's + row, one
+                domain's own catalogue, and HabitEditor, shared with
+                MainScreen's habit-row edit), useLifeOS
                 (the only bridge to Store + clock — habit CRUD lives here as
                 thin wiring around core/habits.ts), push.ts, warmArtwork.ts,
                 Celebration
 src/ui/         Button, Chip/ChipRow, Checkbox, Card, SectionHeading, Note,
-                FullDayStrip, Glyph (the five drawn row actions) — thin
+                FullDayStrip, Glyph (the seven drawn row actions) — thin
                 components over components.css; tokens.ts
                 (parser + contrast helper), tokens.test.ts, chrome.test.ts
 src/content/    catalog.json (137 items, docs/onboarding/02-catalog-changes.md),
@@ -308,6 +328,7 @@ Tests sit next to the code they cover (`*.test.ts`).
 |---|---|
 | **The user's state** — log, habits (catalogue + self-written), reminder flag | On the device, IndexedDB database `life-os`, object store `state`, key `current`. One record, written whole. Never leaves the phone. |
 | Its shape | `AppState` in `src/core/types.ts`; log capped at 400 days (`MAX_LOG_DAYS`, `core/scoring.ts`); `schemaVersion: 2`, migrated from an older record by `src/store/migrate.ts`. |
+| CSV of the log | Settings → Export CSV writes `life-os-log-<date>.csv` (`core/exportCsv.ts`): one row per day per active habit, gap days as `opened = 0`, for Power BI. Read-only, never imported. |
 | Backups | Settings → Export writes `life-os-export-<date>.json` (envelope with `schemaVersion`, currently 2, in `src/store/types.ts`); Import validates it in `src/store/serialize.ts`, migrating a v1 export on the way in. The only defence against a cleared browser. |
 | **Push subscription** + digest (ids, each habit's own period anchor, last hit, period length — no titles, no log) | Vercel Blob, **private** store, `push/subscription.json` (`SUBSCRIPTION_PATH`, `api/subscribe.ts`). |
 | Secrets and keys | Vercel env vars: `VITE_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET`, `BLOB_READ_WRITE_TOKEN`. Locally only `VITE_VAPID_PUBLIC_KEY` in `.env.local` (gitignored via `*.local`). The private key never goes in the repo. |
@@ -382,8 +403,9 @@ Colour literals live in `src/styles/tokens.css` and nowhere else —
 `src/ui/` only once two different screens use it; everything else stays as
 markup where it is.
 
-A domain's catalogue is reachable only from that domain's own group on
-Home (docs/onboarding/04-revisions.md §6) — a domain the user isn't
-currently working on has no group and so no way in, on purpose. Do not add
-a second, cross-domain way to browse the catalogue; the way back to an
-off domain is running "what you work on" again from Settings.
+The catalogue is reached one way: Home's `+` row, then `DomainPicker` over
+all ten domains, then that domain's own list (docs/plan/phase-5.md §5.4,
+reversing docs/onboarding/04-revisions.md §6, since Home no longer has
+domain groups to hang a route on). Do not add a second way in, such as a
+search across every domain; "Add life domains" in Settings stays the
+guided route.
