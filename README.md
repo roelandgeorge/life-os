@@ -255,9 +255,11 @@ single way to add anything.
 **The catalogue opens from Home's `+` row**, through a picker of all ten
 domains (phase 5, see "Home" below, reversing §6's "only from a domain's own
 group"). `app/DomainCatalog.tsx` replaces the old cross-domain Discover
-screen; a row collapses to its title alone, expanding on tap to the
-catalogue's own `note` and nothing else (§7, §8) — no cadence, importance,
-evidence or effort line. Its "Write your own" form always carries the domain it was
+screen; a row shows its title and, always, the catalogue's own `note` under
+it, since the note is what a choice is made on, and nothing else (§7, §8) —
+no cadence, importance, evidence or effort line. "Write your own" at the
+bottom is an empty field that wakes into the full editor when tapped, so
+the tap itself opens a phone's keyboard. Its "Write your own" form always carries the domain it was
 opened from, so a self-written habit is no longer domain-less by default,
 and offers three importance choices (Important/Medium/Not important, storing
 5/3/1) instead of a free number, a cadence, and an optional filing emoji in

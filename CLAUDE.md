@@ -185,8 +185,10 @@ Export is still in Settings.
 `app/DiscoverScreen.tsx`, `app/ProfileFields.tsx`, `app/HabitPicker.tsx` and
 `src/ui/Field.tsx`/`Select.tsx` are gone — each had zero remaining callers
 once the rebuild landed. `app/DomainCatalog.tsx` replaces Discover: a row
-collapsed to its title alone, its own "Write your own" row shared with
-`MainScreen`'s habit-row Edit. Settings holds exactly four things now — the
+shows its title and its note, always, and "Write your own" is `HabitEditor`
+in `standby`, one real field that wakes on focus (iOS opens the keyboard
+only for a focus inside the tap), the same component as `MainScreen`'s
+habit-row Edit. Settings holds exactly four things now — the
 two redo buttons, the daily reminder, data — the old habit editor and
 catalogue button gone with it, since a habit is edited from its own row on
 Home and profile fields are onboarding's alone. No rules between sections
