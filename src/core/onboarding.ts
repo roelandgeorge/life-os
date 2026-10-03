@@ -71,7 +71,7 @@ export const FIGURE_START_NODE = 'FIG_gender';
 /** The terminal hand-off for a full run and for "Change the figure" — never rendered, see `app/Onboarding.tsx`. */
 export const LANDING_NODE = 'LAND';
 
-type LandingData = { seeds: readonly string[]; offers: readonly string[]; dailyAnchor: string | null };
+type LandingData = { seeds: readonly string[]; dailyAnchor: string | null };
 
 /** `landings.json` carries one non-landing key, `_comment`, alongside the real entries. */
 function isLandingData(v: unknown): v is LandingData {
@@ -211,7 +211,7 @@ function applySets(sets: Readonly<Record<string, boolean>> | undefined, answers:
  * The one place a bare landing id is resolved: it is recorded, then the flow
  * moves straight on without a screen of its own. §5's ordering constraint —
  * seeds are only resolvable once the whole profile is known — is why nothing
- * here reads `landings.json`'s `seeds`/`offers`; that happens in
+ * here reads `landings.json`'s `seeds`; that happens in
  * `resolveSeeds` below, against the finished `Answers`.
  */
 function advanceThroughLandings(id: string, answers: Answers): Advance {
@@ -334,12 +334,11 @@ export function buildInitialState(answers: Answers, newId: () => string, today: 
   return state;
 }
 
-/** Every catalogue habit id `landings.json` can seed or offer — used in tests to check it against `CATALOG`. */
+/** Every catalogue habit id `landings.json` can seed — used in tests to check it against `CATALOG`. */
 export function everyLandingCatalogId(): readonly string[] {
   const ids = new Set<string>();
   for (const landing of Object.values(LANDINGS)) {
     for (const seedId of landing.seeds) ids.add(seedId);
-    for (const offerId of landing.offers) ids.add(offerId);
   }
   return [...ids];
 }

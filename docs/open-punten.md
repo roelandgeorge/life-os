@@ -97,17 +97,7 @@ Recorded in `docs/onboarding/02-catalog-changes.md` and
 So `network` and `partner` move slowly for those users. Filling it is content
 work, not code.
 
-## 6. Two fields are dead and look alive
-
-- `CatalogItem.starter` — the onboarding seeds by landing, not by this flag.
-  It survives because `catalog.json` is taken as a whole file.
-  `catalog.test.ts` only checks that a `starter: true` item is a real entry.
-- `landings.json`'s `offers` — the landing's offers row was removed in
-  `docs/onboarding/05-revisions.md` §4 and the data was left in place.
-
-Check who reads either one before building on it.
-
-## 7. Not yet tested on a real phone keyboard
+## 6. Not yet tested on a real phone keyboard
 
 The in-row habit editor (`docs/onboarding/07-revisions.md` §3) was verified
 headless at 390x844. What a headless browser cannot show:

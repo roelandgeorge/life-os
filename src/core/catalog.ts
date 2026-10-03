@@ -99,8 +99,6 @@ export type CatalogItem = {
   note: string;
   audience: Audience;
   requires: readonly Requirement[];
-  /** Onboarding seed data — see docs/onboarding/03-decisions.md. Unused metadata elsewhere. */
-  starter: boolean;
 };
 
 export const CATALOG: readonly CatalogItem[] = catalogJson as CatalogItem[];

@@ -41,24 +41,15 @@ describe('the catalogue', () => {
 
   // The JSON is taken as a full replacement when it changes, so pin that a
   // field the app no longer has cannot come back with it unnoticed.
-  it('no item carries an effort key', () => {
-    const withEffort = CATALOG.filter((i) => 'effort' in i).map((i) => i.id);
-    expect(withEffort).toEqual([]);
+  it('no item carries a field the app dropped', () => {
+    for (const dropped of ['effort', 'starter']) {
+      expect(CATALOG.filter((i) => dropped in i).map((i) => i.id)).toEqual([]);
+    }
   });
 
   it('every domain has at least one item', () => {
     for (const domain of DOMAIN_KEYS) {
       expect(catalogFor(domain).length).toBeGreaterThan(0);
-    }
-  });
-
-  // `starter` is unused metadata since the onboarding rebuild — the tree in
-  // docs/onboarding/ seeds by landing, not by this flag. The only invariant
-  // left is that it still names a real catalogue item.
-  it('every starter flag marks a real catalogue item', () => {
-    for (const item of CATALOG) {
-      if (!item.starter) continue;
-      expect(catalogById(item.id)).toBe(item);
     }
   });
 
