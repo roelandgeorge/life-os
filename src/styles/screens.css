@@ -284,24 +284,47 @@
   padding-left: 0;
 }
 
-.domain-heading-row {
+/* The editor's last line: up and down, under the cadence chips and on their
+   left edge. Moving is its own action, saved at once, so it sits apart from
+   save and cancel on the title's line. */
+.checkin.editing .habit-move {
+  width: 100%;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
+  gap: var(--space-3);
 }
 
-.checkins:first-of-type .domain-heading-row {
-  margin-top: 0;
+button.icon-action:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
-.domain-heading-row .domain-heading,
-.domain-heading-row .custom-heading {
-  margin: 0;
+/* The way into the catalogue: a row the shape of every other, with the +
+   where the tick box sits and the label where a title does. Quieter than a
+   habit, since it asks nothing of today. */
+button.checkin.add-habit {
+  width: 100%;
+  min-height: 0;
+  border-style: dashed;
+  color: var(--paper-dim);
+  text-align: left;
 }
 
+/* As wide as a tick box with its default margins plus the box's own
+   padding, so the + centres where every other row's box does and the label
+   starts at a title's x. */
+.add-habit .checkin-box {
+  width: calc(25px + var(--space-2) * 2);
+  justify-content: center;
+}
 
+.add-habit .checkin-main {
+  padding-bottom: 0;
+  cursor: inherit;
+}
+
+.add-habit .label {
+  font-weight: 400;
+}
 
 /* ---- a habit row's own menu (docs/onboarding/04-revisions.md §9) -------- */
 
@@ -687,6 +710,16 @@ button.icon-action {
   margin-top: var(--space-3);
 }
 
+/* One domain per row in the picker: the name in its own colour, and how many
+   of its habits are already on the list. The whole row is the tap target. */
+button.checkin.domain-pick {
+  width: 100%;
+  min-height: var(--tap);
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+}
+
 /* ---- layered artwork ---------------------------------------------------- */
 
 .avatar {
@@ -743,32 +776,6 @@ button.icon-action {
   padding: var(--space-5);
   max-width: 360px;
   text-align: center;
-}
-
-/* ---- user-added habits --------------------------------------------------- */
-
-.custom-heading {
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--paper-dim);
-  border: none;
-  padding: 0;
-  margin: 0 0 var(--space-2);
-}
-
-.domain-heading {
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--paper-dim);
-  border: none;
-  padding: 0;
-  margin: var(--space-4) 0 var(--space-2);
-}
-
-.checkins:first-of-type .domain-heading {
-  margin-top: 0;
 }
 
 /* The rest day is the plan working, so it says so in the same quiet voice as

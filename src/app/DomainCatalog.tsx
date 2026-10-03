@@ -1,8 +1,7 @@
 /**
- * A domain's own catalogue (docs/onboarding/04-revisions.md §6), opened from
- * that domain's group on Home — the only route into the catalogue now that
- * cross-domain Discover is gone. A domain the user never turned on has no
- * group on Home and therefore no way in here, which is deliberate.
+ * The way into the catalogue (docs/plan/phase-5.md §5.4): Home's `+` row
+ * opens `DomainPicker`, a list of all ten domains with the ones the user
+ * already works on first, and picking one opens that domain's own catalogue.
  *
  * A row is the same `.checkin` shape Home uses (docs/onboarding/05-revisions.md
  * §4): the add button where Home puts its checkbox, the title as the tap
@@ -19,25 +18,27 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { byImportance, catalogFor, type Cadence, type CatalogItem } from '../core/catalog';
-import { getDomain, type DomainKey } from '../core/domains';
+import { getDomain, orderedDomains, type DomainKey } from '../core/domains';
 import {
   CADENCE_CHOICES,
   canAddCustomHabit,
   DEFAULT_IMPORTANCE,
   catalogFilterFor,
   completedCatalogIds,
+  isActiveOn,
   MAX_HABIT_NOTE_LENGTH,
   MAX_HABIT_TITLE_LENGTH,
   sameCadence,
 } from '../core/habits';
 import type { NewCustomHabitInput, WrittenHabitFields } from '../core/habits';
+import type { DateKey } from '../core/dates';
 import type { AppState } from '../core/types';
 import { en, t, type I18nKey } from '../i18n/en';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Chip, ChipRow } from '../ui/Chip';
 import { Note } from '../ui/Note';
-import { CheckGlyph, CrossGlyph, PlusGlyph } from '../ui/Glyph';
+import { CheckGlyph, ChevronDownGlyph, ChevronUpGlyph, CrossGlyph, PlusGlyph } from '../ui/Glyph';
 
 /**
  * Editing happens in the row, not in a panel under it
@@ -130,12 +131,20 @@ function GrowField({
 export function HabitEditor({
   initial,
   color,
+  move,
   onCancel,
   onSave,
 }: {
   initial?: WrittenHabitFields;
   /** The row's own title colour, so editing it does not repaint it. */
   color?: string;
+  /**
+   * Present when editing a habit already on the list. A direction left out
+   * is a move that cannot happen (the first row up, the last down), drawn
+   * disabled rather than hidden so the row does not shift. A move is saved
+   * at once and is independent of the text: Cancel keeps it.
+   */
+  move?: { up?: () => void; down?: () => void };
   onCancel: () => void;
   onSave: (input: WrittenHabitFields) => void;
 }) {
@@ -143,6 +152,20 @@ export function HabitEditor({
   const [note, setNote] = useState(initial?.note ?? '');
   const [cadence, setCadence] = useState<Cadence>(initial?.cadence ?? 'daily');
   const [emoji, setEmoji] = useState(initial?.emoji ?? '');
+  const moveRow = useRef<HTMLDivElement>(null);
+  const [moves, setMoves] = useState(0);
+
+  // The list re-sorts under the editor on a move. The arrows are the row's
+  // last line, so keeping them in view keeps the finger on them.
+  useEffect(() => {
+    if (moves > 0) moveRow.current?.scrollIntoView({ block: 'nearest' });
+  }, [moves]);
+
+  function moveBy(action: (() => void) | undefined) {
+    if (!action) return;
+    action();
+    setMoves((n) => n + 1);
+  }
 
   function save() {
     const trimmed = title.trim();
@@ -221,6 +244,29 @@ export function HabitEditor({
           </Chip>
         ))}
       </ChipRow>
+
+      {move && (
+        <div className="habit-move" ref={moveRow}>
+          <Button
+            small
+            className="icon-action"
+            aria-label={en['habits.edit.moveUp']}
+            disabled={!move.up}
+            onClick={() => moveBy(move.up)}
+          >
+            <ChevronUpGlyph />
+          </Button>
+          <Button
+            small
+            className="icon-action"
+            aria-label={en['habits.edit.moveDown']}
+            disabled={!move.down}
+            onClick={() => moveBy(move.down)}
+          >
+            <ChevronDownGlyph />
+          </Button>
+        </div>
+      )}
     </Card>
   );
 }
@@ -318,6 +364,53 @@ export function DomainCatalog({
           {en['domainCatalog.write.open']}
         </Button>
       )}
+    </div>
+  );
+}
+
+/**
+ * Every domain, the ones with at least one habit on the list first, each in
+ * `Profile.domainOrder`'s order. A domain the user has never worked on is
+ * here too: this is the one place to start on it from Home.
+ */
+export function DomainPicker({
+  state,
+  today,
+  onPick,
+  onClose,
+}: {
+  state: AppState;
+  today: DateKey;
+  onPick: (domain: DomainKey) => void;
+  onClose: () => void;
+}) {
+  const counts = new Map<DomainKey, number>();
+  for (const h of state.habits) {
+    if (h.domain !== undefined && isActiveOn(h, today)) counts.set(h.domain, (counts.get(h.domain) ?? 0) + 1);
+  }
+  const ordered = orderedDomains(state.profile?.domainOrder);
+  const domains = [...ordered.filter((d) => counts.has(d.key)), ...ordered.filter((d) => !counts.has(d.key))];
+
+  return (
+    <div className="discover-screen domain-picker">
+      <div className="discover-header">
+        <Button onClick={onClose}>{en['domainCatalog.back']}</Button>
+        <h1 className="headline">{en['addHabit.title']}</h1>
+      </div>
+
+      <div className="habit-picker">
+        {domains.map((domain) => {
+          const count = counts.get(domain.key) ?? 0;
+          return (
+            <button key={domain.key} type="button" className="checkin domain-pick" onClick={() => onPick(domain.key)}>
+              <span className="label" style={{ color: domain.color }}>
+                {en[domain.label as I18nKey]}
+              </span>
+              {count > 0 && <span className="lastHit">{t('addHabit.count', { count })}</span>}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -34,7 +34,7 @@ export const en = {
   'main.day.yesterday': 'Yesterday',
   'habits.own': 'Your own habits',
   /** Opens a domain group's own catalogue (docs/onboarding/04-revisions.md §6) — the only route in. */
-  'main.domain.browse': 'Add to {domain}',
+  'main.add': 'Add a habit',
   'habits.streak': '{count}× streak',
   'main.restDay': 'Rest day',
   'main.risk.one': '{name} runs out {when} — that streak is about to break.',
@@ -89,7 +89,7 @@ export const en = {
   'habits.cadence.everyTwoWeeks': 'Every 2 weeks',
   'habits.cadence.monthly': 'Monthly',
   'settings.habits.remove': 'Remove',
-  'settings.habits.empty': 'No habits yet. Add one from a domain above, or add life domains in Settings.',
+  'settings.habits.empty': 'No habits yet. Tap + below to add one.',
 
   'settings.notifications': 'Daily reminder',
   'settings.notifications.enable': 'Remind me each evening, give or take an hour',
@@ -118,6 +118,8 @@ export const en = {
   'domainCatalog.back': 'Back',
   'domainCatalog.add': 'Add {title}',
   'domainCatalog.write.open': 'Write your own',
+  'addHabit.title': 'Add a habit',
+  'addHabit.count': '{count} on your list',
   'action.cancel': 'Cancel',
 
   // The habit editor (docs/onboarding/07-revisions.md §3) — an editable row,
@@ -126,6 +128,8 @@ export const en = {
   'habits.edit.note.placeholder': 'One line under it (optional)',
   'habits.edit.emoji': 'Emoji',
   'habits.edit.save': 'Save',
+  'habits.edit.moveUp': 'Move up',
+  'habits.edit.moveDown': 'Move down',
 
   // A habit row's menu — Edit and Remove for every habit, catalogue or not
   // (docs/onboarding/06-revisions.md §2). Remove reuses settings.habits.remove.
