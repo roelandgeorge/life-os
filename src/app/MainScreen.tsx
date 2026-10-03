@@ -26,6 +26,7 @@ import { en, t } from '../i18n/en';
 import {
   activeInOrder,
   cadencePeriodDays,
+  drivesPanel,
   effectiveColor,
   habitStreak,
   habitTitle,
@@ -34,6 +35,7 @@ import {
   type WrittenHabitFields,
 } from '../core/habits';
 import { atRiskItems, type RiskItem } from '../core/atRisk';
+import { staleHabits, type StaleItem } from '../core/prune';
 import { Avatar } from '../visual/Avatar';
 import { scene as buildScene } from '../visual/scene';
 import { Celebration } from './Celebration';
@@ -89,6 +91,8 @@ export function MainScreen({
   const avatarScene = buildScene(showBest ? BEST_STEPS : projection.preview, state.profile);
   const strip = fullDayStrip(state.logs, state.habits, today, HISTORY_DAYS);
   const habits = activeInOrder(state.habits, today);
+  const stale = staleHabits(state.logs, state.habits, today);
+  const firstStale = stale[0];
 
   const allDone = dailyTasksDone(state.logs, state.habits, today);
   const wasAllDone = useRef(allDone);
@@ -162,7 +166,22 @@ export function MainScreen({
           <>
             <FullDayStrip strip={strip} />
 
-            <RiskWarning state={state} today={today} />
+            <RiskWarning state={state} today={today} stale={stale} />
+
+            {firstStale && (
+              <PruneSuggestion
+                state={state}
+                item={firstStale}
+                onRemove={() => onRemoveHabit(firstStale.id)}
+                onRewrite={() => {
+                  // A rewrite is a fresh start, so it silences the
+                  // suggestion for a window the same way Keep does.
+                  onUpdateHabit(firstStale.id, { pruneKeptOn: today });
+                  setEditingId(firstStale.id);
+                }}
+                onKeep={() => onUpdateHabit(firstStale.id, { pruneKeptOn: today })}
+              />
+            )}
 
             <DayPicker today={today} editing={editing} onPick={setEditing} />
 
@@ -392,8 +411,12 @@ function DayPicker({
  * screen for days and then drops a step — the only case where the picture
  * alone is not enough feedback in time to act on.
  */
-function RiskWarning({ state, today }: { state: AppState; today: DateKey }) {
-  const risks = atRiskItems(state.logs, state.habits, today);
+function RiskWarning({ state, today, stale }: { state: AppState; today: DateKey; stale: readonly StaleItem[] }) {
+  // A habit already offered for pruning is left out: that this week of an
+  // abandoned habit is about to lapse is noise beside asking whether to keep
+  // it at all. The push digest is unaffected.
+  const silent = new Set(stale.map((s) => s.id));
+  const risks = atRiskItems(state.logs, state.habits, today).filter((r) => !silent.has(r.id));
   if (risks.length === 0) return null;
 
   const first = risks[0] as RiskItem;
@@ -412,4 +435,47 @@ function riskName(state: AppState, risk: RiskItem): string {
 
 function whenText(daysLeft: number): string {
   return daysLeft <= 1 ? en['main.risk.today'] : en['main.risk.tomorrow'];
+}
+
+/**
+ * One habit at a time that has gone silent (`core/prune.ts`), with the three
+ * things worth doing about it. Keep silences it for one more window.
+ */
+function PruneSuggestion({
+  state,
+  item,
+  onRemove,
+  onRewrite,
+  onKeep,
+}: {
+  state: AppState;
+  item: StaleItem;
+  onRemove: () => void;
+  onRewrite: () => void;
+  onKeep: () => void;
+}) {
+  const habit = state.habits.find((h) => h.id === item.id);
+  if (!habit) return null;
+  const weighs = habit.domain !== undefined && drivesPanel(habit.cadence);
+  const weeks = Math.floor(item.silentDays / 7);
+
+  return (
+    <Card className="prune-suggestion">
+      <p>
+        {t('main.prune.text', { title: habitTitle(habit, en['settings.habits.title.placeholder']), weeks })}
+        {weighs && ` ${en['main.prune.weighs']}`}
+      </p>
+      <div className="row">
+        <Button small onClick={onRemove}>
+          {en['main.prune.remove']}
+        </Button>
+        <Button small onClick={onRewrite}>
+          {en['main.prune.rewrite']}
+        </Button>
+        <Button small onClick={onKeep}>
+          {en['main.prune.keep']}
+        </Button>
+      </div>
+    </Card>
+  );
 }
