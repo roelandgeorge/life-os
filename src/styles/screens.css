@@ -695,6 +695,13 @@ button.icon-action {
   margin: 0 0 var(--space-3);
 }
 
+/* Export, Export CSV, Import and Reset on one line at phone width: at the
+   default row gap Reset wrapped onto a line of its own and read as a
+   separate warning. */
+.settings-screen .row {
+  gap: var(--space-2);
+}
+
 .notification-row {
   display: flex;
   align-items: center;

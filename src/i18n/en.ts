@@ -111,6 +111,7 @@ export const en = {
   'settings.notifications.testing': 'Sending…',
   'settings.data': 'Data',
   'settings.export': 'Export',
+  'settings.exportCsv': 'Export CSV',
   'settings.import': 'Import',
   'settings.reset': 'Reset',
   'settings.reset.confirm': 'Delete all Life OS data on this device? This cannot be undone.',
