@@ -4,16 +4,16 @@
  * already works on first, and picking one opens that domain's own catalogue.
  *
  * A row is the same `.checkin` shape Home uses (docs/onboarding/05-revisions.md
- * §4): the add button where Home puts its checkbox, the title as the tap
- * target that expands the catalogue `note`. Cadence, importance and
- * evidence stay out of view entirely (§7, §8). Rows are listed most
- * important first (`byImportance`). Adding is one tap regardless of whether
- * the row is expanded.
+ * §4): the add button where Home puts its checkbox, then the title with the
+ * catalogue `note` under it, always shown, since the note is what a choice
+ * is made on. Cadence, importance and evidence stay out of view entirely
+ * (§7, §8). Rows are listed most important first (`byImportance`).
  *
  * A habit already on the list is not shown at all, so this screen is only
- * ever what is still on offer. "Write your own" at the bottom opens
- * `HabitEditor` as an empty row of the same shape; `MainScreen` uses the same
- * component in place of a habit's own row to edit it.
+ * ever what is still on offer. "Write your own" at the bottom is a
+ * `HabitEditor` in standby: one empty field until it is tapped.
+ * `MainScreen` uses the same component in place of a habit's own row to
+ * edit it.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -68,6 +68,7 @@ function GrowField({
   label,
   color,
   autoFocus,
+  onFocus,
 }: {
   className: string;
   value: string;
@@ -77,6 +78,7 @@ function GrowField({
   label: string;
   color?: string;
   autoFocus?: true;
+  onFocus?: () => void;
 }) {
   const field = useRef<HTMLTextAreaElement>(null);
 
@@ -111,6 +113,7 @@ function GrowField({
       style={color === undefined ? undefined : { color }}
       onChange={(e) => onChange(e.target.value)}
       onKeyDown={(e) => onKey(e)}
+      onFocus={onFocus}
     />
   );
 }
@@ -132,6 +135,7 @@ export function HabitEditor({
   initial,
   color,
   move,
+  standby,
   onCancel,
   onSave,
 }: {
@@ -145,13 +149,22 @@ export function HabitEditor({
    * at once and is independent of the text: Cancel keeps it.
    */
   move?: { up?: () => void; down?: () => void };
-  onCancel: () => void;
+  /**
+   * "Write your own": the row waits as a single empty field and wakes when
+   * that field is focused. The tap lands in a real field, because iOS opens
+   * the keyboard only for a focus that happens inside the tap itself, not
+   * for one made after a re-render. Save and Cancel return it to standby
+   * rather than calling away.
+   */
+  standby?: true;
+  onCancel?: () => void;
   onSave: (input: WrittenHabitFields) => void;
 }) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [note, setNote] = useState(initial?.note ?? '');
   const [cadence, setCadence] = useState<Cadence>(initial?.cadence ?? 'daily');
   const [emoji, setEmoji] = useState(initial?.emoji ?? '');
+  const [awake, setAwake] = useState(!standby);
   const moveRow = useRef<HTMLDivElement>(null);
   const [moves, setMoves] = useState(0);
 
@@ -180,6 +193,21 @@ export function HabitEditor({
     const trimmedNote = note.trim();
     if (trimmedNote) input.note = trimmedNote;
     onSave(input);
+    if (standby) toStandby();
+  }
+
+  function cancel() {
+    if (standby) toStandby();
+    else onCancel?.();
+  }
+
+  function toStandby() {
+    setTitle('');
+    setNote('');
+    setCadence('daily');
+    setEmoji('');
+    setAwake(false);
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
   }
 
   // Enter commits rather than breaking the line: these read as one-line
@@ -189,21 +217,29 @@ export function HabitEditor({
       e.preventDefault();
       save();
     }
-    if (e.key === 'Escape') onCancel();
+    if (e.key === 'Escape') cancel();
   }
 
   return (
-    <Card className="checkin editing">
+    <Card className={awake ? 'checkin editing' : 'checkin editing standby'}>
+      {/* The box and the title keep their places in both states, so React
+          keeps the same textarea, and its focus, when the row wakes. */}
       <div className="checkin-box">
-        <input
-          className="emoji-field"
-          type="text"
-          maxLength={2}
-          value={emoji}
-          aria-label={en['habits.edit.emoji']}
-          onChange={(e) => setEmoji(e.target.value)}
-          onKeyDown={onKey}
-        />
+        {awake ? (
+          <input
+            className="emoji-field"
+            type="text"
+            maxLength={2}
+            value={emoji}
+            aria-label={en['habits.edit.emoji']}
+            onChange={(e) => setEmoji(e.target.value)}
+            onKeyDown={onKey}
+          />
+        ) : (
+          <span className="standby-mark">
+            <PlusGlyph />
+          </span>
+        )}
       </div>
 
       <div className="checkin-main">
@@ -213,75 +249,71 @@ export function HabitEditor({
           onChange={setTitle}
           onKey={onKey}
           maxLength={MAX_HABIT_TITLE_LENGTH}
-          label={en['habits.edit.title.placeholder']}
+          label={awake ? en['habits.edit.title.placeholder'] : en['domainCatalog.write.open']}
           {...(color === undefined ? {} : { color })}
-          autoFocus
+          {...(standby ? { onFocus: () => setAwake(true) } : { autoFocus: true as const })}
         />
       </div>
 
-      <div className="habit-menu">
-        <Button small className="icon-action" aria-label={en['habits.edit.save']} onClick={save}>
-          <CheckGlyph />
-        </Button>
-        <Button small className="icon-action" aria-label={en['action.cancel']} onClick={onCancel}>
-          <CrossGlyph />
-        </Button>
-      </div>
+      {awake && (
+        <>
+          <div className="habit-menu">
+            <Button small className="icon-action" aria-label={en['habits.edit.save']} onClick={save}>
+              <CheckGlyph />
+            </Button>
+            <Button small className="icon-action" aria-label={en['action.cancel']} onClick={cancel}>
+              <CrossGlyph />
+            </Button>
+          </div>
 
-      <GrowField
-        className="note-field"
-        value={note}
-        onChange={setNote}
-        onKey={onKey}
-        maxLength={MAX_HABIT_NOTE_LENGTH}
-        label={en['habits.edit.note.placeholder']}
-      />
+          <GrowField
+            className="note-field"
+            value={note}
+            onChange={setNote}
+            onKey={onKey}
+            maxLength={MAX_HABIT_NOTE_LENGTH}
+            label={en['habits.edit.note.placeholder']}
+          />
 
-      <ChipRow className="chips cadence">
-        {CADENCE_CHOICES.map(({ key, cadence: option }) => (
-          <Chip key={key} on={sameCadence(cadence, option)} onClick={() => setCadence(option)}>
-            {en[`habits.cadence.${key}` as I18nKey]}
-          </Chip>
-        ))}
-      </ChipRow>
+          <ChipRow className="chips cadence">
+            {CADENCE_CHOICES.map(({ key, cadence: option }) => (
+              <Chip key={key} on={sameCadence(cadence, option)} onClick={() => setCadence(option)}>
+                {en[`habits.cadence.${key}` as I18nKey]}
+              </Chip>
+            ))}
+          </ChipRow>
 
-      {move && (
-        <div className="habit-move" ref={moveRow}>
-          <Button
-            small
-            className="icon-action"
-            aria-label={en['habits.edit.moveUp']}
-            disabled={!move.up}
-            onClick={() => moveBy(move.up)}
-          >
-            <ChevronUpGlyph />
-          </Button>
-          <Button
-            small
-            className="icon-action"
-            aria-label={en['habits.edit.moveDown']}
-            disabled={!move.down}
-            onClick={() => moveBy(move.down)}
-          >
-            <ChevronDownGlyph />
-          </Button>
-        </div>
+          {move && (
+            <div className="habit-move" ref={moveRow}>
+              <Button
+                small
+                className="icon-action"
+                aria-label={en['habits.edit.moveUp']}
+                disabled={!move.up}
+                onClick={() => moveBy(move.up)}
+              >
+                <ChevronUpGlyph />
+              </Button>
+              <Button
+                small
+                className="icon-action"
+                aria-label={en['habits.edit.moveDown']}
+                disabled={!move.down}
+                onClick={() => moveBy(move.down)}
+              >
+                <ChevronDownGlyph />
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </Card>
   );
 }
 
-function CatalogRow({
-  item,
-  onAdd,
-}: {
-  item: CatalogItem;
-  onAdd: () => void;
-}) {
-  // Per row, like `MainScreen`'s own rows: opening one does not shut another.
-  const [expanded, setExpanded] = useState(false);
+function CatalogRow({ item, onAdd }: { item: CatalogItem; onAdd: () => void }) {
   return (
-    <Card className={expanded ? 'checkin expanded' : 'checkin'}>
+    <Card className="checkin catalog-row">
       <div className="checkin-box">
         <Button
           small
@@ -294,11 +326,11 @@ function CatalogRow({
         </Button>
       </div>
 
-      <button type="button" className="checkin-main" aria-expanded={expanded} onClick={() => setExpanded((v) => !v)}>
+      <div className="checkin-main">
         <span className="label">{item.title}</span>
-      </button>
+      </div>
 
-      {expanded && item.note && <Note>{item.note}</Note>}
+      {item.note && <Note>{item.note}</Note>}
     </Card>
   );
 }
@@ -316,8 +348,6 @@ export function DomainCatalog({
   onAddCustom: (input: NewCustomHabitInput) => void;
   onClose: () => void;
 }) {
-  const [writing, setWriting] = useState(false);
-
   const addedIds = new Set<string>();
   for (const h of state.habits) {
     if (h.removedDate === undefined && h.catalogId !== undefined) addedIds.add(h.catalogId);
@@ -339,28 +369,16 @@ export function DomainCatalog({
 
       <div className="habit-picker">
         {items.map((item) => (
-          <CatalogRow
-            key={item.id}
-            item={item}
-            onAdd={() => onAddHabit(item.id)}
-          />
+          <CatalogRow key={item.id} item={item} onAdd={() => onAddHabit(item.id)} />
         ))}
       </div>
 
-      {writing ? (
-        <HabitEditor
-          onCancel={() => setWriting(false)}
-          onSave={(input) => {
-            onAddCustom({ ...input, domain });
-            setWriting(false);
-          }}
-        />
+      {canAddCustomHabit(state.habits) ? (
+        <div className="write-own">
+          <HabitEditor standby onSave={(input) => onAddCustom({ ...input, domain })} />
+        </div>
       ) : (
-        <Button
-          className="write-habit-open"
-          disabled={!canAddCustomHabit(state.habits)}
-          onClick={() => setWriting(true)}
-        >
+        <Button className="write-habit-open" disabled>
           {en['domainCatalog.write.open']}
         </Button>
       )}

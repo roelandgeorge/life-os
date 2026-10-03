@@ -364,6 +364,12 @@ button.icon-action {
   justify-content: center;
 }
 
+/* The catalogue's add button is the one filled action: its glyph takes the
+   ink that reads on bronze, not the dim tone every outlined action uses. */
+button.primary.icon-action {
+  color: var(--on-bronze);
+}
+
 /* src/ui/Glyph.tsx. currentColor keeps every row action on the row's voice. */
 .glyph {
   width: 14px;
@@ -641,6 +647,41 @@ button.icon-action {
 /* A catalogue row is a `.checkin`, the same shape Home uses
    (docs/onboarding/05-revisions.md §4): only the add button differs from a
    habit row, and it sits where Home's checkbox does. */
+
+/* The note is what a choice is made on, so a catalogue row shows it
+   without a tap, on its own line under the title. */
+.checkin.catalog-row .note {
+  width: 100%;
+  margin: 0;
+}
+
+/* Title and note read as one block: the title keeps its centring padding
+   above, but not the gap under it meant for a row that ends there. */
+.checkin.catalog-row .checkin-main {
+  padding-bottom: 0;
+  cursor: default;
+}
+
+/* "Write your own" before it is tapped: one empty field in a dashed row,
+   the + where the emoji field will be. */
+.write-own {
+  margin-top: var(--space-3);
+}
+
+.checkin.editing.standby {
+  border-style: dashed;
+}
+
+.checkin.editing.standby .title-field {
+  font-weight: 400;
+}
+
+.standby-mark {
+  display: flex;
+  justify-content: center;
+  width: 25px;
+  color: var(--paper-dim);
+}
 
 .write-habit-open {
   display: block;
